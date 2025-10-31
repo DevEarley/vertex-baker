@@ -1,0 +1,16 @@
+[gd_scene load_steps=3 format=3 uid="uid://fijceyg6p4bu"]
+
+[ext_resource type="Texture2D" uid="uid://bp677qlpye2rd" path="res://vl.png" id="1_ggcam"]
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_wuusl"]
+
+[node name="LightMeshPrefab" type="Sprite3D"]
+billboard = 2
+no_depth_test = true
+texture_filter = 0
+texture = ExtResource("1_ggcam")
+
+[node name="StaticBody3D" type="StaticBody3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D"]
+shape = SubResource("SphereShape3D_wuusl")

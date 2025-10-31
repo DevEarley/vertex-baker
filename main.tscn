@@ -1,0 +1,155 @@
+[gd_scene load_steps=5 format=3 uid="uid://egxf4avoauls"]
+
+[ext_resource type="Script" uid="uid://bxhfyvkolmnms" path="res://vertex-painter.gd" id="1_ig7tw"]
+[ext_resource type="Script" uid="uid://hdlai2as1f4i" path="res://free-look.gd" id="2_0xm2m"]
+[ext_resource type="Script" uid="uid://e3f1ox6y6cvg" path="res://addons/Gizmo3DScript/gizmo3D.gd" id="3_h2yge"]
+
+[sub_resource type="Environment" id="Environment_0xm2m"]
+background_mode = 1
+background_color = Color(0.5749978, 0.57499784, 0.57499784, 1)
+
+[node name="Control" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_ig7tw")
+
+[node name="SubViewportContainer" type="SubViewportContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+stretch = true
+
+[node name="SubViewport" type="SubViewport" parent="SubViewportContainer"]
+handle_input_locally = false
+size = Vector2i(1152, 648)
+render_target_update_mode = 4
+
+[node name="Camera3D" type="Camera3D" parent="SubViewportContainer/SubViewport" node_paths=PackedStringArray("gizmo")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 2.4474885)
+environment = SubResource("Environment_0xm2m")
+script = ExtResource("2_0xm2m")
+gizmo = NodePath("../Gizmo3D")
+
+[node name="Gizmo3D" type="Node3D" parent="SubViewportContainer/SubViewport"]
+script = ExtResource("3_h2yge")
+mode = 1
+show_selection_box = false
+
+[node name="HBoxContainer" type="HBoxContainer" parent="."]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="IMPORT_BUTTON" type="Button" parent="HBoxContainer"]
+layout_mode = 2
+text = "IMPORT MESH"
+
+[node name="EXPORT_BUTTON" type="Button" parent="HBoxContainer"]
+layout_mode = 2
+text = "EXPORT MESH"
+
+[node name="SAVE_BUTTON" type="Button" parent="HBoxContainer"]
+layout_mode = 2
+text = "SAVE PROJECT"
+
+[node name="OPEN_BUTTON" type="Button" parent="HBoxContainer"]
+layout_mode = 2
+text = "OPEN PROJECT"
+
+[node name="SHADER_OPTIONS" type="OptionButton" parent="HBoxContainer"]
+layout_mode = 2
+selected = 0
+item_count = 5
+popup/item_0/text = "SHADER"
+popup/item_0/id = 0
+popup/item_0/separator = true
+popup/item_1/text = "MULTI TEX SHADER"
+popup/item_1/id = 1
+popup/item_2/text = "LIQUID SHADER"
+popup/item_2/id = 2
+popup/item_3/text = "WINDY SHADER"
+popup/item_3/id = 3
+popup/item_4/text = "DEFAULT SHADER"
+popup/item_4/id = 4
+
+[node name="BAKE" type="Button" parent="HBoxContainer"]
+layout_mode = 2
+text = "BAKE"
+
+[node name="PALETTE_INSPECTOR" type="Window" parent="."]
+oversampling_override = 1.0
+title = "PALETTE INSPECTOR"
+initial_position = 1
+visible = false
+
+[node name="LAYER_INSPECTOR" type="Window" parent="."]
+oversampling_override = 1.0
+title = "LAYER INSPECTOR"
+initial_position = 1
+size = Vector2i(300, 800)
+
+[node name="ScrollContainer" type="ScrollContainer" parent="LAYER_INSPECTOR"]
+custom_minimum_size = Vector2(300, 0)
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="CONTAINER" type="VBoxContainer" parent="LAYER_INSPECTOR/ScrollContainer"]
+layout_mode = 2
+theme_override_constants/separation = 50
+
+[node name="LAYERS" type="VBoxContainer" parent="LAYER_INSPECTOR/ScrollContainer/CONTAINER"]
+layout_mode = 2
+theme_override_constants/separation = 100
+
+[node name="ADD_LAYER" type="Button" parent="LAYER_INSPECTOR/ScrollContainer/CONTAINER"]
+layout_mode = 2
+text = "ADD LAYER"
+
+[node name="IMPORT" type="FileDialog" parent="."]
+title = "IMPORT MESH"
+ok_button_text = "IMPORT MESH"
+file_mode = 0
+display_mode = 1
+access = 2
+
+[node name="EXPORT" type="FileDialog" parent="."]
+title = "EXPORT MESH"
+ok_button_text = "EXPORT MESH"
+display_mode = 1
+access = 2
+
+[node name="OPEN" type="FileDialog" parent="."]
+title = "OPEN LIGHT DATA"
+ok_button_text = "OPEN LIGHT DATA"
+file_mode = 0
+display_mode = 1
+access = 2
+
+[node name="SAVE" type="FileDialog" parent="."]
+title = "SAVE LIGHT DATA"
+ok_button_text = "SAVE LIGHT DATA"
+access = 2
+
+[connection signal="transform_begin" from="SubViewportContainer/SubViewport/Gizmo3D" to="." method="_on_gizmo_3d_transform_begin"]
+[connection signal="transform_changed" from="SubViewportContainer/SubViewport/Gizmo3D" to="." method="_on_gizmo_3d_transform_changed"]
+[connection signal="transform_end" from="SubViewportContainer/SubViewport/Gizmo3D" to="." method="_on_gizmo_3d_transform_end"]
+[connection signal="pressed" from="HBoxContainer/IMPORT_BUTTON" to="." method="_on_import_button_pressed"]
+[connection signal="pressed" from="HBoxContainer/EXPORT_BUTTON" to="." method="_on_export_button_pressed"]
+[connection signal="pressed" from="HBoxContainer/SAVE_BUTTON" to="." method="_on_save_button_pressed"]
+[connection signal="pressed" from="HBoxContainer/OPEN_BUTTON" to="." method="_on_open_button_pressed"]
+[connection signal="pressed" from="HBoxContainer/BAKE" to="." method="_on_bake_pressed"]
+[connection signal="pressed" from="LAYER_INSPECTOR/ScrollContainer/CONTAINER/ADD_LAYER" to="." method="_on_add_layer_pressed"]
+[connection signal="file_selected" from="IMPORT" to="." method="_on_import_file_selected"]
+[connection signal="file_selected" from="EXPORT" to="." method="_on_export_file_selected"]
+[connection signal="file_selected" from="OPEN" to="." method="_on_open_file_selected"]
+[connection signal="file_selected" from="SAVE" to="." method="_on_save_file_selected"]

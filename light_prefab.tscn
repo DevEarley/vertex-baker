@@ -1,0 +1,129 @@
+[gd_scene load_steps=3 format=3 uid="uid://bpgyxw1rt2l6b"]
+
+[sub_resource type="Gradient" id="Gradient_0daxq"]
+colors = PackedColorArray(0.2308174, 0.2308174, 0.2308174, 1, 0.5338078, 0.5338078, 0.5338078, 1)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_afdp4"]
+gradient = SubResource("Gradient_0daxq")
+fill_to = Vector2(0, 1)
+
+[node name="LIGHT_PREFAB" type="VBoxContainer"]
+custom_minimum_size = Vector2(220, 190)
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 5.0
+offset_top = 5.0
+offset_right = -927.0
+offset_bottom = -453.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="LIGHT_NAME" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+text = "LIGHT #0"
+horizontal_alignment = 1
+
+[node name="TextureRect" type="TextureRect" parent="VBoxContainer/LIGHT_NAME"]
+show_behind_parent = true
+custom_minimum_size = Vector2(290, 220)
+layout_mode = 0
+offset_left = -5.0
+offset_top = -5.0
+offset_right = 285.0
+offset_bottom = 215.0
+texture = SubResource("GradientTexture2D_afdp4")
+
+[node name="RADIUS_CONTAINER" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 24
+
+[node name="VSeparator" type="VSeparator" parent="VBoxContainer/RADIUS_CONTAINER"]
+layout_mode = 2
+
+[node name="RADIUS" type="Label" parent="VBoxContainer/RADIUS_CONTAINER"]
+layout_mode = 2
+text = "RADIUS"
+
+[node name="SpinBox" type="SpinBox" parent="VBoxContainer/RADIUS_CONTAINER"]
+layout_mode = 2
+max_value = 9999.0
+step = 0.01
+update_on_text_changed = true
+select_all_on_focus = true
+
+[node name="COLOR_CONTAINER" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 24
+
+[node name="VSeparator3" type="VSeparator" parent="VBoxContainer/COLOR_CONTAINER"]
+layout_mode = 2
+
+[node name="COLOR" type="Label" parent="VBoxContainer/COLOR_CONTAINER"]
+layout_mode = 2
+text = "COLOR"
+
+[node name="ColorPickerButton" type="ColorPickerButton" parent="VBoxContainer/COLOR_CONTAINER"]
+layout_mode = 2
+text = "LIGHT COLOR"
+color = Color(1, 1, 1, 1)
+edit_alpha = false
+edit_intensity = false
+
+[node name="Button" type="Button" parent="VBoxContainer/COLOR_CONTAINER"]
+layout_mode = 2
+text = "Pal"
+
+[node name="MIX_CONTAINER" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 24
+
+[node name="VSeparator2" type="VSeparator" parent="VBoxContainer/MIX_CONTAINER"]
+layout_mode = 2
+
+[node name="MIX" type="Label" parent="VBoxContainer/MIX_CONTAINER"]
+layout_mode = 2
+text = "MIX"
+
+[node name="SpinBox" type="SpinBox" parent="VBoxContainer/MIX_CONTAINER"]
+layout_mode = 2
+min_value = -10.0
+max_value = 10.0
+step = 0.01
+allow_lesser = true
+update_on_text_changed = true
+select_all_on_focus = true
+
+[node name="BUTTON_ROW_1" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 24
+
+[node name="VSeparator4" type="VSeparator" parent="VBoxContainer/BUTTON_ROW_1"]
+layout_mode = 2
+
+[node name="DELETE" type="Button" parent="VBoxContainer/BUTTON_ROW_1"]
+layout_mode = 2
+text = "DELETE LIGHT"
+
+[node name="DUPLICATE" type="Button" parent="VBoxContainer/BUTTON_ROW_1"]
+layout_mode = 2
+text = "DUPLICATE"
+
+[node name="BUTTON_ROW_2" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 24
+
+[node name="VSeparator3" type="VSeparator" parent="VBoxContainer/BUTTON_ROW_2"]
+layout_mode = 2
+
+[node name="MOVE" type="Button" parent="VBoxContainer/BUTTON_ROW_2"]
+layout_mode = 2
+text = "MOVE LIGHT"
+
+[node name="TOGGLE_VISIBLE" type="Button" parent="VBoxContainer/BUTTON_ROW_2"]
+layout_mode = 2
+text = "HIDE LIGHT"
