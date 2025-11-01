@@ -138,7 +138,7 @@ func update_mesh(mesh:MeshInstance3D) -> void:
 				for light in layer.LIGHTS:
 					for i in range(data.get_vertex_count()):
 						var vertex = mesh.to_global(data.get_vertex(i))
-						var vertex_distance:float = vertex.distance_to(light.ACTUAL_LIGHT.position)
+						var vertex_distance:float = vertex.distance_to(light.ACTUAL_LIGHT.global_position)
 						if vertex_distance < light.RADIUS:
 							light.ACTUAL_LIGHT.hide()
 							print("in")
@@ -167,13 +167,15 @@ func _on_save_file_selected(path: String) -> void:
 func _on_export_file_selected(path: String) -> void:
 	pass # Replace with function body.
 
-var CURRENT_PATH
+var CURRENT_PATH=""
 func _on_import_file_selected(path: String) -> void:
 	CURRENT_PATH = path;
 	load_from_current_path()
 
 func load_from_current_path():
-
+	if(CURRENT_PATH == ""):return;
+	if(CURRENT_MESH!= null):
+		$SubViewportContainer/SubViewport.remove_child(CURRENT_MESH)
 	var gltf_state_load = GLTFState.new()
 	var gltf_document_load = GLTFDocument.new()
 	var error = gltf_document_load.append_from_file(CURRENT_PATH, gltf_state_load)
