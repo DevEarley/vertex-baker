@@ -1,6 +1,6 @@
-[gd_scene load_steps=3 format=3 uid="uid://dlhrf1utkytof"]
+[gd_scene load_steps=3 format=3 uid="uid://3hhv7nrrhige"]
 
-[ext_resource type="Texture2D" uid="uid://ca7k24h4m6ddd" path="res://icon_mesh.png" id="1_1g88l"]
+[ext_resource type="Texture2D" uid="uid://dybaewp4w0jik" path="res://icon_surface.png" id="1_4o4em"]
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_wuusl"]
 
@@ -8,7 +8,7 @@
 billboard = 2
 no_depth_test = true
 texture_filter = 0
-texture = ExtResource("1_1g88l")
+texture = ExtResource("1_4o4em")
 
 [node name="StaticBody3D" type="StaticBody3D" parent="."]
 

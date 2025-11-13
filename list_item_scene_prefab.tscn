@@ -1,19 +1,32 @@
-[gd_scene format=3 uid="uid://csqrlhl4l633e"]
+[gd_scene load_steps=2 format=3 uid="uid://bqqrn15xwihnq"]
 
-[node name="MESH_LIST_ITEM" type="VBoxContainer"]
+[ext_resource type="Texture2D" uid="uid://blkpo7j61hi23" path="res://icon_scene.png" id="1_wowo8"]
+
+[node name="SCENE_LIST_ITEM" type="VBoxContainer"]
 custom_minimum_size = Vector2(490, 200)
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 5.0
-offset_top = 5.0
-offset_right = -907.0
-offset_bottom = -342.0
+offset_left = 1.0
+offset_top = 4.0
+offset_right = -661.0
+offset_bottom = -343.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="NAME" type="Label" parent="."]
+[node name="ICON" type="TextureRect" parent="."]
+custom_minimum_size = Vector2(32, 32)
 layout_mode = 2
+texture = ExtResource("1_wowo8")
+stretch_mode = 2
+
+[node name="NAME" type="Label" parent="ICON"]
+custom_minimum_size = Vector2(490, 50)
+layout_mode = 0
+offset_left = 39.0
+offset_top = 7.0
+offset_right = 529.0
+offset_bottom = 57.0
 text = "<MESH NAME>"
 autowrap_mode = 1
 
@@ -25,7 +38,7 @@ theme_override_constants/separation = 34
 layout_mode = 2
 text = "hide"
 
-[node name="SURFACES" type="VBoxContainer" parent="VBoxContainer"]
+[node name="MESHES" type="VBoxContainer" parent="VBoxContainer"]
 layout_mode = 2
 theme_override_constants/separation = 34
 

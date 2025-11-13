@@ -3,9 +3,14 @@ class_name VertexBakerMainWindow
 var MOVING_WINDOW = false
 var layer_prefab = preload("res://layer_prefab.tscn")
 var light_prefab = preload("res://light_prefab.tscn")
-var mesh_list_item_prefab = preload("res://mesh_list_item_prefab.tscn")
+var mesh_list_item_prefab = preload("res://list_item_mesh_prefab.tscn")
+var scene_list_item_prefab = preload("res://list_item_scene_prefab.tscn")
+var surface_list_item_prefab = preload("res://list_item_surface_prefab.tscn")
+var material_list_item_prefab = preload("res://list_item_material_prefab.tscn")
 var light_mesh = preload("res://light_mesh_prefab.tscn")
 var imported_mesh_prefab = preload("res://imported_mesh_prefab.tscn")
+var scene_prefab = preload("res://scene_prefab.tscn")
+var surface_prefab = preload("res://surface_prefab.tscn")
 var CURRENT_MESH
 var OG_MESH
 var brush_hardness = 1.0
@@ -28,12 +33,9 @@ func _input(event:InputEvent):
 		print("is_released from main")
 		if(CURRENT_WINDOW != null && MOVING_WINDOW == true):
 			print("is_released from main | MOVING_WINDOW = true")
-
 			MOVING_WINDOW = false
 			CURRENT_WINDOW.mouse_passthrough = false
 			CURRENT_WINDOW.unfocusable = true
-
-
 
 func _on_add_layer_pressed() -> void:
 
@@ -232,13 +234,20 @@ func load_from_current_path():
 		CURRENT_MESH = gltf_document_load.generate_scene(gltf_state_load)
 		CURRENT_MESH.name = "MESH"
 		var node= $SubViewportContainer/SubViewport
-		var mesh = imported_mesh_prefab.instantiate()
+		var mesh = scene_prefab.instantiate()
 		mesh.add_child(CURRENT_MESH)
 		node.add_child(mesh)
-		var mesh_list_item = mesh_list_item_prefab.instantiate()
-		mesh_list_item.get_node("NAME").text = CURRENT_PATH
-		$MESH_INSPECTOR/ScrollContainer/CONTAINER/MESHES.add_child(mesh_list_item)
-
+		var scene_list_item = scene_list_item_prefab.instantiate()
+		scene_list_item.get_node("ICON/NAME").text = CURRENT_PATH
+		$MESH_INSPECTOR/ScrollContainer/CONTAINER/MESHES.add_child(scene_list_item)
+		for child_mesh:MeshInstance3D in CURRENT_MESH.get_children():
+			var mesh_list_item = mesh_list_item_prefab.instantiate()
+			mesh_list_item.get_node("ICON/NAME").text = child_mesh.name
+			scene_list_item.get_node("VBoxContainer/MESHES").add_child(mesh_list_item)
+			for surface in child_mesh.mesh.get_surface_count():
+				var surface_list_item = surface_list_item_prefab.instantiate()
+				surface_list_item.get_node("ICON/NAME").text = "Surface %s" % surface
+				mesh_list_item.get_node("VBoxContainer/SURFACES").add_child(surface_list_item)
 	else:
 		print("Couldn't load glTF scene (error code: %s)." % error_string(error))
 

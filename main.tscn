@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3 uid="uid://egxf4avoauls"]
+[gd_scene load_steps=16 format=3 uid="uid://egxf4avoauls"]
 
 [ext_resource type="Script" uid="uid://bxhfyvkolmnms" path="res://vertex-painter.gd" id="1_ig7tw"]
 [ext_resource type="Script" uid="uid://hdlai2as1f4i" path="res://free-look.gd" id="2_0xm2m"]
@@ -6,6 +6,17 @@
 [ext_resource type="Script" uid="uid://x6hxn1ffvby6" path="res://window_mover.gd" id="4_1bvp3"]
 [ext_resource type="Script" uid="uid://dev0gohk766sy" path="res://minimize.gd" id="5_lquwl"]
 [ext_resource type="Theme" uid="uid://2h4h4f0sagcw" path="res://main_theme.tres" id="6_7mycd"]
+[ext_resource type="Texture2D" uid="uid://c12b0vjqpapia" path="res://icon_palette.png" id="7_4c57u"]
+[ext_resource type="Texture2D" uid="uid://ca7k24h4m6ddd" path="res://icon_mesh.png" id="7_kek77"]
+[ext_resource type="Texture2D" uid="uid://c8a5er8tacab3" path="res://icon_material.png" id="8_4c57u"]
+[ext_resource type="Texture2D" uid="uid://cnuey48jbsnn0" path="res://icon_layer.png" id="9_efxa6"]
+
+[sub_resource type="Gradient" id="Gradient_4c57u"]
+colors = PackedColorArray(0, 0, 0, 1, 0, 0, 1, 1)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_efxa6"]
+gradient = SubResource("Gradient_4c57u")
+fill_to = Vector2(0, 1)
 
 [sub_resource type="Environment" id="Environment_0xm2m"]
 background_mode = 1
@@ -16,7 +27,7 @@ colors = PackedColorArray(0, 0, 0, 1, 0, 0, 1, 1)
 
 [sub_resource type="GradientTexture2D" id="GradientTexture2D_7mycd"]
 gradient = SubResource("Gradient_lquwl")
-height = 25
+height = 35
 fill_to = Vector2(0, 1)
 
 [node name="Control" type="Control"]
@@ -28,6 +39,15 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_ig7tw")
 
+[node name="TextureRect" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = SubResource("GradientTexture2D_efxa6")
+
 [node name="SubViewportContainer" type="SubViewportContainer" parent="."]
 layout_mode = 1
 anchors_preset = 15
@@ -38,6 +58,7 @@ grow_vertical = 2
 stretch = true
 
 [node name="SubViewport" type="SubViewport" parent="SubViewportContainer"]
+transparent_bg = true
 handle_input_locally = false
 size = Vector2i(1152, 648)
 render_target_update_mode = 4
@@ -129,7 +150,19 @@ offset_right = 450.0
 offset_bottom = 25.0
 texture = SubResource("GradientTexture2D_7mycd")
 
+[node name="TextureRect2" type="TextureRect" parent="PALETTE_INSPECTOR"]
+custom_minimum_size = Vector2(32, 32)
+anchors_preset = -1
+offset_left = 2.0
+offset_top = 2.0
+offset_right = 32.0
+offset_bottom = 32.0
+texture = ExtResource("7_4c57u")
+
 [node name="TITLE" type="Label" parent="PALETTE_INSPECTOR"]
+anchors_preset = -1
+offset_left = 37.0
+offset_top = 7.0
 offset_right = 40.0
 offset_bottom = 23.0
 text = "PALETTE INSPECTOR"
@@ -137,7 +170,7 @@ text = "PALETTE INSPECTOR"
 [node name="MESH_INSPECTOR" type="Window" parent="." node_paths=PackedStringArray("MAIN")]
 oversampling_override = 1.0
 title = "MESH INSPECTOR"
-position = Vector2i(636, 164)
+position = Vector2i(636, 284)
 size = Vector2i(500, 40)
 transient = true
 borderless = true
@@ -165,7 +198,19 @@ offset_right = 450.0
 offset_bottom = 25.0
 texture = SubResource("GradientTexture2D_7mycd")
 
+[node name="TextureRect2" type="TextureRect" parent="MESH_INSPECTOR"]
+custom_minimum_size = Vector2(32, 32)
+anchors_preset = -1
+offset_left = 2.0
+offset_top = 2.0
+offset_right = 32.0
+offset_bottom = 32.0
+texture = ExtResource("7_kek77")
+
 [node name="TITLE" type="Label" parent="MESH_INSPECTOR"]
+anchors_preset = -1
+offset_left = 37.0
+offset_top = 7.0
 offset_right = 140.0
 offset_bottom = 23.0
 text = "MESH INSPECTOR"
@@ -188,6 +233,75 @@ layout_mode = 2
 theme_override_constants/separation = 100
 
 [node name="IMPORT_MESH" type="Button" parent="MESH_INSPECTOR/ScrollContainer/CONTAINER"]
+layout_mode = 2
+text = "IMPORT MESH"
+
+[node name="MATERIAL_INSTPECTOR" type="Window" parent="." node_paths=PackedStringArray("MAIN")]
+oversampling_override = 1.0
+title = "MESH INSPECTOR"
+position = Vector2i(636, 164)
+size = Vector2i(500, 40)
+transient = true
+borderless = true
+unfocusable = true
+sharp_corners = true
+script = ExtResource("4_1bvp3")
+MAIN = NodePath("..")
+
+[node name="MINIMIZE2" type="Button" parent="MATERIAL_INSTPECTOR" node_paths=PackedStringArray("WINDOW")]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -15.0
+offset_bottom = 31.0
+grow_horizontal = 0
+theme = ExtResource("6_7mycd")
+text = "➕"
+flat = true
+script = ExtResource("5_lquwl")
+WINDOW = NodePath("..")
+
+[node name="TextureRect" type="TextureRect" parent="MATERIAL_INSTPECTOR"]
+custom_minimum_size = Vector2(450, 25)
+offset_right = 450.0
+offset_bottom = 25.0
+texture = SubResource("GradientTexture2D_7mycd")
+
+[node name="TextureRect2" type="TextureRect" parent="MATERIAL_INSTPECTOR"]
+custom_minimum_size = Vector2(32, 32)
+anchors_preset = -1
+offset_left = 2.0
+offset_top = 2.0
+offset_right = 32.0
+offset_bottom = 32.0
+texture = ExtResource("8_4c57u")
+
+[node name="TITLE" type="Label" parent="MATERIAL_INSTPECTOR"]
+anchors_preset = -1
+offset_left = 37.0
+offset_top = 7.0
+offset_right = 140.0
+offset_bottom = 23.0
+text = "MATERIAL INSPECTOR"
+
+[node name="ScrollContainer" type="ScrollContainer" parent="MATERIAL_INSTPECTOR"]
+custom_minimum_size = Vector2(300, 0)
+anchors_preset = -1
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 40.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="CONTAINER" type="VBoxContainer" parent="MATERIAL_INSTPECTOR/ScrollContainer"]
+layout_mode = 2
+theme_override_constants/separation = 50
+
+[node name="MATERIALS" type="VBoxContainer" parent="MATERIAL_INSTPECTOR/ScrollContainer/CONTAINER"]
+layout_mode = 2
+theme_override_constants/separation = 100
+
+[node name="BUTTON" type="Button" parent="MATERIAL_INSTPECTOR/ScrollContainer/CONTAINER"]
 layout_mode = 2
 text = "IMPORT MESH"
 
@@ -221,7 +335,19 @@ offset_right = 450.0
 offset_bottom = 25.0
 texture = SubResource("GradientTexture2D_7mycd")
 
+[node name="TextureRect2" type="TextureRect" parent="LAYER_INSPECTOR"]
+custom_minimum_size = Vector2(32, 32)
+anchors_preset = -1
+offset_left = 2.0
+offset_top = 2.0
+offset_right = 32.0
+offset_bottom = 32.0
+texture = ExtResource("9_efxa6")
+
 [node name="TITLE" type="Label" parent="LAYER_INSPECTOR"]
+anchors_preset = -1
+offset_left = 37.0
+offset_top = 7.0
 offset_right = 40.0
 offset_bottom = 23.0
 text = "LAYER INSPECTOR"
@@ -294,6 +420,8 @@ text = "MENU
 [connection signal="pressed" from="PALETTE_INSPECTOR/MINIMIZE" to="PALETTE_INSPECTOR/MINIMIZE" method="_on_pressed"]
 [connection signal="pressed" from="MESH_INSPECTOR/MINIMIZE2" to="MESH_INSPECTOR/MINIMIZE2" method="_on_pressed"]
 [connection signal="pressed" from="MESH_INSPECTOR/ScrollContainer/CONTAINER/IMPORT_MESH" to="." method="_on_import_button_pressed"]
+[connection signal="pressed" from="MATERIAL_INSTPECTOR/MINIMIZE2" to="MATERIAL_INSTPECTOR/MINIMIZE2" method="_on_pressed"]
+[connection signal="pressed" from="MATERIAL_INSTPECTOR/ScrollContainer/CONTAINER/BUTTON" to="." method="_on_import_button_pressed"]
 [connection signal="mouse_exited" from="LAYER_INSPECTOR" to="LAYER_INSPECTOR" method="_on_scroll_container_mouse_exited"]
 [connection signal="pressed" from="LAYER_INSPECTOR/MINIMIZE3" to="LAYER_INSPECTOR/MINIMIZE3" method="_on_pressed"]
 [connection signal="mouse_entered" from="LAYER_INSPECTOR/ScrollContainer" to="LAYER_INSPECTOR" method="_on_scroll_container_mouse_entered"]
