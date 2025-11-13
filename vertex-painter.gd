@@ -1,14 +1,44 @@
 extends Control
-
+class_name VertexBakerMainWindow
+var MOVING_WINDOW = false
 var layer_prefab = preload("res://layer_prefab.tscn")
 var light_prefab = preload("res://light_prefab.tscn")
+var mesh_list_item_prefab = preload("res://mesh_list_item_prefab.tscn")
 var light_mesh = preload("res://light_mesh_prefab.tscn")
+var imported_mesh_prefab = preload("res://imported_mesh_prefab.tscn")
 var CURRENT_MESH
 var OG_MESH
 var brush_hardness = 1.0
 var calculated_size:float = 5.0
 var PREVIOUS_COLOR:Color = Color.WHITE
+
+var CURRENT_WINDOW:WindowMover
+
+func _input(event:InputEvent):
+	# Mouse in viewport coordinates.
+	#if event is InputEventMouseButton && event.is_released():
+		#self.position = event
+		#print("Mouse Click/Unclick at: ", event.position)
+	if event is InputEventMouseMotion:
+		print("vp movement")
+		if(CURRENT_WINDOW != null && MOVING_WINDOW == true):
+			CURRENT_WINDOW.position = Vector2i(event.position-CURRENT_WINDOW.LAST_POSITION)
+
+	if(event is InputEventMouseButton && event.is_released()):
+		print("is_released from main")
+		if(CURRENT_WINDOW != null && MOVING_WINDOW == true):
+			print("is_released from main | MOVING_WINDOW = true")
+
+			MOVING_WINDOW = false
+			CURRENT_WINDOW.mouse_passthrough = false
+			CURRENT_WINDOW.unfocusable = true
+
+
+
 func _on_add_layer_pressed() -> void:
+
+	$HBoxContainer.visible = false
+	$MENU_BUTTON.visible = true;
 	var layer:Layer = Layer.new()
 	layer.LIGHTS = []
 	layer.ID = DATA.LAYERS.size()
@@ -87,15 +117,25 @@ func on_toggle_light(light:VertexLight):
 	pass
 
 func _on_import_button_pressed() -> void:
+	$HBoxContainer.visible = false
+	$MENU_BUTTON.visible = true;
 	$IMPORT.show()
 
 func _on_save_button_pressed() -> void:
+	$HBoxContainer.visible = false
+	$MENU_BUTTON.visible = true;
 	$SAVE.show()
 
 func _on_export_button_pressed() -> void:
+
+	$HBoxContainer.visible = false
+	$MENU_BUTTON.visible = true;
 	$EXPORT.show()
 
 func _on_open_button_pressed() -> void:
+
+	$HBoxContainer.visible = false
+	$MENU_BUTTON.visible = true;
 	$OPEN.show()
 
 
@@ -121,6 +161,7 @@ func show_palette(for_light:VBoxContainer):
 	pass
 
 func update_mesh(mesh:MeshInstance3D) -> void:
+
 		var count =mesh.mesh.get_surface_count()
 
 		var tools = []
@@ -131,33 +172,38 @@ func update_mesh(mesh:MeshInstance3D) -> void:
 		for layer in DATA.LAYERS:
 				for light in layer.LIGHTS:
 					light.ACTUAL_LIGHT.show()
-		for index in count:
-			var data = tools[index-1]
-			data.create_from_surface(mesh.mesh, index)
-			for layer in DATA.LAYERS:
-				for light in layer.LIGHTS:
+
+		for layer in DATA.LAYERS:
+			for light in layer.LIGHTS:
+				for index in count:
+					var data:MeshDataTool = tools[index-1]
+					data.create_from_surface(mesh.mesh, index)
 					for i in range(data.get_vertex_count()):
-						var vertex = mesh.to_global(data.get_vertex(i))
+						var vertex = mesh.to_global(data.get_vertex(i))#+mesh.global_position
 						var vertex_distance:float = vertex.distance_to(light.ACTUAL_LIGHT.global_position)
 						if vertex_distance < light.RADIUS:
-							light.ACTUAL_LIGHT.hide()
-							print("in")
+							#light.ACTUAL_LIGHT.hide()
+							print("in %s"%index)
 							var linear_distance = 1 - (vertex_distance / (light.RADIUS))
 
 							var old_color:Color = data.get_vertex_color(i)
-							var new_color:Color = lerp(old_color,light.COLOR, linear_distance* light.MIX)
+							var new_color:Color = light.COLOR#lerp(old_color,light.COLOR, linear_distance* light.MIX)
 							data.set_vertex_color(i,new_color )
 						#else:
 							#data.set_vertex_color(i,light.COLOR )
 
-		mesh.mesh.clear_surfaces()
+				var mesh_:Mesh = mesh.mesh;
 
-		for index in count:
-			print("commit_to_surface")
+				mesh_.clear_surfaces()
+				for index in count:
+					print("commit_to_surface")
+#
+					var data = tools[index-1]
+					data.commit_to_surface(mesh.mesh)
 
-			var data = tools[index-1]
-			data.commit_to_surface(mesh.mesh)
-
+		for layer in DATA.LAYERS:
+				for light in layer.LIGHTS:
+					light.ACTUAL_LIGHT.hide()
 
 
 func _on_save_file_selected(path: String) -> void:
@@ -172,50 +218,68 @@ func _on_import_file_selected(path: String) -> void:
 	CURRENT_PATH = path;
 	load_from_current_path()
 
-func load_from_current_path():
-	if(CURRENT_PATH == ""):return;
+func remove_mesh_from_scene():
 	if(CURRENT_MESH!= null):
 		$SubViewportContainer/SubViewport.remove_child(CURRENT_MESH)
+
+func load_from_current_path():
+	if(CURRENT_PATH == ""):return;
 	var gltf_state_load = GLTFState.new()
 	var gltf_document_load = GLTFDocument.new()
 	var error = gltf_document_load.append_from_file(CURRENT_PATH, gltf_state_load)
 	var file:FileAccess = FileAccess.open(CURRENT_PATH, FileAccess.READ_WRITE)
-
 	if error == OK:
 		CURRENT_MESH = gltf_document_load.generate_scene(gltf_state_load)
 		CURRENT_MESH.name = "MESH"
 		var node= $SubViewportContainer/SubViewport
-		node.add_child(CURRENT_MESH)
+		var mesh = imported_mesh_prefab.instantiate()
+		mesh.add_child(CURRENT_MESH)
+		node.add_child(mesh)
+		var mesh_list_item = mesh_list_item_prefab.instantiate()
+		mesh_list_item.get_node("NAME").text = CURRENT_PATH
+		$MESH_INSPECTOR/ScrollContainer/CONTAINER/MESHES.add_child(mesh_list_item)
+
 	else:
 		print("Couldn't load glTF scene (error code: %s)." % error_string(error))
 
 func _on_open_file_selected(path: String) -> void:
 	pass # Replace with function body.
 
-
 func _on_bake_pressed() -> void:
-	$SubViewportContainer/SubViewport.remove_child(CURRENT_MESH)
+
+	$HBoxContainer.visible = false
+	$MENU_BUTTON.visible = true;
+	var parent = CURRENT_MESH.get_parent()
+	var old_position = parent.global_position
+	$SubViewportContainer/SubViewport.remove_child(CURRENT_MESH.get_parent())
 	load_from_current_path()
-
+	CURRENT_MESH.get_parent().global_position = old_position
 	for child:MeshInstance3D in CURRENT_MESH.get_children():
-
 			update_mesh(child)
 
 
 func _on_gizmo_3d_transform_begin(mode: Gizmo3D.TransformMode) -> void:
-	print(_on_gizmo_3d_transform_begin)
+	#print(_on_gizmo_3d_transform_begin)
 	pass # Replace with function body.
 
 
 func _on_gizmo_3d_transform_changed(mode: Gizmo3D.TransformMode, value: Vector3) -> void:
-	print(_on_gizmo_3d_transform_changed)
+	#print(_on_gizmo_3d_transform_changed)
 
 	pass # Replace with function body.
 
 
 func _on_gizmo_3d_transform_end(mode: Gizmo3D.TransformMode) -> void:
+
+	$HBoxContainer.visible = false
+	$MENU_BUTTON.visible = true;
 	print(_on_gizmo_3d_transform_end)
 	for layer in DATA.LAYERS:
 			for light in layer.LIGHTS:
 				light.ACTUAL_LIGHT.show()
-	load_from_current_path()
+	#load_from_current_path()
+
+
+func _on_menu_button_pressed() -> void:
+	$HBoxContainer.visible = true
+	$MENU_BUTTON.visible = false;

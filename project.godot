@@ -19,6 +19,11 @@ config/icon="res://icon.svg"
 
 DATA="*res://GLOBAL_DATA.gd"
 
+[display]
+
+window/energy_saving/keep_screen_on=false
+window/per_pixel_transparency/allowed=true
+
 [input]
 
 Shift={
@@ -32,3 +37,5 @@ Shift={
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
 shading/overrides/force_vertex_shading=true
+limits/opengl/max_renderable_lights=256
+limits/opengl/max_lights_per_object=1024
