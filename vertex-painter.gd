@@ -12,7 +12,6 @@ var imported_mesh_prefab = preload("res://imported_mesh_prefab.tscn")
 var scene_prefab = preload("res://scene_prefab.tscn")
 var surface_prefab = preload("res://surface_prefab.tscn")
 @export var gizmo : Gizmo3D
-var CURRENT_PATH=""
 
 var OG_MESH
 var brush_hardness = 1.0
@@ -22,26 +21,18 @@ var PREVIOUS_COLOR:Color = Color.WHITE
 var CURRENT_WINDOW:WindowMover
 
 func _input(event:InputEvent):
-	# Mouse in viewport coordinates.
-	#if event is InputEventMouseButton && event.is_released():
-		#self.position = event
-		#print("Mouse Click/Unclick at: ", event.position)
 	if event is InputEventMouseMotion:
-		#print("vp movement")
 		if(CURRENT_WINDOW != null && MOVING_WINDOW == true):
 			CURRENT_WINDOW.position = Vector2i(event.position-CURRENT_WINDOW.LAST_POSITION)
 
 	if(event is InputEventMouseButton && event.is_released()):
-		#print("is_released from main")
 		if(CURRENT_WINDOW != null && MOVING_WINDOW == true):
-			#print("is_released from main | MOVING_WINDOW = true")
 			MOVING_WINDOW = false
 			CURRENT_WINDOW.mouse_passthrough = false
 			CURRENT_WINDOW.unfocusable = true
 			CURRENT_WINDOW = null
 
 func _on_add_layer_pressed() -> void:
-
 	$HBoxContainer.visible = false
 	$MENU_BUTTON.visible = true;
 	var layer:Layer = Layer.new()
@@ -73,13 +64,11 @@ func on_add_light_to_layer(layer:Control,layer_:Layer):
 	var radius_control:SpinBox = new_light.get_node("VBoxContainer/RADIUS_CONTAINER/SpinBox")
 	radius_control.value = 1.0;
 	radius_control.connect("value_changed",on_radius_value_changed.bind(light,radius_control))
-
 	var color_control = new_light.get_node("VBoxContainer/COLOR_CONTAINER/ColorPickerButton")
 	color_control.connect("color_changed",on_color_picker_changed.bind(light,color_control))
 	var mix_control:SpinBox = new_light.get_node("VBoxContainer/MIX_CONTAINER/SpinBox")
 	mix_control.value = 0.5;
 	mix_control.connect("value_changed",on_mix_value_changed.bind(light,mix_control))
-
 	var delete_button = new_light.get_node("VBoxContainer/BUTTON_ROW_1/DELETE")
 	delete_button.connect("pressed",on_delete_light.bind(light))
 	var duplicate_button = new_light.get_node("VBoxContainer/BUTTON_ROW_1/DUPLICATE")
@@ -92,6 +81,7 @@ func on_add_light_to_layer(layer:Control,layer_:Layer):
 
 func on_radius_value_changed(value:float,light:VertexLight,radius:SpinBox):
 	light.RADIUS = value
+
 	light.ACTUAL_LIGHT.omni_range = value;
 	var mesh:MeshInstance3D = light.LIGHT_MESH.get_node("MeshInstance3D")
 	mesh.scale = Vector3.ONE *value;
@@ -186,25 +176,16 @@ func update_mesh(mesh:MeshInstance3D) -> void:
 					var data:MeshDataTool = tools[index-1]
 					data.create_from_surface(mesh.mesh, index)
 					for i in range(data.get_vertex_count()):
-						var vertex = mesh.to_global(data.get_vertex(i))#+mesh.global_position
+						var vertex = mesh.to_global(data.get_vertex(i))
 						var vertex_distance:float = vertex.distance_to(light.ACTUAL_LIGHT.global_position)
 						if vertex_distance < light.RADIUS:
-							#light.ACTUAL_LIGHT.hide()
-							#print("in %s"%index)
 							var linear_distance = 1 - (vertex_distance / (light.RADIUS))
-
 							var old_color:Color = data.get_vertex_color(i)
-							var new_color:Color = light.COLOR#lerp(old_color,light.COLOR, linear_distance* light.MIX)
-							data.set_vertex_color(i,new_color )
-						#else:
-							#data.set_vertex_color(i,light.COLOR )
-
+							var new_color:Color = light.COLOR
+							data.set_vertex_color(i,new_color)
 				var mesh_:Mesh = mesh.mesh;
-
 				mesh_.clear_surfaces()
 				for index in count:
-					#print("commit_to_surface")
-#
 					var data = tools[index-1]
 					data.commit_to_surface(mesh.mesh)
 
@@ -213,30 +194,37 @@ func update_mesh(mesh:MeshInstance3D) -> void:
 					light.ACTUAL_LIGHT.hide()
 
 
+func _on_open_file_selected(path: String) -> void:
+	var result:VBData;
+	if ResourceLoader.exists(path):
+		result =  load(path)
+	else:return
+	DATA.from_project_data(result)
+	for scene in result.SCENES:
+		print(scene.PATH)
+		load_from_path(scene.PATH, scene.POSITION)
+
+
 func _on_save_file_selected(path: String) -> void:
-	pass # Replace with function body.
-
-
+	var data = DATA.to_project_data();
+	var err=ResourceSaver.save(data,path,ResourceSaver.FLAG_NONE)
+	if(err != OK):
+			print("uh oh")
+	else:
+		print("ok")
 func _on_export_file_selected(path: String) -> void:
-	pass # Replace with function body.
 	var gltf_scene_root_node = Node3D.new()
-
 	for imported_scene:ImportedScene in DATA.SCENES:
 		for child_mesh in imported_scene.SCENE.get_children():
 			child_mesh.reparent(gltf_scene_root_node)
-
 	var gltf_document_save := GLTFDocument.new()
 	var gltf_state_save := GLTFState.new()
 	gltf_document_save.append_from_scene(gltf_scene_root_node, gltf_state_save)
-	# The file extension in the output `path` (`.gltf` or `.glb`) determines
-	# whether the output uses text or binary format.
-	# `GLTFDocument.generate_buffer()` is also available for saving to memory.
 	gltf_document_save.write_to_filesystem(gltf_state_save, path)
 
-
 func _on_import_file_selected(path: String) -> void:
-	CURRENT_PATH = path;
-	load_from_current_path()
+
+	load_from_path(path)
 
 func on_rotate_pressed(node):
 	gizmo.clear_selection()
@@ -267,6 +255,8 @@ func on_focus():
 var max_recursion = 100
 
 func load_mesh(child_mesh,scene_list_item, recursion):
+	print("load_mesh")
+
 	if(child_mesh is MeshInstance3D):
 		var mesh_list_item = mesh_list_item_prefab.instantiate()
 		mesh_list_item.get_node("ICON/NAME").text = child_mesh.name
@@ -293,29 +283,26 @@ func load_mesh(child_mesh,scene_list_item, recursion):
 						return
 					load_mesh(grand_child_mesh,scene_list_item,recursion)
 
-func load_from_current_path():
+func load_from_path(path,imported_position:Vector3=Vector3.ZERO):
+	if(path == ""):return
 	print("load_from_current_path")
-	if(CURRENT_PATH == ""):return;
 	var gltf_state_load = GLTFState.new()
 	var gltf_state_load_2 = GLTFState.new()
-	#var gltf_state_load = GLTFState.new()
 	var gltf_document_load_2 = GLTFDocument.new()
 	var gltf_document_load = GLTFDocument.new()
-	var error = gltf_document_load.append_from_file(CURRENT_PATH, gltf_state_load)
-	var error_2 = gltf_document_load_2.append_from_file(CURRENT_PATH, gltf_state_load_2)
-	var file:FileAccess = FileAccess.open(CURRENT_PATH, FileAccess.READ_WRITE)
-
+	var error = gltf_document_load.append_from_file(path, gltf_state_load)
+	var error_2 = gltf_document_load_2.append_from_file(path, gltf_state_load_2)
+	var file:FileAccess = FileAccess.open(path, FileAccess.READ_WRITE)
 	if error == OK:
-
 		var scene = gltf_document_load.generate_scene(gltf_state_load)
 		var scene_2 = gltf_document_load_2.generate_scene(gltf_state_load_2)
-
 		scene.name = "MESH"
 		var imported_scene = ImportedScene.new()
 		var node= $SubViewportContainer/SubViewport
 		var mesh = scene_prefab.instantiate()
 		imported_scene.NODE = mesh;
 		imported_scene.SCENE = scene;
+		imported_scene.PATH = path
 		imported_scene.OG_SCENE = scene_2;
 		mesh.add_child(scene)
 		node.add_child(mesh)
@@ -324,19 +311,15 @@ func load_from_current_path():
 		scene_list_item.get_node("HBoxContainer/ROTATE").connect("pressed",on_rotate_pressed.bind(mesh))
 		scene_list_item.get_node("HBoxContainer/SCALE").connect("pressed",on_scale_pressed.bind(mesh))
 		scene_list_item.get_node("HBoxContainer/MOVE").connect("pressed",on_move_pressed.bind(mesh))
-
 		scene_list_item.get_node("HBoxContainer/SCALE_VALUE").connect("mouse_entered",on_focus)
 		scene_list_item.get_node("HBoxContainer/SCALE_VALUE").connect("text_submitted",on_scale_value_changed.bind(mesh))
 		scene_list_item.get_node("HBoxContainer/SCALE_VALUE").connect("focus_exited",on_scale_changed.bind(mesh,scene_list_item))
 		imported_scene.NAME = mesh.name
 		DATA.SCENES.push_back(imported_scene)
-		scene_list_item.get_node("ICON/NAME").text = CURRENT_PATH
+		scene_list_item.get_node("ICON/NAME").text = path
 		$MESH_INSPECTOR/ScrollContainer/CONTAINER/MESHES.add_child(scene_list_item)
 		for child_mesh in scene.get_children():
 			load_mesh(child_mesh,scene_list_item,0)
-
-
-
 		update_material_inspector()
 	else:
 		print("Couldn't load glTF scene (error code: %s)." % error_string(error))
@@ -356,9 +339,6 @@ func update_material_inspector():
 		material_list_item.get_node("ICON/NAME").text = mat
 		$MATERIAL_INSPECTOR/ScrollContainer/CONTAINER/MATERIALS.add_child(material_list_item)
 
-
-func _on_open_file_selected(path: String) -> void:
-	pass # Replace with function body.
 
 
 func _on_bake_pressed() -> void:
