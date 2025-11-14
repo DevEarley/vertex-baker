@@ -94,6 +94,7 @@ func on_radius_value_changed(value:float,light:VertexLight,radius:SpinBox):
 	light.ACTUAL_LIGHT.omni_range = value;
 	var mesh:MeshInstance3D = light.LIGHT_MESH.get_node("MeshInstance3D")
 	mesh.scale = Vector3.ONE *value;
+
 func on_color_picker_changed(color:Color,light:VertexLight,color_button:ColorPickerButton):
 	light.COLOR = color_button.color;
 	light.ACTUAL_LIGHT.light_color =light.COLOR;
@@ -247,20 +248,27 @@ func on_scale_changed(node,scene_list_item):
 func on_scale_value_changed(value,mesh):
 	print(value)
 	mesh.scale = Vector3.ONE * float(value)
+
 func on_focus():
 	$MESH_INSPECTOR.unfocusable =false;
+
 func load_from_current_path():
 	print("load_from_current_path")
 	if(CURRENT_PATH == ""):return;
 	var gltf_state_load = GLTFState.new()
+	var gltf_state_load_2 = GLTFState.new()
+	#var gltf_state_load = GLTFState.new()
+	var gltf_document_load_2 = GLTFDocument.new()
 	var gltf_document_load = GLTFDocument.new()
 	var error = gltf_document_load.append_from_file(CURRENT_PATH, gltf_state_load)
+	var error_2 = gltf_document_load_2.append_from_file(CURRENT_PATH, gltf_state_load_2)
 	var file:FileAccess = FileAccess.open(CURRENT_PATH, FileAccess.READ_WRITE)
 
 	if error == OK:
 
 		var scene = gltf_document_load.generate_scene(gltf_state_load)
-		var scene_2 = gltf_document_load.generate_scene(gltf_state_load)
+		var scene_2 = gltf_document_load_2.generate_scene(gltf_state_load_2)
+
 		scene.name = "MESH"
 		var imported_scene = ImportedScene.new()
 		var node= $SubViewportContainer/SubViewport
@@ -324,19 +332,17 @@ func update_material_inspector():
 func _on_open_file_selected(path: String) -> void:
 	pass # Replace with function body.
 
+
 func _on_bake_pressed() -> void:
 
 	$HBoxContainer.visible = false
 	$MENU_BUTTON.visible = true;
+	_on_reset_pressed()
 	for scene in DATA.SCENES:
-
-		#$SubViewportContainer/SubViewport.remove_child(scene.SCENE)
-		#load_from_current_path()
-
-
-		scene.SCENE = scene.OG_SCENE.duplicate(DUPLICATE_USE_INSTANTIATION)
 		for child:MeshInstance3D in scene.SCENE.get_children():
-				update_mesh(child)
+			update_mesh(child)
+			#for og_child:MeshInstance3D in scene.OG_SCENE.get_children():
+				#if(og_child.name == child.name):
 
 
 func _on_gizmo_3d_transform_begin(mode: Gizmo3D.TransformMode) -> void:
@@ -364,3 +370,24 @@ func _on_gizmo_3d_transform_end(mode: Gizmo3D.TransformMode) -> void:
 func _on_menu_button_pressed() -> void:
 	$HBoxContainer.visible = true
 	$MENU_BUTTON.visible = false;
+
+
+func _on_reset_pressed() -> void:
+
+	for scene in DATA.SCENES:
+		for mesh:MeshInstance3D in scene.SCENE.get_children():
+			for og_mesh:MeshInstance3D in scene.OG_SCENE.get_children():
+				if(og_mesh.name == mesh.name):
+					var count =mesh.mesh.get_surface_count()
+					var tools = []
+					for index in count:
+						tools.push_back(MeshDataTool.new())
+
+					for index in count:
+						var data:MeshDataTool = tools[index-1]
+						data.create_from_surface(og_mesh.mesh, index)
+
+					mesh.mesh.clear_surfaces()
+					for index in count:
+						var data = tools[index-1]
+						data.commit_to_surface(mesh.mesh)

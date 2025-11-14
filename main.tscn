@@ -100,6 +100,10 @@ text = "OPEN PROJECT"
 layout_mode = 2
 text = "BAKE"
 
+[node name="RESET" type="Button" parent="HBoxContainer"]
+layout_mode = 2
+text = "RESET"
+
 [node name="EXPORT_BUTTON" type="Button" parent="HBoxContainer"]
 layout_mode = 2
 text = "EXPORT MESH"
@@ -163,7 +167,7 @@ MAIN = NodePath("..")
 
 [node name="ScrollContainer" type="ScrollContainer" parent="MESH_INSPECTOR"]
 custom_minimum_size = Vector2(494, 300)
-anchors_preset = -1
+anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = 2.0
@@ -393,6 +397,7 @@ text = "MENU
 [connection signal="pressed" from="HBoxContainer/SAVE_BUTTON" to="." method="_on_save_button_pressed"]
 [connection signal="pressed" from="HBoxContainer/OPEN_BUTTON" to="." method="_on_open_button_pressed"]
 [connection signal="pressed" from="HBoxContainer/BAKE" to="." method="_on_bake_pressed"]
+[connection signal="pressed" from="HBoxContainer/RESET" to="." method="_on_reset_pressed"]
 [connection signal="pressed" from="HBoxContainer/EXPORT_BUTTON" to="." method="_on_export_button_pressed"]
 [connection signal="pressed" from="PALETTE_INSPECTOR/MINIMIZE" to="PALETTE_INSPECTOR/MINIMIZE" method="_on_pressed"]
 [connection signal="pressed" from="MESH_INSPECTOR/ScrollContainer/CONTAINER/IMPORT_MESH" to="." method="_on_import_button_pressed"]
