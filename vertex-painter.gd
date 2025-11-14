@@ -12,6 +12,7 @@ var imported_mesh_prefab = preload("res://imported_mesh_prefab.tscn")
 var scene_prefab = preload("res://scene_prefab.tscn")
 var surface_prefab = preload("res://surface_prefab.tscn")
 @export var gizmo : Gizmo3D
+var CURRENT_PATH=""
 
 var OG_MESH
 var brush_hardness = 1.0
@@ -218,8 +219,20 @@ func _on_save_file_selected(path: String) -> void:
 
 func _on_export_file_selected(path: String) -> void:
 	pass # Replace with function body.
+	var gltf_scene_root_node = Node3D.new()
 
-var CURRENT_PATH=""
+	for imported_scene:ImportedScene in DATA.SCENES:
+		for child_mesh in imported_scene.SCENE.get_children():
+			child_mesh.reparent(gltf_scene_root_node)
+
+	var gltf_document_save := GLTFDocument.new()
+	var gltf_state_save := GLTFState.new()
+	gltf_document_save.append_from_scene(gltf_scene_root_node, gltf_state_save)
+	# The file extension in the output `path` (`.gltf` or `.glb`) determines
+	# whether the output uses text or binary format.
+	# `GLTFDocument.generate_buffer()` is also available for saving to memory.
+	gltf_document_save.write_to_filesystem(gltf_state_save, path)
+
 
 func _on_import_file_selected(path: String) -> void:
 	CURRENT_PATH = path;
@@ -251,6 +264,34 @@ func on_scale_value_changed(value,mesh):
 
 func on_focus():
 	$MESH_INSPECTOR.unfocusable =false;
+var max_recursion = 100
+
+func load_mesh(child_mesh,scene_list_item, recursion):
+	if(child_mesh is MeshInstance3D):
+		var mesh_list_item = mesh_list_item_prefab.instantiate()
+		mesh_list_item.get_node("ICON/NAME").text = child_mesh.name
+		scene_list_item.get_node("VBoxContainer/MESHES").add_child(mesh_list_item)
+		for surface in child_mesh.mesh.get_surface_count():
+			var surface_list_item = surface_list_item_prefab.instantiate()
+			surface_list_item.get_node("ICON/NAME").text = "Surface %s" % surface
+			mesh_list_item.get_node("VBoxContainer/SURFACES").add_child(surface_list_item)
+			var material:Material = child_mesh.get_active_material(surface)
+			var material_list_item = material_list_item_prefab.instantiate()
+			var imported_material = ImportedMaterial.new()
+			imported_material.MATERIAL = material
+			imported_material.NAME = material.resource_name
+			imported_material.LIST_ITEM = material_list_item;
+			DATA.MATERIALS.push_back(imported_material)
+			material_list_item.get_node("ICON/NAME").text = material.resource_name
+			surface_list_item.get_node("VBoxContainer/MATERIALS").add_child(material_list_item)
+	elif(child_mesh is Node3D && child_mesh.get_children().size()>0):
+				for grand_child_mesh in child_mesh.get_children():
+					print("grand-child | level %s" % recursion)
+					recursion+=1;
+					if(recursion>max_recursion):
+						print("ERR too much recursion in this mesh")
+						return
+					load_mesh(grand_child_mesh,scene_list_item,recursion)
 
 func load_from_current_path():
 	print("load_from_current_path")
@@ -291,23 +332,10 @@ func load_from_current_path():
 		DATA.SCENES.push_back(imported_scene)
 		scene_list_item.get_node("ICON/NAME").text = CURRENT_PATH
 		$MESH_INSPECTOR/ScrollContainer/CONTAINER/MESHES.add_child(scene_list_item)
-		for child_mesh:MeshInstance3D in scene.get_children():
-			var mesh_list_item = mesh_list_item_prefab.instantiate()
-			mesh_list_item.get_node("ICON/NAME").text = child_mesh.name
-			scene_list_item.get_node("VBoxContainer/MESHES").add_child(mesh_list_item)
-			for surface in child_mesh.mesh.get_surface_count():
-				var surface_list_item = surface_list_item_prefab.instantiate()
-				surface_list_item.get_node("ICON/NAME").text = "Surface %s" % surface
-				mesh_list_item.get_node("VBoxContainer/SURFACES").add_child(surface_list_item)
-				var material:Material = child_mesh.get_active_material(surface)
-				var material_list_item = material_list_item_prefab.instantiate()
-				var imported_material = ImportedMaterial.new()
-				imported_material.MATERIAL = material
-				imported_material.NAME = material.resource_name
-				imported_material.LIST_ITEM = material_list_item;
-				DATA.MATERIALS.push_back(imported_material)
-				material_list_item.get_node("ICON/NAME").text = material.resource_name
-				surface_list_item.get_node("VBoxContainer/MATERIALS").add_child(material_list_item)
+		for child_mesh in scene.get_children():
+			load_mesh(child_mesh,scene_list_item,0)
+
+
 
 		update_material_inspector()
 	else:
@@ -334,7 +362,6 @@ func _on_open_file_selected(path: String) -> void:
 
 
 func _on_bake_pressed() -> void:
-
 	$HBoxContainer.visible = false
 	$MENU_BUTTON.visible = true;
 	_on_reset_pressed()
