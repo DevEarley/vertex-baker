@@ -6,9 +6,9 @@ class_name WindowMover
 var LAST_POSITION:Vector2 = Vector2.ZERO
 var stuck = false
 func _input(event):
-	if event is InputEventMouseMotion:
-		print("wm movement")
-
+	#if event is InputEventMouseMotion:
+		#print("wm movement")
+	if(MAIN.CURRENT_WINDOW != self && MAIN.CURRENT_WINDOW != null): return
 	if event is InputEventMouseMotion && MAIN.MOVING_WINDOW == true:
 		#LAST_POSITION =  Vector2.ZERO
 		#stuck= false
@@ -27,7 +27,7 @@ func _input(event):
 				self.mouse_passthrough = true
 				MAIN.MOVING_WINDOW = true
 				MAIN.CURRENT_WINDOW = self;
-				print("clicked window")
+				#print("clicked window")
 			#else:
 				#self.mouse_passthrough = false
 				#self.unfocusable = false
@@ -40,7 +40,7 @@ func _input(event):
 		self.unfocusable = true
 		MAIN.CURRENT_WINDOW = self;
 		MAIN.MOVING_WINDOW = true
-		print("stop moving window")
+		#print("stop moving window")
 		stuck = true
 		MAIN._input(event)
 
@@ -48,7 +48,7 @@ func _input(event):
 func _on_scroll_container_mouse_entered() -> void:
 	self.unfocusable = false
 	MAIN.CURRENT_WINDOW = self;
-	print("in")
+	#print("in")
 	pass # Replace with function body.
 
 
@@ -56,8 +56,8 @@ func _on_scroll_container_mouse_exited() -> void:
 	if(MAIN.MOVING_WINDOW == false):
 		self.mouse_passthrough = false
 		self.unfocusable = true
-		MAIN.CURRENT_WINDOW = self;
+		MAIN.CURRENT_WINDOW = null;
 		#MAIN.MOVING_WINDOW = true
 		stuck = true
 
-		print(" out")
+		#print(" out")

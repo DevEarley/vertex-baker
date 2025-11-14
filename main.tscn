@@ -30,7 +30,7 @@ gradient = SubResource("Gradient_lquwl")
 height = 35
 fill_to = Vector2(0, 1)
 
-[node name="Control" type="Control"]
+[node name="Control" type="Control" node_paths=PackedStringArray("gizmo")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -38,6 +38,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_ig7tw")
+gizmo = NodePath("SubViewportContainer/SubViewport/Gizmo3D_MOVE")
 
 [node name="TextureRect" type="TextureRect" parent="."]
 layout_mode = 1
@@ -67,12 +68,14 @@ render_target_update_mode = 4
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 2.4474885)
 environment = SubResource("Environment_0xm2m")
 script = ExtResource("2_0xm2m")
-gizmo = NodePath("../Gizmo3D")
+gizmo = NodePath("../Gizmo3D_MOVE")
 
-[node name="Gizmo3D" type="Node3D" parent="SubViewportContainer/SubViewport"]
+[node name="Gizmo3D_MOVE" type="Node3D" parent="SubViewportContainer/SubViewport"]
 script = ExtResource("3_h2yge")
 mode = 1
+size = 100.0
 show_selection_box = false
+_opacity = 0.955
 
 [node name="HBoxContainer" type="HBoxContainer" parent="."]
 visible = false
@@ -93,22 +96,6 @@ text = "SAVE PROJECT"
 layout_mode = 2
 text = "OPEN PROJECT"
 
-[node name="SHADER_OPTIONS" type="OptionButton" parent="HBoxContainer"]
-layout_mode = 2
-selected = 0
-item_count = 5
-popup/item_0/text = "SHADER"
-popup/item_0/id = 0
-popup/item_0/separator = true
-popup/item_1/text = "MULTI TEX SHADER"
-popup/item_1/id = 1
-popup/item_2/text = "LIQUID SHADER"
-popup/item_2/id = 2
-popup/item_3/text = "WINDY SHADER"
-popup/item_3/id = 3
-popup/item_4/text = "DEFAULT SHADER"
-popup/item_4/id = 4
-
 [node name="BAKE" type="Button" parent="HBoxContainer"]
 layout_mode = 2
 text = "BAKE"
@@ -122,8 +109,6 @@ oversampling_override = 1.0
 title = "PALETTE INSPECTOR"
 position = Vector2i(630, 515)
 size = Vector2i(500, 40)
-transient = true
-transient_to_focused = true
 borderless = true
 unfocusable = true
 sharp_corners = true
@@ -152,7 +137,6 @@ texture = SubResource("GradientTexture2D_7mycd")
 
 [node name="TextureRect2" type="TextureRect" parent="PALETTE_INSPECTOR"]
 custom_minimum_size = Vector2(32, 32)
-anchors_preset = -1
 offset_left = 2.0
 offset_top = 2.0
 offset_right = 32.0
@@ -160,7 +144,6 @@ offset_bottom = 32.0
 texture = ExtResource("7_4c57u")
 
 [node name="TITLE" type="Label" parent="PALETTE_INSPECTOR"]
-anchors_preset = -1
 offset_left = 37.0
 offset_top = 7.0
 offset_right = 40.0
@@ -174,23 +157,32 @@ position = Vector2i(636, 284)
 size = Vector2i(500, 40)
 transient = true
 borderless = true
-unfocusable = true
 sharp_corners = true
 script = ExtResource("4_1bvp3")
 MAIN = NodePath("..")
 
-[node name="MINIMIZE2" type="Button" parent="MESH_INSPECTOR" node_paths=PackedStringArray("WINDOW")]
-anchors_preset = 1
-anchor_left = 1.0
+[node name="ScrollContainer" type="ScrollContainer" parent="MESH_INSPECTOR"]
+custom_minimum_size = Vector2(494, 300)
+anchors_preset = -1
 anchor_right = 1.0
-offset_left = -15.0
-offset_bottom = 31.0
-grow_horizontal = 0
-theme = ExtResource("6_7mycd")
-text = "➕"
-flat = true
-script = ExtResource("5_lquwl")
-WINDOW = NodePath("..")
+anchor_bottom = 1.0
+offset_left = 2.0
+offset_top = 40.0
+offset_right = -2.0
+offset_bottom = -2.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="CONTAINER" type="VBoxContainer" parent="MESH_INSPECTOR/ScrollContainer"]
+custom_minimum_size = Vector2(490, 0)
+layout_mode = 2
+
+[node name="MESHES" type="VBoxContainer" parent="MESH_INSPECTOR/ScrollContainer/CONTAINER"]
+layout_mode = 2
+
+[node name="IMPORT_MESH" type="Button" parent="MESH_INSPECTOR/ScrollContainer/CONTAINER"]
+layout_mode = 2
+text = "IMPORT MESH"
 
 [node name="TextureRect" type="TextureRect" parent="MESH_INSPECTOR"]
 custom_minimum_size = Vector2(450, 25)
@@ -200,7 +192,6 @@ texture = SubResource("GradientTexture2D_7mycd")
 
 [node name="TextureRect2" type="TextureRect" parent="MESH_INSPECTOR"]
 custom_minimum_size = Vector2(32, 32)
-anchors_preset = -1
 offset_left = 2.0
 offset_top = 2.0
 offset_right = 32.0
@@ -208,35 +199,26 @@ offset_bottom = 32.0
 texture = ExtResource("7_kek77")
 
 [node name="TITLE" type="Label" parent="MESH_INSPECTOR"]
-anchors_preset = -1
 offset_left = 37.0
 offset_top = 7.0
 offset_right = 140.0
 offset_bottom = 23.0
 text = "MESH INSPECTOR"
 
-[node name="ScrollContainer" type="ScrollContainer" parent="MESH_INSPECTOR"]
-custom_minimum_size = Vector2(300, 0)
-anchors_preset = -1
+[node name="MINIMIZE2" type="Button" parent="MESH_INSPECTOR" node_paths=PackedStringArray("WINDOW")]
+anchors_preset = 1
+anchor_left = 1.0
 anchor_right = 1.0
-anchor_bottom = 1.0
-offset_top = 40.0
-grow_horizontal = 2
-grow_vertical = 2
+offset_left = -22.0
+offset_bottom = 31.0
+grow_horizontal = 0
+theme = ExtResource("6_7mycd")
+text = "➕"
+flat = true
+script = ExtResource("5_lquwl")
+WINDOW = NodePath("..")
 
-[node name="CONTAINER" type="VBoxContainer" parent="MESH_INSPECTOR/ScrollContainer"]
-layout_mode = 2
-theme_override_constants/separation = 50
-
-[node name="MESHES" type="VBoxContainer" parent="MESH_INSPECTOR/ScrollContainer/CONTAINER"]
-layout_mode = 2
-theme_override_constants/separation = 100
-
-[node name="IMPORT_MESH" type="Button" parent="MESH_INSPECTOR/ScrollContainer/CONTAINER"]
-layout_mode = 2
-text = "IMPORT MESH"
-
-[node name="MATERIAL_INSTPECTOR" type="Window" parent="." node_paths=PackedStringArray("MAIN")]
+[node name="MATERIAL_INSPECTOR" type="Window" parent="." node_paths=PackedStringArray("MAIN")]
 oversampling_override = 1.0
 title = "MESH INSPECTOR"
 position = Vector2i(636, 164)
@@ -248,7 +230,7 @@ sharp_corners = true
 script = ExtResource("4_1bvp3")
 MAIN = NodePath("..")
 
-[node name="MINIMIZE2" type="Button" parent="MATERIAL_INSTPECTOR" node_paths=PackedStringArray("WINDOW")]
+[node name="MINIMIZE2" type="Button" parent="MATERIAL_INSPECTOR" node_paths=PackedStringArray("WINDOW")]
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
@@ -261,47 +243,44 @@ flat = true
 script = ExtResource("5_lquwl")
 WINDOW = NodePath("..")
 
-[node name="TextureRect" type="TextureRect" parent="MATERIAL_INSTPECTOR"]
+[node name="TextureRect" type="TextureRect" parent="MATERIAL_INSPECTOR"]
 custom_minimum_size = Vector2(450, 25)
 offset_right = 450.0
 offset_bottom = 25.0
 texture = SubResource("GradientTexture2D_7mycd")
 
-[node name="TextureRect2" type="TextureRect" parent="MATERIAL_INSTPECTOR"]
+[node name="TextureRect2" type="TextureRect" parent="MATERIAL_INSPECTOR"]
 custom_minimum_size = Vector2(32, 32)
-anchors_preset = -1
 offset_left = 2.0
 offset_top = 2.0
 offset_right = 32.0
 offset_bottom = 32.0
 texture = ExtResource("8_4c57u")
 
-[node name="TITLE" type="Label" parent="MATERIAL_INSTPECTOR"]
-anchors_preset = -1
+[node name="TITLE" type="Label" parent="MATERIAL_INSPECTOR"]
 offset_left = 37.0
 offset_top = 7.0
 offset_right = 140.0
 offset_bottom = 23.0
 text = "MATERIAL INSPECTOR"
 
-[node name="ScrollContainer" type="ScrollContainer" parent="MATERIAL_INSTPECTOR"]
+[node name="ScrollContainer" type="ScrollContainer" parent="MATERIAL_INSPECTOR"]
 custom_minimum_size = Vector2(300, 0)
-anchors_preset = -1
+anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_top = 40.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="CONTAINER" type="VBoxContainer" parent="MATERIAL_INSTPECTOR/ScrollContainer"]
+[node name="CONTAINER" type="VBoxContainer" parent="MATERIAL_INSPECTOR/ScrollContainer"]
 layout_mode = 2
-theme_override_constants/separation = 50
 
-[node name="MATERIALS" type="VBoxContainer" parent="MATERIAL_INSTPECTOR/ScrollContainer/CONTAINER"]
+[node name="MATERIALS" type="VBoxContainer" parent="MATERIAL_INSPECTOR/ScrollContainer/CONTAINER"]
 layout_mode = 2
-theme_override_constants/separation = 100
 
-[node name="BUTTON" type="Button" parent="MATERIAL_INSTPECTOR/ScrollContainer/CONTAINER"]
+[node name="BUTTON" type="Button" parent="MATERIAL_INSPECTOR/ScrollContainer/CONTAINER"]
+visible = false
 layout_mode = 2
 text = "IMPORT MESH"
 
@@ -337,7 +316,6 @@ texture = SubResource("GradientTexture2D_7mycd")
 
 [node name="TextureRect2" type="TextureRect" parent="LAYER_INSPECTOR"]
 custom_minimum_size = Vector2(32, 32)
-anchors_preset = -1
 offset_left = 2.0
 offset_top = 2.0
 offset_right = 32.0
@@ -345,7 +323,6 @@ offset_bottom = 32.0
 texture = ExtResource("9_efxa6")
 
 [node name="TITLE" type="Label" parent="LAYER_INSPECTOR"]
-anchors_preset = -1
 offset_left = 37.0
 offset_top = 7.0
 offset_right = 40.0
@@ -354,7 +331,7 @@ text = "LAYER INSPECTOR"
 
 [node name="ScrollContainer" type="ScrollContainer" parent="LAYER_INSPECTOR"]
 custom_minimum_size = Vector2(300, 0)
-anchors_preset = -1
+anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_top = 40.0
@@ -410,19 +387,18 @@ grow_horizontal = 2
 text = "MENU
 "
 
-[connection signal="transform_begin" from="SubViewportContainer/SubViewport/Gizmo3D" to="." method="_on_gizmo_3d_transform_begin"]
-[connection signal="transform_changed" from="SubViewportContainer/SubViewport/Gizmo3D" to="." method="_on_gizmo_3d_transform_changed"]
-[connection signal="transform_end" from="SubViewportContainer/SubViewport/Gizmo3D" to="." method="_on_gizmo_3d_transform_end"]
+[connection signal="transform_begin" from="SubViewportContainer/SubViewport/Gizmo3D_MOVE" to="." method="_on_gizmo_3d_transform_begin"]
+[connection signal="transform_changed" from="SubViewportContainer/SubViewport/Gizmo3D_MOVE" to="." method="_on_gizmo_3d_transform_changed"]
+[connection signal="transform_end" from="SubViewportContainer/SubViewport/Gizmo3D_MOVE" to="." method="_on_gizmo_3d_transform_end"]
 [connection signal="pressed" from="HBoxContainer/SAVE_BUTTON" to="." method="_on_save_button_pressed"]
 [connection signal="pressed" from="HBoxContainer/OPEN_BUTTON" to="." method="_on_open_button_pressed"]
 [connection signal="pressed" from="HBoxContainer/BAKE" to="." method="_on_bake_pressed"]
 [connection signal="pressed" from="HBoxContainer/EXPORT_BUTTON" to="." method="_on_export_button_pressed"]
 [connection signal="pressed" from="PALETTE_INSPECTOR/MINIMIZE" to="PALETTE_INSPECTOR/MINIMIZE" method="_on_pressed"]
-[connection signal="pressed" from="MESH_INSPECTOR/MINIMIZE2" to="MESH_INSPECTOR/MINIMIZE2" method="_on_pressed"]
 [connection signal="pressed" from="MESH_INSPECTOR/ScrollContainer/CONTAINER/IMPORT_MESH" to="." method="_on_import_button_pressed"]
-[connection signal="pressed" from="MATERIAL_INSTPECTOR/MINIMIZE2" to="MATERIAL_INSTPECTOR/MINIMIZE2" method="_on_pressed"]
-[connection signal="pressed" from="MATERIAL_INSTPECTOR/ScrollContainer/CONTAINER/BUTTON" to="." method="_on_import_button_pressed"]
-[connection signal="mouse_exited" from="LAYER_INSPECTOR" to="LAYER_INSPECTOR" method="_on_scroll_container_mouse_exited"]
+[connection signal="pressed" from="MESH_INSPECTOR/MINIMIZE2" to="MESH_INSPECTOR/MINIMIZE2" method="_on_pressed"]
+[connection signal="pressed" from="MATERIAL_INSPECTOR/MINIMIZE2" to="MATERIAL_INSPECTOR/MINIMIZE2" method="_on_pressed"]
+[connection signal="pressed" from="MATERIAL_INSPECTOR/ScrollContainer/CONTAINER/BUTTON" to="." method="_on_import_button_pressed"]
 [connection signal="pressed" from="LAYER_INSPECTOR/MINIMIZE3" to="LAYER_INSPECTOR/MINIMIZE3" method="_on_pressed"]
 [connection signal="mouse_entered" from="LAYER_INSPECTOR/ScrollContainer" to="LAYER_INSPECTOR" method="_on_scroll_container_mouse_entered"]
 [connection signal="pressed" from="LAYER_INSPECTOR/ScrollContainer/CONTAINER/ADD_LAYER" to="." method="_on_add_layer_pressed"]

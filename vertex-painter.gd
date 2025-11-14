@@ -11,7 +11,8 @@ var light_mesh = preload("res://light_mesh_prefab.tscn")
 var imported_mesh_prefab = preload("res://imported_mesh_prefab.tscn")
 var scene_prefab = preload("res://scene_prefab.tscn")
 var surface_prefab = preload("res://surface_prefab.tscn")
-var CURRENT_MESH
+@export var gizmo : Gizmo3D
+
 var OG_MESH
 var brush_hardness = 1.0
 var calculated_size:float = 5.0
@@ -25,17 +26,18 @@ func _input(event:InputEvent):
 		#self.position = event
 		#print("Mouse Click/Unclick at: ", event.position)
 	if event is InputEventMouseMotion:
-		print("vp movement")
+		#print("vp movement")
 		if(CURRENT_WINDOW != null && MOVING_WINDOW == true):
 			CURRENT_WINDOW.position = Vector2i(event.position-CURRENT_WINDOW.LAST_POSITION)
 
 	if(event is InputEventMouseButton && event.is_released()):
-		print("is_released from main")
+		#print("is_released from main")
 		if(CURRENT_WINDOW != null && MOVING_WINDOW == true):
-			print("is_released from main | MOVING_WINDOW = true")
+			#print("is_released from main | MOVING_WINDOW = true")
 			MOVING_WINDOW = false
 			CURRENT_WINDOW.mouse_passthrough = false
 			CURRENT_WINDOW.unfocusable = true
+			CURRENT_WINDOW = null
 
 func _on_add_layer_pressed() -> void:
 
@@ -90,7 +92,8 @@ func on_add_light_to_layer(layer:Control,layer_:Layer):
 func on_radius_value_changed(value:float,light:VertexLight,radius:SpinBox):
 	light.RADIUS = value
 	light.ACTUAL_LIGHT.omni_range = value;
-
+	var mesh:MeshInstance3D = light.LIGHT_MESH.get_node("MeshInstance3D")
+	mesh.scale = Vector3.ONE *value;
 func on_color_picker_changed(color:Color,light:VertexLight,color_button:ColorPickerButton):
 	light.COLOR = color_button.color;
 	light.ACTUAL_LIGHT.light_color =light.COLOR;
@@ -185,7 +188,7 @@ func update_mesh(mesh:MeshInstance3D) -> void:
 						var vertex_distance:float = vertex.distance_to(light.ACTUAL_LIGHT.global_position)
 						if vertex_distance < light.RADIUS:
 							#light.ACTUAL_LIGHT.hide()
-							print("in %s"%index)
+							#print("in %s"%index)
 							var linear_distance = 1 - (vertex_distance / (light.RADIUS))
 
 							var old_color:Color = data.get_vertex_color(i)
@@ -198,7 +201,7 @@ func update_mesh(mesh:MeshInstance3D) -> void:
 
 				mesh_.clear_surfaces()
 				for index in count:
-					print("commit_to_surface")
+					#print("commit_to_surface")
 #
 					var data = tools[index-1]
 					data.commit_to_surface(mesh.mesh)
@@ -216,31 +219,71 @@ func _on_export_file_selected(path: String) -> void:
 	pass # Replace with function body.
 
 var CURRENT_PATH=""
+
 func _on_import_file_selected(path: String) -> void:
 	CURRENT_PATH = path;
 	load_from_current_path()
 
-func remove_mesh_from_scene():
-	if(CURRENT_MESH!= null):
-		$SubViewportContainer/SubViewport.remove_child(CURRENT_MESH)
+func on_rotate_pressed(node):
+	gizmo.clear_selection()
+	$SubViewportContainer/SubViewport/Gizmo3D_MOVE.mode = Gizmo3D.ToolMode.ROTATE
+	gizmo.select(node)
 
+func on_scale_pressed(node):
+	gizmo.clear_selection()
+	$SubViewportContainer/SubViewport/Gizmo3D_MOVE.mode = Gizmo3D.ToolMode.SCALE
+	gizmo.select(node)
+
+func on_move_pressed(node):
+	gizmo.clear_selection()
+	$SubViewportContainer/SubViewport/Gizmo3D_MOVE.mode = Gizmo3D.ToolMode.MOVE
+	gizmo.select(node)
+
+func on_scale_changed(node,scene_list_item):
+	gizmo.clear_selection()
+	var value = scene_list_item.get_node("HBoxContainer/SCALE_VALUE").text
+	node.scale = Vector3.ONE * float(value)
+
+func on_scale_value_changed(value,mesh):
+	print(value)
+	mesh.scale = Vector3.ONE * float(value)
+func on_focus():
+	$MESH_INSPECTOR.unfocusable =false;
 func load_from_current_path():
+	print("load_from_current_path")
 	if(CURRENT_PATH == ""):return;
 	var gltf_state_load = GLTFState.new()
 	var gltf_document_load = GLTFDocument.new()
 	var error = gltf_document_load.append_from_file(CURRENT_PATH, gltf_state_load)
 	var file:FileAccess = FileAccess.open(CURRENT_PATH, FileAccess.READ_WRITE)
+
 	if error == OK:
-		CURRENT_MESH = gltf_document_load.generate_scene(gltf_state_load)
-		CURRENT_MESH.name = "MESH"
+
+		var scene = gltf_document_load.generate_scene(gltf_state_load)
+		var scene_2 = gltf_document_load.generate_scene(gltf_state_load)
+		scene.name = "MESH"
+		var imported_scene = ImportedScene.new()
 		var node= $SubViewportContainer/SubViewport
 		var mesh = scene_prefab.instantiate()
-		mesh.add_child(CURRENT_MESH)
+		imported_scene.NODE = mesh;
+		imported_scene.SCENE = scene;
+		imported_scene.OG_SCENE = scene_2;
+		mesh.add_child(scene)
 		node.add_child(mesh)
 		var scene_list_item = scene_list_item_prefab.instantiate()
+		imported_scene.LIST_ITEM = scene_list_item
+		scene_list_item.get_node("HBoxContainer/ROTATE").connect("pressed",on_rotate_pressed.bind(mesh))
+		scene_list_item.get_node("HBoxContainer/SCALE").connect("pressed",on_scale_pressed.bind(mesh))
+		scene_list_item.get_node("HBoxContainer/MOVE").connect("pressed",on_move_pressed.bind(mesh))
+
+		scene_list_item.get_node("HBoxContainer/SCALE_VALUE").connect("mouse_entered",on_focus)
+		scene_list_item.get_node("HBoxContainer/SCALE_VALUE").connect("text_submitted",on_scale_value_changed.bind(mesh))
+		scene_list_item.get_node("HBoxContainer/SCALE_VALUE").connect("focus_exited",on_scale_changed.bind(mesh,scene_list_item))
+		imported_scene.NAME = mesh.name
+		DATA.SCENES.push_back(imported_scene)
 		scene_list_item.get_node("ICON/NAME").text = CURRENT_PATH
 		$MESH_INSPECTOR/ScrollContainer/CONTAINER/MESHES.add_child(scene_list_item)
-		for child_mesh:MeshInstance3D in CURRENT_MESH.get_children():
+		for child_mesh:MeshInstance3D in scene.get_children():
 			var mesh_list_item = mesh_list_item_prefab.instantiate()
 			mesh_list_item.get_node("ICON/NAME").text = child_mesh.name
 			scene_list_item.get_node("VBoxContainer/MESHES").add_child(mesh_list_item)
@@ -248,8 +291,35 @@ func load_from_current_path():
 				var surface_list_item = surface_list_item_prefab.instantiate()
 				surface_list_item.get_node("ICON/NAME").text = "Surface %s" % surface
 				mesh_list_item.get_node("VBoxContainer/SURFACES").add_child(surface_list_item)
+				var material:Material = child_mesh.get_active_material(surface)
+				var material_list_item = material_list_item_prefab.instantiate()
+				var imported_material = ImportedMaterial.new()
+				imported_material.MATERIAL = material
+				imported_material.NAME = material.resource_name
+				imported_material.LIST_ITEM = material_list_item;
+				DATA.MATERIALS.push_back(imported_material)
+				material_list_item.get_node("ICON/NAME").text = material.resource_name
+				surface_list_item.get_node("VBoxContainer/MATERIALS").add_child(material_list_item)
+
+		update_material_inspector()
 	else:
 		print("Couldn't load glTF scene (error code: %s)." % error_string(error))
+
+func update_material_inspector():
+	for child in $MATERIAL_INSPECTOR/ScrollContainer/CONTAINER/MATERIALS.get_children():
+		child.queue_free()
+	var grouped_materials = DATA.MATERIALS.map(func (imported_material:ImportedMaterial):
+		var grouped_material_count = DATA.MATERIALS.filter(func(mat):return imported_material.NAME == mat.NAME).size()
+		return "%s (%s)" % [imported_material.NAME,grouped_material_count] )
+	var distinct_grouped_materials = []
+	for mat in grouped_materials:
+		if(distinct_grouped_materials.has(mat) == false):
+			distinct_grouped_materials.push_back(mat)
+	for mat in distinct_grouped_materials:
+		var material_list_item = material_list_item_prefab.instantiate()
+		material_list_item.get_node("ICON/NAME").text = mat
+		$MATERIAL_INSPECTOR/ScrollContainer/CONTAINER/MATERIALS.add_child(material_list_item)
+
 
 func _on_open_file_selected(path: String) -> void:
 	pass # Replace with function body.
@@ -258,13 +328,15 @@ func _on_bake_pressed() -> void:
 
 	$HBoxContainer.visible = false
 	$MENU_BUTTON.visible = true;
-	var parent = CURRENT_MESH.get_parent()
-	var old_position = parent.global_position
-	$SubViewportContainer/SubViewport.remove_child(CURRENT_MESH.get_parent())
-	load_from_current_path()
-	CURRENT_MESH.get_parent().global_position = old_position
-	for child:MeshInstance3D in CURRENT_MESH.get_children():
-			update_mesh(child)
+	for scene in DATA.SCENES:
+
+		#$SubViewportContainer/SubViewport.remove_child(scene.SCENE)
+		#load_from_current_path()
+
+
+		scene.SCENE = scene.OG_SCENE.duplicate(DUPLICATE_USE_INSTANTIATION)
+		for child:MeshInstance3D in scene.SCENE.get_children():
+				update_mesh(child)
 
 
 func _on_gizmo_3d_transform_begin(mode: Gizmo3D.TransformMode) -> void:
@@ -282,7 +354,7 @@ func _on_gizmo_3d_transform_end(mode: Gizmo3D.TransformMode) -> void:
 
 	$HBoxContainer.visible = false
 	$MENU_BUTTON.visible = true;
-	print(_on_gizmo_3d_transform_end)
+	#print(_on_gizmo_3d_transform_end)
 	for layer in DATA.LAYERS:
 			for light in layer.LIGHTS:
 				light.ACTUAL_LIGHT.show()

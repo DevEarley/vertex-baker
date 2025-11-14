@@ -3,13 +3,13 @@
 [ext_resource type="Texture2D" uid="uid://ca7k24h4m6ddd" path="res://icon_mesh.png" id="1_kestx"]
 
 [node name="MESH_LIST_ITEM" type="VBoxContainer"]
-custom_minimum_size = Vector2(490, 200)
+custom_minimum_size = Vector2(454, 0)
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 5.0
+offset_left = -120.0
 offset_top = 5.0
-offset_right = -907.0
+offset_right = -818.0
 offset_bottom = -342.0
 grow_horizontal = 2
 grow_vertical = 2
@@ -31,32 +31,9 @@ text = "<MESH NAME>"
 autowrap_mode = 1
 
 [node name="VBoxContainer" type="VBoxContainer" parent="."]
+custom_minimum_size = Vector2(418, 0)
 layout_mode = 2
-theme_override_constants/separation = 34
-
-[node name="TOGGLE" type="Button" parent="VBoxContainer"]
-layout_mode = 2
-text = "hide"
+size_flags_horizontal = 4
 
 [node name="SURFACES" type="VBoxContainer" parent="VBoxContainer"]
 layout_mode = 2
-theme_override_constants/separation = 34
-
-[node name="BUTTON" type="Button" parent="VBoxContainer"]
-layout_mode = 2
-text = "BUTTON"
-
-[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer"]
-layout_mode = 2
-
-[node name="UP" type="Button" parent="VBoxContainer/HBoxContainer"]
-layout_mode = 2
-text = "🔼"
-
-[node name="DOWN" type="Button" parent="VBoxContainer/HBoxContainer"]
-layout_mode = 2
-text = "🔽"
-
-[node name="DELETE" type="Button" parent="VBoxContainer/HBoxContainer"]
-layout_mode = 2
-text = "❌ DELETE LAYER"

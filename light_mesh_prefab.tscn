@@ -1,16 +1,33 @@
-[gd_scene load_steps=3 format=3 uid="uid://fijceyg6p4bu"]
+[gd_scene load_steps=5 format=3 uid="uid://fijceyg6p4bu"]
 
 [ext_resource type="Texture2D" uid="uid://bp677qlpye2rd" path="res://vl.png" id="1_ggcam"]
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_wuusl"]
 
+[sub_resource type="SphereMesh" id="SphereMesh_ggcam"]
+radius = 1.0
+height = 2.0
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ggcam"]
+transparency = 1
+cull_mode = 1
+shading_mode = 2
+albedo_color = Color(1, 1, 1, 0.57254905)
+
 [node name="LightMeshPrefab" type="Sprite3D"]
+pixel_size = 0.001
 billboard = 2
 no_depth_test = true
+fixed_size = true
 texture_filter = 0
+render_priority = 1
 texture = ExtResource("1_ggcam")
 
 [node name="StaticBody3D" type="StaticBody3D" parent="."]
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D"]
 shape = SubResource("SphereShape3D_wuusl")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+mesh = SubResource("SphereMesh_ggcam")
+surface_material_override/0 = SubResource("StandardMaterial3D_ggcam")

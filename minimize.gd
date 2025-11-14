@@ -3,6 +3,7 @@ extends Button
 
 var OPEN = false
 func _on_pressed() -> void:
+	WINDOW.MAIN.CURRENT_WINDOW = null
 	if(OPEN == true):
 		OPEN = false
 		self.text = "➕"
