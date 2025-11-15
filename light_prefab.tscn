@@ -8,14 +8,10 @@ gradient = SubResource("Gradient_0daxq")
 fill_to = Vector2(0, 1)
 
 [node name="LIGHT_PREFAB" type="VBoxContainer"]
-custom_minimum_size = Vector2(220, 190)
+custom_minimum_size = Vector2(220, 126)
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 5.0
-offset_top = 5.0
-offset_right = -927.0
-offset_bottom = -453.0
 grow_horizontal = 2
 grow_vertical = 2
 
@@ -30,12 +26,12 @@ horizontal_alignment = 1
 
 [node name="TextureRect" type="TextureRect" parent="VBoxContainer/LIGHT_NAME"]
 show_behind_parent = true
-custom_minimum_size = Vector2(290, 220)
+custom_minimum_size = Vector2(290, 150)
 layout_mode = 0
-offset_left = -5.0
+offset_left = 12.0
 offset_top = -5.0
-offset_right = 285.0
-offset_bottom = 215.0
+offset_right = 302.0
+offset_bottom = 145.0
 texture = SubResource("GradientTexture2D_afdp4")
 
 [node name="RADIUS_CONTAINER" type="HBoxContainer" parent="VBoxContainer"]
@@ -75,6 +71,7 @@ edit_alpha = false
 edit_intensity = false
 
 [node name="Button" type="Button" parent="VBoxContainer/COLOR_CONTAINER"]
+visible = false
 layout_mode = 2
 text = "Pal"
 
@@ -99,6 +96,7 @@ update_on_text_changed = true
 select_all_on_focus = true
 
 [node name="BUTTON_ROW_1" type="HBoxContainer" parent="VBoxContainer"]
+visible = false
 layout_mode = 2
 theme_override_constants/separation = 24
 
@@ -114,6 +112,7 @@ layout_mode = 2
 text = "DUPLICATE"
 
 [node name="BUTTON_ROW_2" type="HBoxContainer" parent="VBoxContainer"]
+visible = false
 layout_mode = 2
 theme_override_constants/separation = 24
 

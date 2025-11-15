@@ -1,4 +1,4 @@
-[gd_scene load_steps=16 format=3 uid="uid://egxf4avoauls"]
+[gd_scene load_steps=18 format=3 uid="uid://egxf4avoauls"]
 
 [ext_resource type="Script" uid="uid://bxhfyvkolmnms" path="res://vertex-painter.gd" id="1_ig7tw"]
 [ext_resource type="Script" uid="uid://hdlai2as1f4i" path="res://free-look.gd" id="2_0xm2m"]
@@ -7,9 +7,11 @@
 [ext_resource type="Script" uid="uid://dev0gohk766sy" path="res://minimize.gd" id="5_lquwl"]
 [ext_resource type="Theme" uid="uid://2h4h4f0sagcw" path="res://main_theme.tres" id="6_7mycd"]
 [ext_resource type="Texture2D" uid="uid://c12b0vjqpapia" path="res://icon_palette.png" id="7_4c57u"]
-[ext_resource type="Texture2D" uid="uid://ca7k24h4m6ddd" path="res://icon_mesh.png" id="7_kek77"]
 [ext_resource type="Texture2D" uid="uid://c8a5er8tacab3" path="res://icon_material.png" id="8_4c57u"]
+[ext_resource type="Texture2D" uid="uid://bf325cwloju67" path="res://icon_geo.png" id="8_efxa6"]
+[ext_resource type="Texture2D" uid="uid://2f05blbjguuq" path="res://icon_expand.png" id="9_dg77c"]
 [ext_resource type="Texture2D" uid="uid://cnuey48jbsnn0" path="res://icon_layer.png" id="9_efxa6"]
+[ext_resource type="Texture2D" uid="uid://bws3hgrn7bebm" path="res://icon_fold.png" id="9_ycdy4"]
 
 [sub_resource type="Gradient" id="Gradient_4c57u"]
 colors = PackedColorArray(0, 0, 0, 1, 0, 0, 1, 1)
@@ -27,7 +29,7 @@ colors = PackedColorArray(0, 0, 0, 1, 0, 0, 1, 1)
 
 [sub_resource type="GradientTexture2D" id="GradientTexture2D_7mycd"]
 gradient = SubResource("Gradient_lquwl")
-height = 35
+height = 40
 fill_to = Vector2(0, 1)
 
 [node name="Control" type="Control" node_paths=PackedStringArray("gizmo")]
@@ -61,7 +63,7 @@ stretch = true
 [node name="SubViewport" type="SubViewport" parent="SubViewportContainer"]
 transparent_bg = true
 handle_input_locally = false
-size = Vector2i(1152, 648)
+size = Vector2i(3840, 2160)
 render_target_update_mode = 4
 
 [node name="Camera3D" type="Camera3D" parent="SubViewportContainer/SubViewport" node_paths=PackedStringArray("gizmo")]
@@ -83,35 +85,49 @@ layout_mode = 1
 anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
-offset_left = -362.5
-offset_right = 362.5
-offset_bottom = 40.0
+offset_left = -201.0
+offset_right = 201.0
+offset_bottom = 66.0
 grow_horizontal = 2
+theme_override_constants/separation = 44
 
-[node name="SAVE_BUTTON" type="Button" parent="HBoxContainer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="HBoxContainer"]
 layout_mode = 2
-text = "SAVE PROJECT"
 
-[node name="OPEN_BUTTON" type="Button" parent="HBoxContainer"]
+[node name="IMPORT_MESH" type="Button" parent="HBoxContainer/VBoxContainer"]
+layout_mode = 2
+text = "IMPORT MESH"
+
+[node name="EXPORT_BUTTON" type="Button" parent="HBoxContainer/VBoxContainer"]
+layout_mode = 2
+text = "EXPORT MESH"
+
+[node name="VBoxContainer2" type="VBoxContainer" parent="HBoxContainer"]
+layout_mode = 2
+
+[node name="OPEN_BUTTON" type="Button" parent="HBoxContainer/VBoxContainer2"]
 layout_mode = 2
 text = "OPEN PROJECT"
 
-[node name="BAKE" type="Button" parent="HBoxContainer"]
+[node name="SAVE_BUTTON" type="Button" parent="HBoxContainer/VBoxContainer2"]
+layout_mode = 2
+text = "SAVE PROJECT"
+
+[node name="VBoxContainer3" type="VBoxContainer" parent="HBoxContainer"]
+layout_mode = 2
+
+[node name="RESET" type="Button" parent="HBoxContainer/VBoxContainer3"]
+layout_mode = 2
+text = "UNBAKE"
+
+[node name="BAKE" type="Button" parent="HBoxContainer/VBoxContainer3"]
 layout_mode = 2
 text = "BAKE"
-
-[node name="RESET" type="Button" parent="HBoxContainer"]
-layout_mode = 2
-text = "RESET"
-
-[node name="EXPORT_BUTTON" type="Button" parent="HBoxContainer"]
-layout_mode = 2
-text = "EXPORT MESH"
 
 [node name="PALETTE_INSPECTOR" type="Window" parent="." node_paths=PackedStringArray("MAIN")]
 oversampling_override = 1.0
 title = "PALETTE INSPECTOR"
-position = Vector2i(630, 515)
+position = Vector2i(25, 1190)
 size = Vector2i(500, 40)
 borderless = true
 unfocusable = true
@@ -120,112 +136,68 @@ keep_title_visible = true
 script = ExtResource("4_1bvp3")
 MAIN = NodePath("..")
 
-[node name="MINIMIZE" type="Button" parent="PALETTE_INSPECTOR" node_paths=PackedStringArray("WINDOW")]
-anchors_preset = 1
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -15.0
-offset_bottom = 31.0
-grow_horizontal = 0
-theme = ExtResource("6_7mycd")
-text = "➕"
-flat = true
-script = ExtResource("5_lquwl")
-WINDOW = NodePath("..")
-
 [node name="TextureRect" type="TextureRect" parent="PALETTE_INSPECTOR"]
-custom_minimum_size = Vector2(450, 25)
-offset_right = 450.0
-offset_bottom = 25.0
+custom_minimum_size = Vector2(460, 25)
+offset_right = 460.0
+offset_bottom = 40.0
 texture = SubResource("GradientTexture2D_7mycd")
 
 [node name="TextureRect2" type="TextureRect" parent="PALETTE_INSPECTOR"]
+texture_filter = 1
 custom_minimum_size = Vector2(32, 32)
+anchors_preset = -1
 offset_left = 2.0
-offset_top = 2.0
+offset_top = 5.0
 offset_right = 32.0
 offset_bottom = 32.0
 texture = ExtResource("7_4c57u")
 
 [node name="TITLE" type="Label" parent="PALETTE_INSPECTOR"]
-offset_left = 37.0
+offset_left = 42.0
 offset_top = 7.0
-offset_right = 40.0
-offset_bottom = 23.0
-text = "PALETTE INSPECTOR"
+offset_right = 108.0
+offset_bottom = 30.0
+text = "PALETTE"
 
-[node name="MESH_INSPECTOR" type="Window" parent="." node_paths=PackedStringArray("MAIN")]
-oversampling_override = 1.0
-title = "MESH INSPECTOR"
-position = Vector2i(636, 284)
-size = Vector2i(500, 40)
-transient = true
-borderless = true
-sharp_corners = true
-script = ExtResource("4_1bvp3")
-MAIN = NodePath("..")
-
-[node name="ScrollContainer" type="ScrollContainer" parent="MESH_INSPECTOR"]
-custom_minimum_size = Vector2(494, 300)
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 2.0
-offset_top = 40.0
-offset_right = -2.0
-offset_bottom = -2.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="CONTAINER" type="VBoxContainer" parent="MESH_INSPECTOR/ScrollContainer"]
-custom_minimum_size = Vector2(490, 0)
-layout_mode = 2
-
-[node name="MESHES" type="VBoxContainer" parent="MESH_INSPECTOR/ScrollContainer/CONTAINER"]
-layout_mode = 2
-
-[node name="IMPORT_MESH" type="Button" parent="MESH_INSPECTOR/ScrollContainer/CONTAINER"]
-layout_mode = 2
-text = "IMPORT MESH"
-
-[node name="TextureRect" type="TextureRect" parent="MESH_INSPECTOR"]
-custom_minimum_size = Vector2(450, 25)
-offset_right = 450.0
-offset_bottom = 25.0
-texture = SubResource("GradientTexture2D_7mycd")
-
-[node name="TextureRect2" type="TextureRect" parent="MESH_INSPECTOR"]
-custom_minimum_size = Vector2(32, 32)
-offset_left = 2.0
-offset_top = 2.0
-offset_right = 32.0
-offset_bottom = 32.0
-texture = ExtResource("7_kek77")
-
-[node name="TITLE" type="Label" parent="MESH_INSPECTOR"]
-offset_left = 37.0
-offset_top = 7.0
-offset_right = 140.0
-offset_bottom = 23.0
-text = "MESH INSPECTOR"
-
-[node name="MINIMIZE2" type="Button" parent="MESH_INSPECTOR" node_paths=PackedStringArray("WINDOW")]
+[node name="EXPAND" type="Button" parent="PALETTE_INSPECTOR" node_paths=PackedStringArray("WINDOW", "EXPAND_BUTTON", "FOLD_BUTTON")]
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = -22.0
-offset_bottom = 31.0
+offset_left = -35.0
+offset_top = 4.0
+offset_right = -3.0
+offset_bottom = 36.0
 grow_horizontal = 0
 theme = ExtResource("6_7mycd")
-text = "➕"
+icon = ExtResource("9_dg77c")
 flat = true
 script = ExtResource("5_lquwl")
 WINDOW = NodePath("..")
+EXPAND_BUTTON = NodePath(".")
+FOLD_BUTTON = NodePath("../FOLD")
+
+[node name="FOLD" type="Button" parent="PALETTE_INSPECTOR" node_paths=PackedStringArray("WINDOW", "EXPAND_BUTTON", "FOLD_BUTTON")]
+visible = false
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -35.0
+offset_top = 4.0
+offset_right = -3.0
+offset_bottom = 36.0
+grow_horizontal = 0
+theme = ExtResource("6_7mycd")
+icon = ExtResource("9_ycdy4")
+flat = true
+script = ExtResource("5_lquwl")
+WINDOW = NodePath("..")
+EXPAND_BUTTON = NodePath("../EXPAND")
+FOLD_BUTTON = NodePath(".")
 
 [node name="MATERIAL_INSPECTOR" type="Window" parent="." node_paths=PackedStringArray("MAIN")]
 oversampling_override = 1.0
 title = "MESH INSPECTOR"
-position = Vector2i(636, 164)
+position = Vector2i(36, 1119)
 size = Vector2i(500, 40)
 transient = true
 borderless = true
@@ -234,26 +206,49 @@ sharp_corners = true
 script = ExtResource("4_1bvp3")
 MAIN = NodePath("..")
 
-[node name="MINIMIZE2" type="Button" parent="MATERIAL_INSPECTOR" node_paths=PackedStringArray("WINDOW")]
+[node name="EXPAND" type="Button" parent="MATERIAL_INSPECTOR" node_paths=PackedStringArray("WINDOW", "EXPAND_BUTTON", "FOLD_BUTTON")]
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = -15.0
-offset_bottom = 31.0
+offset_left = -35.0
+offset_top = 4.0
+offset_right = -3.0
+offset_bottom = 36.0
 grow_horizontal = 0
 theme = ExtResource("6_7mycd")
-text = "➕"
+icon = ExtResource("9_dg77c")
 flat = true
 script = ExtResource("5_lquwl")
 WINDOW = NodePath("..")
+EXPAND_BUTTON = NodePath(".")
+FOLD_BUTTON = NodePath("../FOLD")
+
+[node name="FOLD" type="Button" parent="MATERIAL_INSPECTOR" node_paths=PackedStringArray("WINDOW", "EXPAND_BUTTON", "FOLD_BUTTON")]
+visible = false
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -35.0
+offset_top = 4.0
+offset_right = -3.0
+offset_bottom = 36.0
+grow_horizontal = 0
+theme = ExtResource("6_7mycd")
+icon = ExtResource("9_ycdy4")
+flat = true
+script = ExtResource("5_lquwl")
+WINDOW = NodePath("..")
+EXPAND_BUTTON = NodePath("../EXPAND")
+FOLD_BUTTON = NodePath(".")
 
 [node name="TextureRect" type="TextureRect" parent="MATERIAL_INSPECTOR"]
-custom_minimum_size = Vector2(450, 25)
+custom_minimum_size = Vector2(460, 25)
 offset_right = 450.0
 offset_bottom = 25.0
 texture = SubResource("GradientTexture2D_7mycd")
 
 [node name="TextureRect2" type="TextureRect" parent="MATERIAL_INSPECTOR"]
+texture_filter = 1
 custom_minimum_size = Vector2(32, 32)
 offset_left = 2.0
 offset_top = 2.0
@@ -262,11 +257,11 @@ offset_bottom = 32.0
 texture = ExtResource("8_4c57u")
 
 [node name="TITLE" type="Label" parent="MATERIAL_INSPECTOR"]
-offset_left = 37.0
+offset_left = 39.0
 offset_top = 7.0
-offset_right = 140.0
-offset_bottom = 23.0
-text = "MATERIAL INSPECTOR"
+offset_right = 142.0
+offset_bottom = 30.0
+text = "MATERIALS"
 
 [node name="ScrollContainer" type="ScrollContainer" parent="MATERIAL_INSPECTOR"]
 custom_minimum_size = Vector2(300, 0)
@@ -291,58 +286,62 @@ text = "IMPORT MESH"
 [node name="LAYER_INSPECTOR" type="Window" parent="." node_paths=PackedStringArray("MAIN")]
 oversampling_override = 1.0
 title = "LAYER INSPECTOR"
-position = Vector2i(26, 519)
-size = Vector2i(500, 40)
+position = Vector2i(41, 579)
+size = Vector2i(500, 500)
 borderless = true
 unfocusable = true
 sharp_corners = true
 script = ExtResource("4_1bvp3")
 MAIN = NodePath("..")
 
-[node name="MINIMIZE3" type="Button" parent="LAYER_INSPECTOR" node_paths=PackedStringArray("WINDOW")]
-anchors_preset = 1
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -15.0
-offset_bottom = 31.0
-grow_horizontal = 0
-theme = ExtResource("6_7mycd")
-text = "➕"
-flat = true
-script = ExtResource("5_lquwl")
-WINDOW = NodePath("..")
+[node name="ADD_LAYER" type="Button" parent="LAYER_INSPECTOR"]
+anchors_preset = -1
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 4.0
+offset_top = -35.0
+offset_right = 490.0
+offset_bottom = -4.0
+grow_vertical = 0
+text = "ADD LAYER"
 
 [node name="TextureRect" type="TextureRect" parent="LAYER_INSPECTOR"]
-custom_minimum_size = Vector2(450, 25)
-offset_right = 450.0
-offset_bottom = 25.0
+custom_minimum_size = Vector2(460, 25)
+offset_right = 460.0
+offset_bottom = 40.0
 texture = SubResource("GradientTexture2D_7mycd")
 
 [node name="TextureRect2" type="TextureRect" parent="LAYER_INSPECTOR"]
+texture_filter = 1
 custom_minimum_size = Vector2(32, 32)
-offset_left = 2.0
-offset_top = 2.0
-offset_right = 32.0
-offset_bottom = 32.0
+anchors_preset = -1
+offset_left = 4.0
+offset_top = 5.0
+offset_right = 36.0
+offset_bottom = 37.0
 texture = ExtResource("9_efxa6")
 
 [node name="TITLE" type="Label" parent="LAYER_INSPECTOR"]
-offset_left = 37.0
+offset_left = 45.0
 offset_top = 7.0
-offset_right = 40.0
-offset_bottom = 23.0
-text = "LAYER INSPECTOR"
+offset_right = 153.0
+offset_bottom = 56.0
+text = "LIGHT LAYERS
+"
 
 [node name="ScrollContainer" type="ScrollContainer" parent="LAYER_INSPECTOR"]
-custom_minimum_size = Vector2(300, 0)
-anchors_preset = 15
+custom_minimum_size = Vector2(490, 0)
+anchors_preset = -1
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_top = 40.0
+offset_right = -2.0
+offset_bottom = -40.0
 grow_horizontal = 2
 grow_vertical = 2
 
 [node name="CONTAINER" type="VBoxContainer" parent="LAYER_INSPECTOR/ScrollContainer"]
+custom_minimum_size = Vector2(490, 0)
 layout_mode = 2
 theme_override_constants/separation = 50
 
@@ -350,9 +349,140 @@ theme_override_constants/separation = 50
 layout_mode = 2
 theme_override_constants/separation = 100
 
-[node name="ADD_LAYER" type="Button" parent="LAYER_INSPECTOR/ScrollContainer/CONTAINER"]
+[node name="EXPAND" type="Button" parent="LAYER_INSPECTOR" node_paths=PackedStringArray("WINDOW", "EXPAND_BUTTON", "FOLD_BUTTON")]
+visible = false
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -35.0
+offset_top = 4.0
+offset_right = -3.0
+offset_bottom = 36.0
+grow_horizontal = 0
+theme = ExtResource("6_7mycd")
+icon = ExtResource("9_dg77c")
+flat = true
+script = ExtResource("5_lquwl")
+WINDOW = NodePath("..")
+EXPAND_BUTTON = NodePath(".")
+FOLD_BUTTON = NodePath("../FOLD")
+
+[node name="FOLD" type="Button" parent="LAYER_INSPECTOR" node_paths=PackedStringArray("WINDOW", "EXPAND_BUTTON", "FOLD_BUTTON")]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -35.0
+offset_top = 4.0
+offset_right = -3.0
+offset_bottom = 36.0
+grow_horizontal = 0
+theme = ExtResource("6_7mycd")
+icon = ExtResource("9_ycdy4")
+flat = true
+script = ExtResource("5_lquwl")
+WINDOW = NodePath("..")
+EXPAND_BUTTON = NodePath("../EXPAND")
+FOLD_BUTTON = NodePath(".")
+
+[node name="MESH_INSPECTOR" type="Window" parent="." node_paths=PackedStringArray("MAIN")]
+oversampling_override = 1.0
+title = "SCENE INSPECTOR"
+position = Vector2i(31, 64)
+size = Vector2i(500, 500)
+transient = true
+borderless = true
+sharp_corners = true
+script = ExtResource("4_1bvp3")
+MAIN = NodePath("..")
+
+[node name="IMPORT_MESH" type="Button" parent="MESH_INSPECTOR"]
+custom_minimum_size = Vector2(490, 0)
+anchors_preset = -1
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 4.0
+offset_top = -35.0
+offset_right = 494.0
+offset_bottom = -4.0
+grow_vertical = 0
+text = "IMPORT MESH"
+
+[node name="ScrollContainer" type="ScrollContainer" parent="MESH_INSPECTOR"]
+custom_minimum_size = Vector2(494, 300)
+anchors_preset = -1
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 2.0
+offset_top = 40.0
+offset_right = -2.0
+offset_bottom = -40.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="CONTAINER" type="VBoxContainer" parent="MESH_INSPECTOR/ScrollContainer"]
+custom_minimum_size = Vector2(490, 0)
 layout_mode = 2
-text = "ADD LAYER"
+
+[node name="MESHES" type="VBoxContainer" parent="MESH_INSPECTOR/ScrollContainer/CONTAINER"]
+layout_mode = 2
+
+[node name="TextureRect" type="TextureRect" parent="MESH_INSPECTOR"]
+custom_minimum_size = Vector2(460, 25)
+offset_right = 450.0
+offset_bottom = 25.0
+texture = SubResource("GradientTexture2D_7mycd")
+
+[node name="TextureRect2" type="TextureRect" parent="MESH_INSPECTOR"]
+texture_filter = 1
+custom_minimum_size = Vector2(32, 32)
+anchors_preset = -1
+offset_left = 7.0
+offset_top = 4.0
+offset_right = 32.0
+offset_bottom = 32.0
+texture = ExtResource("8_efxa6")
+
+[node name="TITLE" type="Label" parent="MESH_INSPECTOR"]
+offset_left = 42.0
+offset_top = 7.0
+offset_right = 206.0
+offset_bottom = 30.0
+text = "GEOMETRY"
+
+[node name="EXPAND" type="Button" parent="MESH_INSPECTOR" node_paths=PackedStringArray("WINDOW", "EXPAND_BUTTON", "FOLD_BUTTON")]
+visible = false
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -35.0
+offset_top = 4.0
+offset_right = -3.0
+offset_bottom = 36.0
+grow_horizontal = 0
+theme = ExtResource("6_7mycd")
+icon = ExtResource("9_dg77c")
+flat = true
+script = ExtResource("5_lquwl")
+WINDOW = NodePath("..")
+EXPAND_BUTTON = NodePath(".")
+FOLD_BUTTON = NodePath("../FOLD")
+
+[node name="FOLD" type="Button" parent="MESH_INSPECTOR" node_paths=PackedStringArray("WINDOW", "EXPAND_BUTTON", "FOLD_BUTTON")]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -35.0
+offset_top = 4.0
+offset_right = -3.0
+offset_bottom = 36.0
+grow_horizontal = 0
+theme = ExtResource("6_7mycd")
+icon = ExtResource("9_ycdy4")
+flat = true
+script = ExtResource("5_lquwl")
+WINDOW = NodePath("..")
+EXPAND_BUTTON = NodePath("../EXPAND")
+FOLD_BUTTON = NodePath(".")
 
 [node name="IMPORT" type="FileDialog" parent="."]
 title = "Open a File"
@@ -394,19 +524,27 @@ text = "MENU
 [connection signal="transform_begin" from="SubViewportContainer/SubViewport/Gizmo3D_MOVE" to="." method="_on_gizmo_3d_transform_begin"]
 [connection signal="transform_changed" from="SubViewportContainer/SubViewport/Gizmo3D_MOVE" to="." method="_on_gizmo_3d_transform_changed"]
 [connection signal="transform_end" from="SubViewportContainer/SubViewport/Gizmo3D_MOVE" to="." method="_on_gizmo_3d_transform_end"]
-[connection signal="pressed" from="HBoxContainer/SAVE_BUTTON" to="." method="_on_save_button_pressed"]
-[connection signal="pressed" from="HBoxContainer/OPEN_BUTTON" to="." method="_on_open_button_pressed"]
-[connection signal="pressed" from="HBoxContainer/BAKE" to="." method="_on_bake_pressed"]
-[connection signal="pressed" from="HBoxContainer/RESET" to="." method="_on_reset_pressed"]
-[connection signal="pressed" from="HBoxContainer/EXPORT_BUTTON" to="." method="_on_export_button_pressed"]
-[connection signal="pressed" from="PALETTE_INSPECTOR/MINIMIZE" to="PALETTE_INSPECTOR/MINIMIZE" method="_on_pressed"]
-[connection signal="pressed" from="MESH_INSPECTOR/ScrollContainer/CONTAINER/IMPORT_MESH" to="." method="_on_import_button_pressed"]
-[connection signal="pressed" from="MESH_INSPECTOR/MINIMIZE2" to="MESH_INSPECTOR/MINIMIZE2" method="_on_pressed"]
-[connection signal="pressed" from="MATERIAL_INSPECTOR/MINIMIZE2" to="MATERIAL_INSPECTOR/MINIMIZE2" method="_on_pressed"]
+[connection signal="pressed" from="HBoxContainer/VBoxContainer/IMPORT_MESH" to="." method="_on_import_button_pressed"]
+[connection signal="pressed" from="HBoxContainer/VBoxContainer/EXPORT_BUTTON" to="." method="_on_export_button_pressed"]
+[connection signal="pressed" from="HBoxContainer/VBoxContainer2/OPEN_BUTTON" to="." method="_on_open_button_pressed"]
+[connection signal="pressed" from="HBoxContainer/VBoxContainer2/SAVE_BUTTON" to="." method="_on_save_button_pressed"]
+[connection signal="pressed" from="HBoxContainer/VBoxContainer3/RESET" to="." method="_on_reset_pressed"]
+[connection signal="pressed" from="HBoxContainer/VBoxContainer3/BAKE" to="." method="_on_bake_pressed"]
+[connection signal="pressed" from="PALETTE_INSPECTOR/EXPAND" to="PALETTE_INSPECTOR/EXPAND" method="ON_EXPAND"]
+[connection signal="pressed" from="PALETTE_INSPECTOR/FOLD" to="PALETTE_INSPECTOR/FOLD" method="ON_FOLD"]
+[connection signal="pressed" from="MATERIAL_INSPECTOR/EXPAND" to="MATERIAL_INSPECTOR/EXPAND" method="ON_EXPAND"]
+[connection signal="pressed" from="MATERIAL_INSPECTOR/FOLD" to="MATERIAL_INSPECTOR/FOLD" method="ON_FOLD"]
 [connection signal="pressed" from="MATERIAL_INSPECTOR/ScrollContainer/CONTAINER/BUTTON" to="." method="_on_import_button_pressed"]
-[connection signal="pressed" from="LAYER_INSPECTOR/MINIMIZE3" to="LAYER_INSPECTOR/MINIMIZE3" method="_on_pressed"]
+[connection signal="mouse_entered" from="LAYER_INSPECTOR/ADD_LAYER" to="LAYER_INSPECTOR" method="_on_scroll_container_mouse_entered"]
+[connection signal="pressed" from="LAYER_INSPECTOR/ADD_LAYER" to="." method="_on_add_layer_pressed"]
 [connection signal="mouse_entered" from="LAYER_INSPECTOR/ScrollContainer" to="LAYER_INSPECTOR" method="_on_scroll_container_mouse_entered"]
-[connection signal="pressed" from="LAYER_INSPECTOR/ScrollContainer/CONTAINER/ADD_LAYER" to="." method="_on_add_layer_pressed"]
+[connection signal="pressed" from="LAYER_INSPECTOR/EXPAND" to="LAYER_INSPECTOR/EXPAND" method="ON_EXPAND"]
+[connection signal="pressed" from="LAYER_INSPECTOR/FOLD" to="LAYER_INSPECTOR/FOLD" method="ON_FOLD"]
+[connection signal="mouse_entered" from="MESH_INSPECTOR/IMPORT_MESH" to="MESH_INSPECTOR" method="_on_scroll_container_mouse_entered"]
+[connection signal="pressed" from="MESH_INSPECTOR/IMPORT_MESH" to="." method="_on_import_button_pressed"]
+[connection signal="mouse_entered" from="MESH_INSPECTOR/ScrollContainer" to="MESH_INSPECTOR" method="_on_scroll_container_mouse_entered"]
+[connection signal="pressed" from="MESH_INSPECTOR/EXPAND" to="MESH_INSPECTOR/EXPAND" method="ON_EXPAND"]
+[connection signal="pressed" from="MESH_INSPECTOR/FOLD" to="MESH_INSPECTOR/FOLD" method="ON_FOLD"]
 [connection signal="file_selected" from="IMPORT" to="." method="_on_import_file_selected"]
 [connection signal="file_selected" from="EXPORT" to="." method="_on_export_file_selected"]
 [connection signal="file_selected" from="OPEN" to="." method="_on_open_file_selected"]

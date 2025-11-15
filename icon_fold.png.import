@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://b6s8kf8cgf0du"
-path="res://.godot/imported/icon_light.png-457d4483f705d62f75b51f977e61b605.ctex"
+uid="uid://bws3hgrn7bebm"
+path="res://.godot/imported/icon_fold.png-ce401a0bce3e98491ee5c7ebbdd9d8c9.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://icon_light.png"
-dest_files=["res://.godot/imported/icon_light.png-457d4483f705d62f75b51f977e61b605.ctex"]
+source_file="res://icon_fold.png"
+dest_files=["res://.godot/imported/icon_fold.png-ce401a0bce3e98491ee5c7ebbdd9d8c9.ctex"]
 
 [params]
 
@@ -37,4 +37,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=0
+detect_3d/compress_to=1

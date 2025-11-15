@@ -1,14 +1,14 @@
 [gd_scene format=3 uid="uid://c7ctcgis1ic5l"]
 
 [node name="LAYER_PREFAB" type="VBoxContainer"]
-custom_minimum_size = Vector2(240, 200)
+custom_minimum_size = Vector2(240, 150)
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = 5.0
 offset_top = 5.0
 offset_right = -907.0
-offset_bottom = -342.0
+offset_bottom = -443.0
 grow_horizontal = 2
 grow_vertical = 2
 
@@ -16,23 +16,26 @@ grow_vertical = 2
 layout_mode = 2
 text = "Layer #0"
 
+[node name="ADD_LIGHT_TO_LAYER" type="Button" parent="NAME"]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -171.0
+offset_bottom = 31.0
+grow_horizontal = 0
+text = "ADD LIGHT TO LAYER"
+
 [node name="VBoxContainer" type="VBoxContainer" parent="."]
 layout_mode = 2
 theme_override_constants/separation = 34
-
-[node name="TOGGLE" type="Button" parent="VBoxContainer"]
-layout_mode = 2
-text = "hide"
 
 [node name="LIGHTS" type="VBoxContainer" parent="VBoxContainer"]
 layout_mode = 2
 theme_override_constants/separation = 34
 
-[node name="ADD_LIGHT_TO_LAYER" type="Button" parent="VBoxContainer"]
-layout_mode = 2
-text = "ADD LIGHT TO LAYER"
-
 [node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer"]
+visible = false
 layout_mode = 2
 
 [node name="UP" type="Button" parent="VBoxContainer/HBoxContainer"]

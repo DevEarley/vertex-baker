@@ -42,12 +42,12 @@ func _on_add_layer_pressed() -> void:
 	var new_layer = layer_prefab.instantiate()
 	layer.MENU_ITEM = new_layer;
 	$LAYER_INSPECTOR/ScrollContainer/CONTAINER/LAYERS.add_child(new_layer)
-	var button  = new_layer.get_node("VBoxContainer/ADD_LIGHT_TO_LAYER")
-	var toggle  = new_layer.get_node("VBoxContainer/TOGGLE")
+	var button  = new_layer.get_node("NAME/ADD_LIGHT_TO_LAYER")
+	#var toggle  = new_layer.get_node("VBoxContainer/TOGGLE")
 	var name_label  = new_layer.get_node("NAME")
 	name_label.text = "Layer #%s"%layer.ID
 	button.connect("pressed",on_add_light_to_layer.bind(new_layer,layer))
-	toggle.connect("pressed",on_toggle_layer.bind(new_layer))
+	#toggle.connect("pressed",on_toggle_layer.bind(new_layer))
 
 func on_add_light_to_layer(layer:Control,layer_:Layer, imported_position:Vector3=Vector3.ZERO, imported_color:Color= Color.WHITE, imported_radius:float=1.0,imported_mix:float=1.0):
 	var light = VertexLight.new()
@@ -274,12 +274,13 @@ func on_focus():
 	$MESH_INSPECTOR.unfocusable =false;
 var max_recursion = 100
 
-func load_mesh(child_mesh,scene_list_item, recursion):
+func load_mesh(child_mesh,scene_list_item, recursion,imported_scene, imported_scale:Vector3=Vector3.ONE):
 	print("load_mesh")
 
 	if(child_mesh is MeshInstance3D):
 		var mesh_list_item = mesh_list_item_prefab.instantiate()
 		mesh_list_item.get_node("ICON/NAME").text = child_mesh.name
+
 		scene_list_item.get_node("VBoxContainer/MESHES").add_child(mesh_list_item)
 		for surface in child_mesh.mesh.get_surface_count():
 			var surface_list_item = surface_list_item_prefab.instantiate()
@@ -288,6 +289,8 @@ func load_mesh(child_mesh,scene_list_item, recursion):
 			var material:Material = child_mesh.get_active_material(surface)
 			var material_list_item = material_list_item_prefab.instantiate()
 			var imported_material = ImportedMaterial.new()
+			imported_material.SCENE = imported_scene
+			imported_scene.MATERIALS.push_back(imported_material)
 			imported_material.MATERIAL = material
 			imported_material.NAME = material.resource_name
 			imported_material.LIST_ITEM = material_list_item;
@@ -301,9 +304,38 @@ func load_mesh(child_mesh,scene_list_item, recursion):
 					if(recursion>max_recursion):
 						print("ERR too much recursion in this mesh")
 						return
-					load_mesh(grand_child_mesh,scene_list_item,recursion)
+					load_mesh(grand_child_mesh,scene_list_item,imported_scene,recursion)
 
-func load_from_path(path,imported_position:Vector3=Vector3.ZERO):
+func on_duplicated_pressed(imported_scene:ImportedScene):
+	load_from_path(imported_scene.PATH,imported_scene.SCENE.global_position,imported_scene.SCENE.scale)
+
+func on_bake_toggle_pressed(imported_scene:ImportedScene):
+	var check_box:CheckBox = imported_scene.LIST_ITEM.get_node("HBoxContainer/BAKE");
+	imported_scene.EXCLUDE = !check_box.button_pressed
+	if(imported_scene.EXCLUDE==true):
+		imported_scene.EXCLUDE = false
+		imported_scene.LIST_ITEM.get_node("ICON/ICON_NO_BAKE").show()
+	elif(imported_scene.EXCLUDE==false):
+		imported_scene.EXCLUDE = true
+		imported_scene.LIST_ITEM.get_node("ICON/ICON_NO_BAKE").hide()
+
+func on_delete_scene_pressed(imported_scene:ImportedScene):
+	_on_reset_pressed()
+	gizmo.clear_selection()
+	var index = DATA.SCENES.find(imported_scene)
+	imported_scene.SCENE.queue_free()
+	imported_scene.NODE.queue_free()
+	imported_scene.LIST_ITEM.queue_free()
+	for mat in imported_scene.MATERIALS:
+		var mat_index = DATA.MATERIALS.find(mat)
+		DATA.MATERIALS.remove_at(mat_index)
+
+	imported_scene.MATERIALS = []
+	DATA.SCENES.remove_at(index)
+
+	update_material_inspector()
+
+func load_from_path(path,imported_position:Vector3=Vector3.ZERO, imported_scale:Vector3=Vector3.ONE):
 	if(path == ""):return
 	print("load_from_current_path")
 	var gltf_state_load = GLTFState.new()
@@ -326,11 +358,15 @@ func load_from_path(path,imported_position:Vector3=Vector3.ZERO):
 		imported_scene.OG_SCENE = scene_2;
 		mesh.add_child(scene)
 		node.add_child(mesh)
+		mesh.scale = imported_scale
 		var scene_list_item = scene_list_item_prefab.instantiate()
 		imported_scene.LIST_ITEM = scene_list_item
 		scene_list_item.get_node("HBoxContainer/ROTATE").connect("pressed",on_rotate_pressed.bind(mesh))
 		scene_list_item.get_node("HBoxContainer/SCALE").connect("pressed",on_scale_pressed.bind(mesh))
 		scene_list_item.get_node("HBoxContainer/MOVE").connect("pressed",on_move_pressed.bind(mesh))
+		scene_list_item.get_node("HBoxContainer/DUPLICATE").connect("pressed",on_duplicated_pressed.bind(imported_scene))
+		scene_list_item.get_node("ICON/MORE_MENU/DELETE").connect("pressed",on_delete_scene_pressed.bind(imported_scene))
+		scene_list_item.get_node("HBoxContainer/BAKE").connect("pressed",on_bake_toggle_pressed.bind(imported_scene))
 		scene_list_item.get_node("HBoxContainer/SCALE_VALUE").connect("mouse_entered",on_focus)
 		scene_list_item.get_node("HBoxContainer/SCALE_VALUE").connect("text_submitted",on_scale_value_changed.bind(mesh))
 		scene_list_item.get_node("HBoxContainer/SCALE_VALUE").connect("focus_exited",on_scale_changed.bind(mesh,scene_list_item))
@@ -338,8 +374,9 @@ func load_from_path(path,imported_position:Vector3=Vector3.ZERO):
 		DATA.SCENES.push_back(imported_scene)
 		scene_list_item.get_node("ICON/NAME").text = path
 		$MESH_INSPECTOR/ScrollContainer/CONTAINER/MESHES.add_child(scene_list_item)
+
 		for child_mesh in scene.get_children():
-			load_mesh(child_mesh,scene_list_item,0)
+			load_mesh(child_mesh,scene_list_item,0,imported_scene)
 		update_material_inspector()
 	else:
 		print("Couldn't load glTF scene (error code: %s)." % error_string(error))

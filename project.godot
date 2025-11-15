@@ -21,6 +21,8 @@ DATA="*res://GLOBAL_DATA.gd"
 
 [display]
 
+window/size/viewport_width=3840
+window/size/viewport_height=2160
 window/energy_saving/keep_screen_on=false
 window/per_pixel_transparency/allowed=true
 
