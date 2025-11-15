@@ -10,9 +10,9 @@ script = ExtResource("1_va01t")
 
 [sub_resource type="Resource" id="Resource_6o4ld"]
 script = ExtResource("2_bntm1")
-COLOR = Vector3(1, 1, 1)
-MIX = 0.5
-RADIUS = 1.0
+COLOR = Vector3(1, 0, 0)
+MIX = 1.0
+RADIUS = 10.0
 
 [sub_resource type="Resource" id="Resource_kt3gw"]
 script = ExtResource("3_m4paa")

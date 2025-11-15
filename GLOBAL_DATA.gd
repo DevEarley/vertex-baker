@@ -3,32 +3,6 @@ var LAYERS:Array[Layer]=[]
 var SCENES:Array[ImportedScene]=[]
 var MATERIALS:Array[ImportedMaterial]=[]
 
-func from_project_data(project_data:VBData):
-	SCENES = []
-	LAYERS = []
-	MATERIALS = []
-	#for scene_data:VBSceneData in project_data.SCENES:
-		#var imported_scene = ImportedScene.new();
-		#imported_scene.NAME = scene_data.NAME
-		#imported_scene.PATH = scene_data.PATH
-		#imported_scene.IMPORTED_POSITION = scene_data.POSITION
-		#SCENES.push_back(imported_scene);
-
-	for layer_data:VBLayerData in project_data.LAYERS:
-		var layer:Layer = Layer.new()
-		layer.ID = layer_data.ID
-		LAYERS.push_back(layer)
-		for light_data in project_data.LIGHTS:
-			if(light_data.PARENT_LAYER_ID == layer.ID):
-				var light = VertexLight.new()
-				light.COLOR = Color(light_data.COLOR.x,light_data.COLOR.y,light_data.COLOR.z)
-				light.IMPORTED_POSITION = light_data.POSITION
-				light.MIX = (light_data.MIX)
-				light.ID = (light_data.ID)
-				light.RADIUS = (light_data.RADIUS)
-				layer.LIGHTS.push_back(light)
-
-
 
 func to_project_data():
 	var project_data:VBData = VBData.new()

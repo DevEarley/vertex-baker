@@ -40,6 +40,7 @@ func _on_add_layer_pressed() -> void:
 	layer.ID = DATA.LAYERS.size()
 	DATA.LAYERS.push_back(layer)
 	var new_layer = layer_prefab.instantiate()
+	layer.MENU_ITEM = new_layer;
 	$LAYER_INSPECTOR/ScrollContainer/CONTAINER/LAYERS.add_child(new_layer)
 	var button  = new_layer.get_node("VBoxContainer/ADD_LIGHT_TO_LAYER")
 	var toggle  = new_layer.get_node("VBoxContainer/TOGGLE")
@@ -48,15 +49,27 @@ func _on_add_layer_pressed() -> void:
 	button.connect("pressed",on_add_light_to_layer.bind(new_layer,layer))
 	toggle.connect("pressed",on_toggle_layer.bind(new_layer))
 
-func on_add_light_to_layer(layer:Control,layer_:Layer):
+func on_add_light_to_layer(layer:Control,layer_:Layer, imported_position:Vector3=Vector3.ZERO, imported_color:Color= Color.WHITE, imported_radius:float=1.0,imported_mix:float=1.0):
 	var light = VertexLight.new()
 	var actual_light = OmniLight3D.new()
-	light.COLOR = PREVIOUS_COLOR
+	light.COLOR = imported_color
 	light.LIGHT_MESH = light_mesh.instantiate()
 	light.LIGHT_MESH.add_child(actual_light)
+	light.LIGHT_MESH.global_position = imported_position
+	var mesh:MeshInstance3D = light.LIGHT_MESH.get_node("MeshInstance3D")
+	mesh.scale = Vector3.ONE *imported_radius;
 	light.ACTUAL_LIGHT = actual_light;
-	light.RADIUS = 1.0
-	light.MIX = 0.5
+	light.ACTUAL_LIGHT.omni_range = imported_radius;
+	light.ACTUAL_LIGHT.light_color =light.COLOR;
+	light.LIGHT_MESH.modulate = light.COLOR
+	light.RADIUS = imported_radius
+	if(imported_mix ==0):
+		light.ACTUAL_LIGHT.hide()
+	else:
+		light.ACTUAL_LIGHT.show()
+
+	light.ACTUAL_LIGHT.omni_attenuation =2-imported_mix;
+	light.MIX = imported_mix
 	light.ID = layer_.LIGHTS.size()
 	layer_.LIGHTS.push_back(light)
 	$SubViewportContainer/SubViewport.add_child(light.LIGHT_MESH)
@@ -199,8 +212,15 @@ func _on_open_file_selected(path: String) -> void:
 	if ResourceLoader.exists(path):
 		result =  load(path)
 	else:return
-	DATA.from_project_data(result)
-	for scene in result.SCENES:
+	#DATA.from_project_data(result)
+	for layer_data:VBLayerData in result.LAYERS:
+		_on_add_layer_pressed()
+		var last_layer =  DATA.LAYERS[DATA.LAYERS.size()-1]
+		for light_data:VBLightData in result.LIGHTS:
+			if(light_data.PARENT_LAYER_ID == layer_data.ID):
+				on_add_light_to_layer(last_layer.MENU_ITEM,last_layer,light_data.POSITION, Color(light_data.COLOR.x,light_data.COLOR.y,light_data.COLOR.z),light_data.RADIUS,light_data.MIX)
+
+	for scene:VBSceneData in result.SCENES:
 		print(scene.PATH)
 		load_from_path(scene.PATH, scene.POSITION)
 
@@ -209,9 +229,10 @@ func _on_save_file_selected(path: String) -> void:
 	var data = DATA.to_project_data();
 	var err=ResourceSaver.save(data,path,ResourceSaver.FLAG_NONE)
 	if(err != OK):
-			print("uh oh")
+			print("uh oh: %s" % err)
 	else:
 		print("ok")
+
 func _on_export_file_selected(path: String) -> void:
 	var gltf_scene_root_node = Node3D.new()
 	for imported_scene:ImportedScene in DATA.SCENES:
@@ -223,7 +244,6 @@ func _on_export_file_selected(path: String) -> void:
 	gltf_document_save.write_to_filesystem(gltf_state_save, path)
 
 func _on_import_file_selected(path: String) -> void:
-
 	load_from_path(path)
 
 func on_rotate_pressed(node):
