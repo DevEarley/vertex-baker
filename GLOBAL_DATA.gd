@@ -25,6 +25,7 @@ func to_project_data():
 		scene_data.PATH = scene.PATH;
 		scene_data.ID = scene.ID;
 		scene_data.POSITION = scene.NODE.global_position
+		scene_data.ROTATION = scene.NODE.rotation
 		scene_data.SCALE = scene.NODE.scale
 		project_data.SCENES.push_back(scene_data)
 

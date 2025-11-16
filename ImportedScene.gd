@@ -8,5 +8,6 @@ var SCENE: Node3D;
 var OG_SCENE: Node3D;
 var LIST_ITEM: VBoxContainer;
 var IMPORTED_POSITION:Vector3
+var IMPORTED_ROTATION:Vector3
 var EXCLUDE:bool = false
 var MATERIALS:Array[ImportedMaterial]

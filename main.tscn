@@ -1,4 +1,4 @@
-[gd_scene load_steps=18 format=3 uid="uid://egxf4avoauls"]
+[gd_scene load_steps=19 format=3 uid="uid://egxf4avoauls"]
 
 [ext_resource type="Script" uid="uid://bxhfyvkolmnms" path="res://vertex-painter.gd" id="1_ig7tw"]
 [ext_resource type="Script" uid="uid://hdlai2as1f4i" path="res://free-look.gd" id="2_0xm2m"]
@@ -12,6 +12,7 @@
 [ext_resource type="Texture2D" uid="uid://2f05blbjguuq" path="res://icon_expand.png" id="9_dg77c"]
 [ext_resource type="Texture2D" uid="uid://cnuey48jbsnn0" path="res://icon_layer.png" id="9_efxa6"]
 [ext_resource type="Texture2D" uid="uid://bws3hgrn7bebm" path="res://icon_fold.png" id="9_ycdy4"]
+[ext_resource type="Texture2D" uid="uid://bp677qlpye2rd" path="res://vl.png" id="13_ycdy4"]
 
 [sub_resource type="Gradient" id="Gradient_4c57u"]
 colors = PackedColorArray(0, 0, 0, 1, 0, 0, 1, 1)
@@ -518,6 +519,32 @@ grow_horizontal = 2
 text = "MENU
 "
 
+[node name="LIGHT_SPHERE_CHECKBOX" type="CheckButton" parent="."]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -202.0
+offset_top = -40.0
+grow_horizontal = 0
+grow_vertical = 0
+button_pressed = true
+text = "LIGHT SPHERES"
+icon = ExtResource("13_ycdy4")
+
+[node name="BAKE" type="Button" parent="."]
+custom_minimum_size = Vector2(153, 0)
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -49.0
+offset_bottom = 31.0
+grow_horizontal = 0
+text = "BAKE"
+
 [connection signal="transform_begin" from="SubViewportContainer/SubViewport/Gizmo3D_MOVE" to="." method="_on_gizmo_3d_transform_begin"]
 [connection signal="transform_changed" from="SubViewportContainer/SubViewport/Gizmo3D_MOVE" to="." method="_on_gizmo_3d_transform_changed"]
 [connection signal="transform_end" from="SubViewportContainer/SubViewport/Gizmo3D_MOVE" to="." method="_on_gizmo_3d_transform_end"]
@@ -547,3 +574,5 @@ text = "MENU
 [connection signal="file_selected" from="OPEN" to="." method="_on_open_file_selected"]
 [connection signal="file_selected" from="SAVE" to="." method="_on_save_file_selected"]
 [connection signal="pressed" from="MENU_BUTTON" to="." method="_on_menu_button_pressed"]
+[connection signal="toggled" from="LIGHT_SPHERE_CHECKBOX" to="." method="_on_light_sphere_checkbox_toggled"]
+[connection signal="pressed" from="BAKE" to="." method="_on_bake_pressed"]

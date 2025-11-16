@@ -102,11 +102,11 @@ alignment = 2
 
 [node name="DELETE" type="Button" parent="VBoxContainer/BUTTON_ROW_1"]
 layout_mode = 2
-text = "DELETE"
+text = "DELETE LIGHT"
 
 [node name="DUPLICATE" type="Button" parent="VBoxContainer/BUTTON_ROW_1"]
 layout_mode = 2
-text = "DUPLICATE"
+text = "CLONE"
 
 [node name="MOVE" type="Button" parent="VBoxContainer/BUTTON_ROW_1"]
 layout_mode = 2

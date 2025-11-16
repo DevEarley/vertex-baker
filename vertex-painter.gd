@@ -82,8 +82,14 @@ func on_delete_layer_pressed(layer:Control,light_layer:LightLayer):
 	#remove from UI
 	light_layer.LIST_ITEM.queue_free()
 	DATA.LAYERS.remove_at(index_to_remove)
+	_on_bake_pressed()
 
-func on_add_light_to_layer(layer:Control,light_layer:LightLayer, imported_position:Vector3=Vector3.ZERO, imported_color:Color= Color.WHITE, imported_radius:float=1.0,imported_mix:float=1.0):
+func on_add_light_to_layer(
+	layer:Control,light_layer:LightLayer,
+	imported_position:Vector3=Vector3.ZERO,
+	imported_color:Color= Color.WHITE,
+	imported_radius:float=1.0,
+	imported_mix:float=1.0):
 	var light = VertexLight.new()
 	#var actual_light = OmniLight3D.new()
 	light.COLOR = imported_color
@@ -91,6 +97,7 @@ func on_add_light_to_layer(layer:Control,light_layer:LightLayer, imported_positi
 	#light.LIGHT_MESH.add_child(actual_light)
 	light.LIGHT_MESH.position = imported_position
 	var mesh:MeshInstance3D = light.LIGHT_MESH.get_node("MeshInstance3D")
+	mesh.visible = LIGHT_SPHERES_ON;
 	mesh.scale = Vector3.ONE *imported_radius;
 	#light.ACTUAL_LIGHT = actual_light;
 	#light.ACTUAL_LIGHT.omni_range = imported_radius;
@@ -130,6 +137,8 @@ func on_add_light_to_layer(layer:Control,light_layer:LightLayer, imported_positi
 	scale_button.connect("pressed",on_scale_light_pressed.bind(light))
 
 	layer.get_node("VBoxContainer/LIGHTS").add_child(new_light)
+	_on_bake_pressed()
+
 var CURRENT_LIGHT: VertexLight= null
 
 func on_scale_light_pressed(light:VertexLight):
@@ -384,7 +393,7 @@ func _on_open_file_selected(path: String) -> void:
 
 	for scene:VBSceneData in result.SCENES:
 		print(scene.PATH)
-		load_from_path(scene.PATH, scene.POSITION,scene.SCALE,scene.ID)
+		load_from_path(scene.PATH, scene.POSITION,scene.ROTATION,scene.SCALE,scene.ID)
 	_on_bake_pressed()
 
 func _on_save_file_selected(path: String) -> void:
@@ -548,6 +557,7 @@ func on_duplicated_pressed(imported_scene:ImportedScene):
 	load_from_path(
 		imported_scene.PATH,
 		imported_scene.SCENE.global_position,
+		imported_scene.SCENE.rotation,
 		imported_scene.SCENE.scale)
 
 func on_bake_toggle_pressed(imported_scene:ImportedScene):
@@ -567,6 +577,7 @@ func on_delete_light(light:VertexLight):
 	light.LIST_ITEM.queue_free()
 	var lights = light.LAYER.LIGHTS
 	lights.remove_at(index)
+	_on_bake_pressed()
 
 
 func on_delete_scene_pressed(imported_scene:ImportedScene):
@@ -585,7 +596,12 @@ func on_delete_scene_pressed(imported_scene:ImportedScene):
 
 	update_material_inspector()
 
-func load_from_path(path,imported_position:Vector3=Vector3.ZERO, imported_scale:Vector3=Vector3.ONE, imported_ID:int=-1):
+func load_from_path(
+	path,
+	imported_position:Vector3=Vector3.ZERO,
+	imported_rotation:Vector3=Vector3.ZERO,
+	imported_scale:Vector3=Vector3.ONE,
+	imported_ID:int=-1):
 	if(path == ""):return
 	print("load_from_current_path")
 	var gltf_state_load = GLTFState.new()
@@ -605,6 +621,7 @@ func load_from_path(path,imported_position:Vector3=Vector3.ZERO, imported_scale:
 		imported_scene.NODE = mesh;
 		imported_scene.SCENE = scene;
 		imported_scene.IMPORTED_POSITION = imported_position
+		imported_scene.IMPORTED_ROTATION = imported_rotation
 		imported_scene.PATH = path
 		imported_scene.OG_SCENE = scene_2;
 		if(imported_ID==-1):
@@ -616,6 +633,7 @@ func load_from_path(path,imported_position:Vector3=Vector3.ZERO, imported_scale:
 		node.add_child(mesh)
 		mesh.scale = imported_scale
 		mesh.position = imported_position
+		mesh.rotation = imported_rotation
 		var scene_list_item = scene_list_item_prefab.instantiate()
 		imported_scene.LIST_ITEM = scene_list_item
 		scene_list_item.get_node("HBoxContainer/ROTATE").connect("pressed",on_rotate_pressed.bind(mesh))
@@ -662,7 +680,8 @@ func _ready():
 	add_child(baking_timer)
 
 func actually_bake():
-	print("bake")
+	$BAKE.text = ("BAKING")
+
 	$HBoxContainer.visible = false
 	$MENU_BUTTON.visible = true;
 	_on_reset_pressed()
@@ -672,10 +691,11 @@ func actually_bake():
 				update_mesh(child,scene)
 			#for og_child:MeshInstance3D in scene.OG_SCENE.get_children():
 				#if(og_child.name == child.name):
+	$BAKE.text = ("BAKE")
 
 
 func _on_bake_pressed() -> void:
-	print("queue bake")
+	$BAKE.text = ("QUEUING BAKE")
 	baking_timer.start()
 
 func _on_gizmo_3d_transform_begin(mode: Gizmo3D.TransformMode) -> void:
@@ -739,3 +759,12 @@ func _on_reset_pressed() -> void:
 					for index in count:
 						var data = tools[index-1]
 						data.commit_to_surface(mesh.mesh)
+
+var LIGHT_SPHERES_ON = true
+
+func _on_light_sphere_checkbox_toggled(toggled_on: bool) -> void:
+	LIGHT_SPHERES_ON = toggled_on
+	for layer in DATA.LAYERS:
+		for light in layer.LIGHTS:
+			var sphere:MeshInstance3D = light.LIGHT_MESH.get_node("MeshInstance3D")
+			sphere.visible = toggled_on;

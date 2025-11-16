@@ -20,7 +20,7 @@ texture = ExtResource("1_tgnmm")
 stretch_mode = 2
 
 [node name="NAME" type="Label" parent="ICON"]
-custom_minimum_size = Vector2(0, 35)
+custom_minimum_size = Vector2(0, 25)
 layout_mode = 0
 offset_left = 43.0
 offset_top = 5.0

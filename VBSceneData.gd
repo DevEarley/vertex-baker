@@ -5,4 +5,5 @@ class_name VBSceneData
 @export var ID:int;
 @export var NAME:String;
 @export var POSITION: Vector3;
+@export var ROTATION: Vector3;
 @export var SCALE: Vector3;
