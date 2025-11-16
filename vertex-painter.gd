@@ -32,55 +32,78 @@ func _input(event:InputEvent):
 			CURRENT_WINDOW.unfocusable = true
 			CURRENT_WINDOW = null
 
-func _on_add_layer_pressed() -> void:
+func _on_add_layer_pressed(
+	layer_name:String="UNTITLED",
+	blending_method:LightLayer.BLENDING_METHODS=LightLayer.BLENDING_METHODS.MULTIPLY,
+	imported_id:int=-1) -> void:
 	$HBoxContainer.visible = false
 	$MENU_BUTTON.visible = true;
 	var layer:LightLayer = LightLayer.new()
 	layer.LIGHTS = []
-	layer.ID = DATA.LAYERS.size()
+	layer.BLENDING_METHOD = blending_method
+	if(imported_id == -1):
+		layer.ID = Time.get_unix_time_from_system()
+	else:
+		layer.ID == imported_id
+	if(layer_name == "UNTITLED"):
+		layer.NAME = "%s #%s"%[layer_name,layer.ID]
+	else:
+		layer.NAME = layer_name
 	DATA.LAYERS.push_back(layer)
 	var new_layer = layer_prefab.instantiate()
 	layer.LIST_ITEM = new_layer;
 	$LAYER_INSPECTOR/ScrollContainer/CONTAINER/LAYERS.add_child(new_layer)
 	var button  = new_layer.get_node("NAME/ADD_LIGHT_TO_LAYER")
-	var blending_dropdown  = new_layer.get_node("NAME/BLENDING_METHOD")
-	#var toggle  = new_layer.get_node("VBoxContainer/TOGGLE")
+	var delete_button  = new_layer.get_node("NAME/MORE_MENU/DELETE")
+	var blending_dropdown:OptionButton  = new_layer.get_node("NAME/BLENDING_METHOD")
 	var name_label  = new_layer.get_node("NAME")
-	name_label.text = "LightLayer #%s"%layer.ID
+	name_label.text = layer.NAME
 	button.connect("pressed",on_add_light_to_layer.bind(new_layer,layer))
+	delete_button.connect("pressed",on_delete_layer_pressed.bind(new_layer,layer))
+	blending_dropdown.select(layer.BLENDING_METHOD)
 	blending_dropdown.connect("pressed",on_blending_method_dropdown_pressed.bind(layer))
 	blending_dropdown.connect("item_selected",on_blending_method_dropdown_selected)
-	#toggle.connect("pressed",on_toggle_layer.bind(new_layer))
+
 var CURRENT_LAYER:LightLayer = null
 
 func on_blending_method_dropdown_selected(index:int):
 	if(CURRENT_LAYER != null):
 		CURRENT_LAYER.BLENDING_METHOD = index
+	_on_bake_pressed()
 
 func on_blending_method_dropdown_pressed(light_layer:LightLayer):
 		CURRENT_LAYER = light_layer
 
+func on_delete_layer_pressed(layer:Control,light_layer:LightLayer):
+	var index_to_remove = DATA.LAYERS.find(light_layer)
+	#remove all of the lights
+	for light in light_layer.LIGHTS:
+		on_delete_light(light)
+	#remove from UI
+	light_layer.LIST_ITEM.queue_free()
+	DATA.LAYERS.remove_at(index_to_remove)
+
 func on_add_light_to_layer(layer:Control,light_layer:LightLayer, imported_position:Vector3=Vector3.ZERO, imported_color:Color= Color.WHITE, imported_radius:float=1.0,imported_mix:float=1.0):
 	var light = VertexLight.new()
-	var actual_light = OmniLight3D.new()
+	#var actual_light = OmniLight3D.new()
 	light.COLOR = imported_color
 	light.LIGHT_MESH = light_mesh.instantiate()
-	light.LIGHT_MESH.add_child(actual_light)
-	light.LIGHT_MESH.global_position = imported_position
+	#light.LIGHT_MESH.add_child(actual_light)
+	light.LIGHT_MESH.position = imported_position
 	var mesh:MeshInstance3D = light.LIGHT_MESH.get_node("MeshInstance3D")
 	mesh.scale = Vector3.ONE *imported_radius;
-	light.ACTUAL_LIGHT = actual_light;
-	light.ACTUAL_LIGHT.omni_range = imported_radius;
-	light.ACTUAL_LIGHT.light_color =light.COLOR;
+	#light.ACTUAL_LIGHT = actual_light;
+	#light.ACTUAL_LIGHT.omni_range = imported_radius;
+	#light.ACTUAL_LIGHT.light_color =light.COLOR;
 	light.LIGHT_MESH.modulate = light.COLOR
 	light.RADIUS = imported_radius
 	light.LAYER = light_layer
-	if(imported_mix ==0):
-		light.ACTUAL_LIGHT.hide()
-	else:
-		light.ACTUAL_LIGHT.show()
+	#if(imported_mix ==0):
+		#light.ACTUAL_LIGHT.hide()
+	#else:
+		#light.ACTUAL_LIGHT.show()
 
-	light.ACTUAL_LIGHT.omni_attenuation =2-imported_mix;
+	#light.ACTUAL_LIGHT.omni_attenuation =2-imported_mix;
 	light.MIX = imported_mix
 	light.ID = light_layer.LIGHTS.size()
 	light_layer.LIGHTS.push_back(light)
@@ -108,35 +131,38 @@ func on_add_light_to_layer(layer:Control,light_layer:LightLayer, imported_positi
 
 	layer.get_node("VBoxContainer/LIGHTS").add_child(new_light)
 var CURRENT_LIGHT: VertexLight= null
+
 func on_scale_light_pressed(light:VertexLight):
 	gizmo.clear_selection()
 	CURRENT_LIGHT = light
 	gizmo.mode = Gizmo3D.ToolMode.SCALE
 	gizmo.select(light.LIGHT_MESH)
-	pass
+	_on_bake_pressed()
 
 func on_radius_value_changed(value:float,light:VertexLight,radius:SpinBox):
 	light.RADIUS = value
 
-	light.ACTUAL_LIGHT.omni_range = value;
+	#light.ACTUAL_LIGHT.omni_range = value;
 	var mesh:MeshInstance3D = light.LIGHT_MESH.get_node("MeshInstance3D")
 	mesh.scale = Vector3.ONE *value;
+	_on_bake_pressed()
 
 func on_color_picker_changed(color:Color,light:VertexLight,color_button:ColorPickerButton):
 	light.COLOR = color_button.color;
-	light.ACTUAL_LIGHT.light_color =light.COLOR;
+	#light.ACTUAL_LIGHT.light_color =light.COLOR;
 	light.LIGHT_MESH.modulate = light.COLOR
 	PREVIOUS_COLOR = light.COLOR
+	_on_bake_pressed()
 
 func on_mix_value_changed(value:float,light:VertexLight,mix:SpinBox):
 	light.MIX = value
-	if(value ==0):
-		light.ACTUAL_LIGHT.hide()
-	else:
-		light.ACTUAL_LIGHT.show()
+	#if(value ==0):
+		#light.ACTUAL_LIGHT.hide()
+	#else:
+		#light.ACTUAL_LIGHT.show()
 
-	light.ACTUAL_LIGHT.omni_attenuation =2-value;
-
+	#light.ACTUAL_LIGHT.omni_attenuation =2-value;
+	_on_bake_pressed()
 
 
 func on_duplicate_light(light:VertexLight):
@@ -193,103 +219,173 @@ func on_toggle_layer(layer:Control):
 func show_palette(for_light:VBoxContainer):
 	pass
 
-func update_mesh(mesh:MeshInstance3D) -> void:
+func update_mesh(mesh:MeshInstance3D, imported_scene:ImportedScene) -> void:
 
-		var count =mesh.mesh.get_surface_count()
+		var surface_count =mesh.mesh.get_surface_count()
 
 		var tools = []
 
-		for index in count:
+		for index in surface_count:
 			tools.push_back(MeshDataTool.new())
-
-		for layer in DATA.LAYERS:
-				for light in layer.LIGHTS:
-					light.ACTUAL_LIGHT.show()
+#
+		#for layer in DATA.LAYERS:
+				#for light in layer.LIGHTS:
+					#light.ACTUAL_LIGHT.show()
 
 		for layer in DATA.LAYERS:
 			for light in layer.LIGHTS:
-				for index in count:
+				for index in surface_count:
+					var is_masked = DATA.LAYER_MASKS.any(func(layer_mask:LightLayerMask):
+						return (layer_mask.LAYER_ID == layer.ID &&
+						layer_mask.MESH_NAME == mesh.name &&
+						layer_mask.SURFACE_ID == index &&
+						layer_mask.SCENE_ID == imported_scene.ID))
+
 					var data:MeshDataTool = tools[index-1]
 					data.create_from_surface(mesh.mesh, index)
-					for i in range(data.get_vertex_count()):
-						var vertex = mesh.to_global(data.get_vertex(i))
-						var vertex_distance:float = vertex.distance_to(light.ACTUAL_LIGHT.global_position)
-						if vertex_distance < light.RADIUS:
-							var linear_distance = 1 - (vertex_distance / (light.RADIUS))
-							var old_color:Color = data.get_vertex_color(i)
-							var new_color:Color = light.COLOR
-							var mixed_color:Color = light.COLOR
+					if(is_masked == false):
+						for i in range(data.get_vertex_count()):
+							var vertex = mesh.to_global(data.get_vertex(i))
+							var vertex_distance:float = vertex.distance_to(light.LIGHT_MESH.global_position)
+							if vertex_distance < light.RADIUS:
+								var linear_distance = 1 - (vertex_distance / (light.RADIUS))
+								var old_color:Color = data.get_vertex_color(i)
+								var new_color:Color = light.COLOR
+								var mixed_color:Color = light.COLOR
+								var mix = 1.0
+								#print("blend %s"% layer.BLENDING_METHOD)
+								match(layer.BLENDING_METHOD):
 
-							print("blend %s"% layer.BLENDING_METHOD)
-							match(layer.BLENDING_METHOD):
+									LightLayer.BLENDING_METHODS.MIN:
+										#print("blend | MIN")
+										var max_r = minf(old_color.r,new_color.r)
+										var max_g = minf(old_color.g,new_color.g)
+										var max_b = minf(old_color.b,new_color.b)
+										mix = light.MIX*linear_distance
 
-								LightLayer.BLENDING_METHODS.MIN:
-									#print("blend | MIN")
-									var max_r = minf(old_color.r,new_color.r)
-									var max_g = minf(old_color.g,new_color.g)
-									var max_b = minf(old_color.b,new_color.b)
+									LightLayer.BLENDING_METHODS.MAX:
+										#print("blend | MAX")
+										var max_r = maxf(old_color.r,new_color.r)
+										var max_g = maxf(old_color.g,new_color.g)
+										var max_b = maxf(old_color.b,new_color.b)
+										mix = light.MIX*linear_distance
 
-								LightLayer.BLENDING_METHODS.MAX:
-									#print("blend | MAX")
-									var max_r = maxf(old_color.r,new_color.r)
-									var max_g = maxf(old_color.g,new_color.g)
-									var max_b = maxf(old_color.b,new_color.b)
+									LightLayer.BLENDING_METHODS.DIVIDE:
+										#print("blend | DIVIDE")
+										mixed_color = Color(
+											old_color.r/(new_color.r+0.001),
+											old_color.g/(new_color.g+0.001),
+											old_color.b/(new_color.b+0.001))
+										mix = light.MIX*linear_distance
 
-								LightLayer.BLENDING_METHODS.DIVIDE:
-									#print("blend | DIVIDE")
-									mixed_color = Color(
-										old_color.r/(new_color.r+0.001),
-										old_color.g/(new_color.g+0.001),
-										old_color.b/(new_color.b+0.001))
+									LightLayer.BLENDING_METHODS.MULTIPLY,	LightLayer.BLENDING_METHODS.DEFAULT:
+										#print("blend | MULTIPLY")
+										mixed_color = Color(old_color.r*new_color.r,old_color.g*new_color.g,old_color.b*new_color.b)
+										mix = light.MIX*linear_distance
 
-								LightLayer.BLENDING_METHODS.MULTIPLY|	LightLayer.BLENDING_METHODS.DEFAULT:
-									#print("blend | MULTIPLY")
-									mixed_color = Color(old_color.r*new_color.r,old_color.g*new_color.g,old_color.b*new_color.b)
+									LightLayer.BLENDING_METHODS.ADD:
+										#print("blend | MIX or ADD")
+										var clamped_r = clamp(old_color.r+new_color.r,0,1)
+										var clamped_g = clamp(old_color.g+new_color.g,0,1)
+										var clamped_b = clamp(old_color.b+new_color.b,0,1)
+										mixed_color = Color(clamped_r,clamped_g,clamped_b)
 
-								LightLayer.BLENDING_METHODS.ADD|LightLayer.BLENDING_METHODS.MIX:
-									#print("blend | MIX or ADD")
-									var clamped_r = clamp(old_color.r+new_color.r,0,1)
-									var clamped_g = clamp(old_color.g+new_color.g,0,1)
-									var clamped_b = clamp(old_color.b+new_color.b,0,1)
-									mixed_color = Color(clamped_r,clamped_g,clamped_b)
+										mix = light.MIX*linear_distance
 
-								LightLayer.BLENDING_METHODS.SUBTRACT:
-									#print("blend | SUBTRACT")
-									var clamped_r = clamp(old_color.r-new_color.r,0,1)
-									var clamped_g = clamp(old_color.g-new_color.g,0,1)
-									var clamped_b = clamp(old_color.b-new_color.b,0,1)
-									mixed_color = Color(clamped_r,clamped_g,clamped_b)
+									LightLayer.BLENDING_METHODS.MIX:#add flat
+										#print("blend | MIX or ADD")
+										var clamped_r = clamp(old_color.r+new_color.r,0,1)
+										var clamped_g = clamp(old_color.g+new_color.g,0,1)
+										var clamped_b = clamp(old_color.b+new_color.b,0,1)
+										mixed_color = Color(clamped_r,clamped_g,clamped_b)
+										mix = light.MIX
 
-							data.set_vertex_color(i,lerp(old_color,mixed_color,light.MIX*linear_distance))
-							#data.set_vertex_color(i,mixed_color)
+									LightLayer.BLENDING_METHODS.SUBTRACT:
+										#print("blend | SUBTRACT")
+										var clamped_r = clamp(old_color.r-new_color.r,0,1)
+										var clamped_g = clamp(old_color.g-new_color.g,0,1)
+										var clamped_b = clamp(old_color.b-new_color.b,0,1)
+										mixed_color = Color(clamped_r,clamped_g,clamped_b)
+										mix = light.MIX*linear_distance
+
+									LightLayer.BLENDING_METHODS.MIN_FLAT:
+										#print("blend | MIN")
+										var max_r = minf(old_color.r,new_color.r)
+										var max_g = minf(old_color.g,new_color.g)
+										var max_b = minf(old_color.b,new_color.b)
+										mix = light.MIX
+
+									LightLayer.BLENDING_METHODS.MAX_FLAT:
+										#print("blend | MAX")
+										var max_r = maxf(old_color.r,new_color.r)
+										var max_g = maxf(old_color.g,new_color.g)
+										var max_b = maxf(old_color.b,new_color.b)
+										mix = light.MIX
+
+									LightLayer.BLENDING_METHODS.DIVIDE_FLAT:
+										#print("blend | DIVIDE")
+										mixed_color = Color(
+											old_color.r/(new_color.r+0.001),
+											old_color.g/(new_color.g+0.001),
+											old_color.b/(new_color.b+0.001))
+										mix = light.MIX
+
+									LightLayer.BLENDING_METHODS.MULTIPLY_FLAT:
+										#print("blend | MULTIPLY")
+										mixed_color = Color(old_color.r*new_color.r,old_color.g*new_color.g,old_color.b*new_color.b)
+										mix = light.MIX
+
+									LightLayer.BLENDING_METHODS.SUBTRACT_FLAT:
+										#print("blend | SUBTRACT")
+										var clamped_r = clamp(old_color.r-new_color.r,0,1)
+										var clamped_g = clamp(old_color.g-new_color.g,0,1)
+										var clamped_b = clamp(old_color.b-new_color.b,0,1)
+										mixed_color = Color(clamped_r,clamped_g,clamped_b)
+										mix = light.MIX
+								data.set_vertex_color(i,lerp(old_color,mixed_color,mix))
+
 				var mesh_:Mesh = mesh.mesh;
 				mesh_.clear_surfaces()
-				for index in count:
+				for index in surface_count:
 					var data = tools[index-1]
 					data.commit_to_surface(mesh.mesh)
 
-		for layer in DATA.LAYERS:
-				for light in layer.LIGHTS:
-					light.ACTUAL_LIGHT.hide()
+		#for layer in DATA.LAYERS:
+				#for light in layer.LIGHTS:
+					#light.ACTUAL_LIGHT.hide()
 
 
 func _on_open_file_selected(path: String) -> void:
 	var result:VBData;
 	if ResourceLoader.exists(path):
 		result =  load(path)
-	else:return
-	#DATA.from_project_data(result)
+	else:
+		return
+
+	for layer_mask_data:VBLayerMaskData in result.LAYER_MASKS:
+		var layer_mask:LightLayerMask = LightLayerMask.new()
+		layer_mask.LAYER_ID = layer_mask_data.LAYER_ID
+		layer_mask.MESH_NAME = layer_mask_data.MESH_NAME
+		layer_mask.SCENE_ID = layer_mask_data.SCENE_ID
+		layer_mask.SURFACE_ID = layer_mask_data.SURFACE_ID
+		DATA.LAYER_MASKS.push_back(layer_mask)
 	for layer_data:VBLayerData in result.LAYERS:
-		_on_add_layer_pressed()
+		_on_add_layer_pressed(layer_data.NAME,layer_data.BLENDING_METHOD,layer_data.ID)
 		var last_layer =  DATA.LAYERS[DATA.LAYERS.size()-1]
 		for light_data:VBLightData in result.LIGHTS:
 			if(light_data.PARENT_LAYER_ID == layer_data.ID):
-				on_add_light_to_layer(last_layer.LIST_ITEM,last_layer,light_data.POSITION, Color(light_data.COLOR.x,light_data.COLOR.y,light_data.COLOR.z),light_data.RADIUS,light_data.MIX)
+				on_add_light_to_layer(
+					last_layer.LIST_ITEM,
+					last_layer,
+					light_data.POSITION,
+					Color(light_data.COLOR.x,light_data.COLOR.y,light_data.COLOR.z),
+					light_data.RADIUS,
+					light_data.MIX)
 
 	for scene:VBSceneData in result.SCENES:
 		print(scene.PATH)
-		load_from_path(scene.PATH, scene.POSITION)
-
+		load_from_path(scene.PATH, scene.POSITION,scene.SCALE,scene.ID)
+	_on_bake_pressed()
 
 func _on_save_file_selected(path: String) -> void:
 	var data = DATA.to_project_data();
@@ -340,16 +436,92 @@ func on_focus():
 	$MESH_INSPECTOR.unfocusable =false;
 var max_recursion = 100
 
+func on_assign_layers_to_mesh_pressed(
+	mesh_list_item:VBoxContainer,
+	imported_scene:ImportedScene,
+	child_mesh:MeshInstance3D,
+	surface:int):
+	print("on_assign_layers_to_mesh_pressed")
+	var menu_button:MenuButton = mesh_list_item.get_node("ICON/ASSIGN_LAYERS")
+	menu_button.get_popup().clear()
+	for light_layer in DATA.LAYERS:
+		menu_button.get_popup().add_check_item(light_layer.NAME)
+		var index = menu_button.get_popup().item_count - 1
+		var already_has_a_mask = DATA.LAYER_MASKS.any(func(layer_mask:LightLayerMask):
+				return( layer_mask.LAYER_ID == light_layer.ID &&
+				layer_mask.MESH_NAME == child_mesh.name &&
+				layer_mask.SURFACE_ID == surface &&
+				layer_mask.SCENE_ID == imported_scene.ID))
+		menu_button.get_popup().set_item_checked(index,!already_has_a_mask)
+
+func on_assign_layers_to_mesh_done(
+	mesh_list_item:VBoxContainer,
+	imported_scene:ImportedScene,
+	child_mesh:MeshInstance3D,
+	surface:int):
+	print("on_assign_layers_to_mesh_done")
+	var menu_button:MenuButton = mesh_list_item.get_node("ICON/ASSIGN_LAYERS")
+	for item_index in menu_button.get_popup().item_count:
+		var light_layer = DATA.LAYERS[item_index]
+		var item_is_checked = menu_button.get_popup().is_item_checked(item_index)
+		var already_has_a_mask = DATA.LAYER_MASKS.any(func(layer_mask:LightLayerMask):
+			return( layer_mask.LAYER_ID == light_layer.ID &&
+				layer_mask.SURFACE_ID == surface &&
+				layer_mask.MESH_NAME == child_mesh.name &&
+				layer_mask.SCENE_ID == imported_scene.ID))
+		if(item_is_checked == false && already_has_a_mask == false):
+				var new_layer_mask = LightLayerMask.new()
+				new_layer_mask.LAYER_ID = light_layer.ID
+				new_layer_mask.SURFACE_ID = surface
+				new_layer_mask.MESH_NAME = child_mesh.name
+				new_layer_mask.SCENE_ID = imported_scene.ID
+				DATA.LAYER_MASKS.push_back(new_layer_mask)
+		elif(item_is_checked == true && already_has_a_mask == true):
+			var index_to_remove = DATA.LAYER_MASKS.find(light_layer)
+			DATA.LAYER_MASKS.remove_at(index_to_remove)
+	_on_bake_pressed()
+
+func on_assign_layer_mask_state_changed(index:int,
+	mesh_list_item:VBoxContainer,
+	imported_scene:ImportedScene,
+	child_mesh:MeshInstance3D,
+	surface:int):
+	print("on_assign_layer_mask_state_changed")
+
+	var assign_layers:MenuButton = mesh_list_item.get_node("ICON/ASSIGN_LAYERS")
+	var popup_menu:PopupMenu = assign_layers.get_popup()
+	var item_is_checked = popup_menu.is_item_checked(index)
+	popup_menu.set_item_checked(index,!item_is_checked)
+
 func load_mesh(child_mesh,scene_list_item, recursion,imported_scene, imported_scale:Vector3=Vector3.ONE):
 	print("load_mesh")
 
 	if(child_mesh is MeshInstance3D):
 		var mesh_list_item = mesh_list_item_prefab.instantiate()
 		mesh_list_item.get_node("ICON/NAME").text = child_mesh.name
-
 		scene_list_item.get_node("VBoxContainer/MESHES").add_child(mesh_list_item)
 		for surface in child_mesh.mesh.get_surface_count():
 			var surface_list_item = surface_list_item_prefab.instantiate()
+			var assign_layers = surface_list_item.get_node("ICON/ASSIGN_LAYERS")
+			var popup_menu:PopupMenu = assign_layers.get_popup()
+			popup_menu.hide_on_checkable_item_selection = false;
+			popup_menu.hide_on_item_selection = false;
+
+			assign_layers.connect("about_to_popup",on_assign_layers_to_mesh_pressed.bind(
+				surface_list_item,
+				imported_scene,
+				child_mesh,
+				surface))
+			popup_menu.connect("index_pressed",on_assign_layer_mask_state_changed.bind(
+				surface_list_item,
+				imported_scene,
+				child_mesh,
+				surface))
+			popup_menu.connect("popup_hide",on_assign_layers_to_mesh_done.bind(
+				surface_list_item,
+				imported_scene,
+				child_mesh,
+				surface))
 			surface_list_item.get_node("ICON/NAME").text = "Surface %s" % surface
 			mesh_list_item.get_node("VBoxContainer/SURFACES").add_child(surface_list_item)
 			var material:Material = child_mesh.get_active_material(surface)
@@ -373,7 +545,10 @@ func load_mesh(child_mesh,scene_list_item, recursion,imported_scene, imported_sc
 					load_mesh(grand_child_mesh,scene_list_item,imported_scene,recursion)
 
 func on_duplicated_pressed(imported_scene:ImportedScene):
-	load_from_path(imported_scene.PATH,imported_scene.SCENE.global_position,imported_scene.SCENE.scale)
+	load_from_path(
+		imported_scene.PATH,
+		imported_scene.SCENE.global_position,
+		imported_scene.SCENE.scale)
 
 func on_bake_toggle_pressed(imported_scene:ImportedScene):
 	var check_box:CheckBox = imported_scene.LIST_ITEM.get_node("HBoxContainer/BAKE");
@@ -410,7 +585,7 @@ func on_delete_scene_pressed(imported_scene:ImportedScene):
 
 	update_material_inspector()
 
-func load_from_path(path,imported_position:Vector3=Vector3.ZERO, imported_scale:Vector3=Vector3.ONE):
+func load_from_path(path,imported_position:Vector3=Vector3.ZERO, imported_scale:Vector3=Vector3.ONE, imported_ID:int=-1):
 	if(path == ""):return
 	print("load_from_current_path")
 	var gltf_state_load = GLTFState.new()
@@ -429,11 +604,18 @@ func load_from_path(path,imported_position:Vector3=Vector3.ZERO, imported_scale:
 		var mesh = scene_prefab.instantiate()
 		imported_scene.NODE = mesh;
 		imported_scene.SCENE = scene;
+		imported_scene.IMPORTED_POSITION = imported_position
 		imported_scene.PATH = path
 		imported_scene.OG_SCENE = scene_2;
+		if(imported_ID==-1):
+			imported_scene.ID = Time.get_unix_time_from_system()
+		else:
+			imported_scene.ID = imported_ID
+
 		mesh.add_child(scene)
 		node.add_child(mesh)
 		mesh.scale = imported_scale
+		mesh.position = imported_position
 		var scene_list_item = scene_list_item_prefab.instantiate()
 		imported_scene.LIST_ITEM = scene_list_item
 		scene_list_item.get_node("HBoxContainer/ROTATE").connect("pressed",on_rotate_pressed.bind(mesh))
@@ -471,19 +653,30 @@ func update_material_inspector():
 		material_list_item.get_node("ICON/NAME").text = mat
 		$MATERIAL_INSPECTOR/ScrollContainer/CONTAINER/MATERIALS.add_child(material_list_item)
 
+var baking_timer:Timer
+func _ready():
+	baking_timer = Timer.new()
+	baking_timer.one_shot = true;
+	baking_timer.connect("timeout", actually_bake)
+	baking_timer.wait_time = 0.25;
+	add_child(baking_timer)
 
-
-func _on_bake_pressed() -> void:
+func actually_bake():
+	print("bake")
 	$HBoxContainer.visible = false
 	$MENU_BUTTON.visible = true;
 	_on_reset_pressed()
 	for scene in DATA.SCENES:
 		for child:MeshInstance3D in scene.SCENE.get_children():
 			if(scene.EXCLUDE == false):
-				update_mesh(child)
+				update_mesh(child,scene)
 			#for og_child:MeshInstance3D in scene.OG_SCENE.get_children():
 				#if(og_child.name == child.name):
 
+
+func _on_bake_pressed() -> void:
+	print("queue bake")
+	baking_timer.start()
 
 func _on_gizmo_3d_transform_begin(mode: Gizmo3D.TransformMode) -> void:
 	#print(_on_gizmo_3d_transform_begin)
@@ -496,7 +689,7 @@ func _on_gizmo_3d_transform_changed(mode: Gizmo3D.TransformMode, value: Vector3)
 		CURRENT_LIGHT.LIGHT_MESH.scale =Vector3.ONE
 		var mesh:MeshInstance3D = CURRENT_LIGHT.LIGHT_MESH.get_node("MeshInstance3D")
 		mesh.scale = Vector3.ONE *CURRENT_LIGHT.RADIUS;
-		CURRENT_LIGHT.ACTUAL_LIGHT.omni_range = CURRENT_LIGHT.RADIUS;
+		#CURRENT_LIGHT.ACTUAL_LIGHT.omni_range = CURRENT_LIGHT.RADIUS;
 
 		CURRENT_LIGHT.RADIUS+=value.x/10.0
 		CURRENT_LIGHT.RADIUS+=value.y/10.0
@@ -508,7 +701,7 @@ func _on_gizmo_3d_transform_changed(mode: Gizmo3D.TransformMode, value: Vector3)
 func _on_gizmo_3d_transform_end(mode: Gizmo3D.TransformMode) -> void:
 	if(CURRENT_LIGHT != null && mode == Gizmo3D.TransformMode.SCALE):
 
-		CURRENT_LIGHT.ACTUAL_LIGHT.omni_range = CURRENT_LIGHT.RADIUS;
+		#CURRENT_LIGHT.ACTUAL_LIGHT.omni_range = CURRENT_LIGHT.RADIUS;
 		var mesh:MeshInstance3D = CURRENT_LIGHT.LIGHT_MESH.get_node("MeshInstance3D")
 		mesh.scale = Vector3.ONE *CURRENT_LIGHT.RADIUS;
 		CURRENT_LIGHT.LIGHT_MESH.scale =Vector3.ONE
@@ -516,11 +709,11 @@ func _on_gizmo_3d_transform_end(mode: Gizmo3D.TransformMode) -> void:
 	$HBoxContainer.visible = false
 	$MENU_BUTTON.visible = true;
 	#print(_on_gizmo_3d_transform_end)
-	for layer in DATA.LAYERS:
-			for light in layer.LIGHTS:
-				light.ACTUAL_LIGHT.show()
+	#for layer in DATA.LAYERS:
+			#for light in layer.LIGHTS:
+				#light.ACTUAL_LIGHT.show()
 	#load_from_current_path()
-
+	_on_bake_pressed()
 
 func _on_menu_button_pressed() -> void:
 	$HBoxContainer.visible = true

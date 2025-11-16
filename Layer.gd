@@ -1,6 +1,7 @@
 class_name LightLayer;
 
 var ID:int
+var NAME:String
 var LIST_ITEM:VBoxContainer
 var LIGHTS:Array[VertexLight]
 var BLENDING_METHOD:BLENDING_METHODS
@@ -12,5 +13,10 @@ enum BLENDING_METHODS{
 	DIVIDE=4,
 	MIN=5,
 	MAX=6,
-	MIX=7
+	MIX=7,#add flat
+	MULTIPLY_FLAT= 8,
+	SUBTRACT_FLAT=9,
+	DIVIDE_FLAT=10,
+	MIN_FLAT=11,
+	MAX_FLAT=12,
 }
