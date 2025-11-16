@@ -35,21 +35,32 @@ func _input(event:InputEvent):
 func _on_add_layer_pressed() -> void:
 	$HBoxContainer.visible = false
 	$MENU_BUTTON.visible = true;
-	var layer:Layer = Layer.new()
+	var layer:LightLayer = LightLayer.new()
 	layer.LIGHTS = []
 	layer.ID = DATA.LAYERS.size()
 	DATA.LAYERS.push_back(layer)
 	var new_layer = layer_prefab.instantiate()
-	layer.MENU_ITEM = new_layer;
+	layer.LIST_ITEM = new_layer;
 	$LAYER_INSPECTOR/ScrollContainer/CONTAINER/LAYERS.add_child(new_layer)
 	var button  = new_layer.get_node("NAME/ADD_LIGHT_TO_LAYER")
+	var blending_dropdown  = new_layer.get_node("NAME/BLENDING_METHOD")
 	#var toggle  = new_layer.get_node("VBoxContainer/TOGGLE")
 	var name_label  = new_layer.get_node("NAME")
-	name_label.text = "Layer #%s"%layer.ID
+	name_label.text = "LightLayer #%s"%layer.ID
 	button.connect("pressed",on_add_light_to_layer.bind(new_layer,layer))
+	blending_dropdown.connect("pressed",on_blending_method_dropdown_pressed.bind(layer))
+	blending_dropdown.connect("item_selected",on_blending_method_dropdown_selected)
 	#toggle.connect("pressed",on_toggle_layer.bind(new_layer))
+var CURRENT_LAYER:LightLayer = null
 
-func on_add_light_to_layer(layer:Control,layer_:Layer, imported_position:Vector3=Vector3.ZERO, imported_color:Color= Color.WHITE, imported_radius:float=1.0,imported_mix:float=1.0):
+func on_blending_method_dropdown_selected(index:int):
+	if(CURRENT_LAYER != null):
+		CURRENT_LAYER.BLENDING_METHOD = index
+
+func on_blending_method_dropdown_pressed(light_layer:LightLayer):
+		CURRENT_LAYER = light_layer
+
+func on_add_light_to_layer(layer:Control,light_layer:LightLayer, imported_position:Vector3=Vector3.ZERO, imported_color:Color= Color.WHITE, imported_radius:float=1.0,imported_mix:float=1.0):
 	var light = VertexLight.new()
 	var actual_light = OmniLight3D.new()
 	light.COLOR = imported_color
@@ -63,6 +74,7 @@ func on_add_light_to_layer(layer:Control,layer_:Layer, imported_position:Vector3
 	light.ACTUAL_LIGHT.light_color =light.COLOR;
 	light.LIGHT_MESH.modulate = light.COLOR
 	light.RADIUS = imported_radius
+	light.LAYER = light_layer
 	if(imported_mix ==0):
 		light.ACTUAL_LIGHT.hide()
 	else:
@@ -70,27 +82,38 @@ func on_add_light_to_layer(layer:Control,layer_:Layer, imported_position:Vector3
 
 	light.ACTUAL_LIGHT.omni_attenuation =2-imported_mix;
 	light.MIX = imported_mix
-	light.ID = layer_.LIGHTS.size()
-	layer_.LIGHTS.push_back(light)
+	light.ID = light_layer.LIGHTS.size()
+	light_layer.LIGHTS.push_back(light)
 	$SubViewportContainer/SubViewport.add_child(light.LIGHT_MESH)
 	var new_light = light_prefab.instantiate()
+	light.LIST_ITEM = new_light;
 	var radius_control:SpinBox = new_light.get_node("VBoxContainer/RADIUS_CONTAINER/SpinBox")
-	radius_control.value = 1.0;
+	radius_control.value =imported_radius
 	radius_control.connect("value_changed",on_radius_value_changed.bind(light,radius_control))
-	var color_control = new_light.get_node("VBoxContainer/COLOR_CONTAINER/ColorPickerButton")
+	var color_control:ColorPickerButton = new_light.get_node("VBoxContainer/COLOR_CONTAINER/ColorPickerButton")
+	color_control.color = light.COLOR;
 	color_control.connect("color_changed",on_color_picker_changed.bind(light,color_control))
 	var mix_control:SpinBox = new_light.get_node("VBoxContainer/MIX_CONTAINER/SpinBox")
-	mix_control.value = 0.5;
+	mix_control.value = imported_mix;
 	mix_control.connect("value_changed",on_mix_value_changed.bind(light,mix_control))
 	var delete_button = new_light.get_node("VBoxContainer/BUTTON_ROW_1/DELETE")
 	delete_button.connect("pressed",on_delete_light.bind(light))
+
 	var duplicate_button = new_light.get_node("VBoxContainer/BUTTON_ROW_1/DUPLICATE")
 	duplicate_button.connect("pressed",on_duplicate_light.bind(light))
-	var move_button = new_light.get_node("VBoxContainer/BUTTON_ROW_2/MOVE")
-	move_button.connect("pressed",on_duplicate_light.bind(light))
-	var toggle_visible_button = new_light.get_node("VBoxContainer/BUTTON_ROW_2/TOGGLE_VISIBLE")
-	toggle_visible_button.connect("pressed",on_toggle_light.bind(light))
+	var move_button = new_light.get_node("VBoxContainer/BUTTON_ROW_1/MOVE")
+	move_button.connect("pressed",on_move_light.bind(light))
+	var scale_button = new_light.get_node("VBoxContainer/RADIUS_CONTAINER/SCALE")
+	scale_button.connect("pressed",on_scale_light_pressed.bind(light))
+
 	layer.get_node("VBoxContainer/LIGHTS").add_child(new_light)
+var CURRENT_LIGHT: VertexLight= null
+func on_scale_light_pressed(light:VertexLight):
+	gizmo.clear_selection()
+	CURRENT_LIGHT = light
+	gizmo.mode = Gizmo3D.ToolMode.SCALE
+	gizmo.select(light.LIGHT_MESH)
+	pass
 
 func on_radius_value_changed(value:float,light:VertexLight,radius:SpinBox):
 	light.RADIUS = value
@@ -114,17 +137,17 @@ func on_mix_value_changed(value:float,light:VertexLight,mix:SpinBox):
 
 	light.ACTUAL_LIGHT.omni_attenuation =2-value;
 
-func on_delete_light(light:VertexLight):
-	pass
+
 
 func on_duplicate_light(light:VertexLight):
-	pass
+	on_add_light_to_layer(light.LAYER.LIST_ITEM,light.LAYER,light.LIGHT_MESH.global_position,light.COLOR,light.RADIUS,light.MIX)
 
 func on_move_light(light:VertexLight):
+	gizmo.clear_selection()
+	gizmo.mode = Gizmo3D.ToolMode.MOVE
+	gizmo.select(light.LIGHT_MESH)
 	pass
 
-func on_toggle_light(light:VertexLight):
-	pass
 
 func _on_import_button_pressed() -> void:
 	$HBoxContainer.visible = false
@@ -195,7 +218,50 @@ func update_mesh(mesh:MeshInstance3D) -> void:
 							var linear_distance = 1 - (vertex_distance / (light.RADIUS))
 							var old_color:Color = data.get_vertex_color(i)
 							var new_color:Color = light.COLOR
-							data.set_vertex_color(i,new_color)
+							var mixed_color:Color = light.COLOR
+
+							print("blend %s"% layer.BLENDING_METHOD)
+							match(layer.BLENDING_METHOD):
+
+								LightLayer.BLENDING_METHODS.MIN:
+									#print("blend | MIN")
+									var max_r = minf(old_color.r,new_color.r)
+									var max_g = minf(old_color.g,new_color.g)
+									var max_b = minf(old_color.b,new_color.b)
+
+								LightLayer.BLENDING_METHODS.MAX:
+									#print("blend | MAX")
+									var max_r = maxf(old_color.r,new_color.r)
+									var max_g = maxf(old_color.g,new_color.g)
+									var max_b = maxf(old_color.b,new_color.b)
+
+								LightLayer.BLENDING_METHODS.DIVIDE:
+									#print("blend | DIVIDE")
+									mixed_color = Color(
+										old_color.r/(new_color.r+0.001),
+										old_color.g/(new_color.g+0.001),
+										old_color.b/(new_color.b+0.001))
+
+								LightLayer.BLENDING_METHODS.MULTIPLY|	LightLayer.BLENDING_METHODS.DEFAULT:
+									#print("blend | MULTIPLY")
+									mixed_color = Color(old_color.r*new_color.r,old_color.g*new_color.g,old_color.b*new_color.b)
+
+								LightLayer.BLENDING_METHODS.ADD|LightLayer.BLENDING_METHODS.MIX:
+									#print("blend | MIX or ADD")
+									var clamped_r = clamp(old_color.r+new_color.r,0,1)
+									var clamped_g = clamp(old_color.g+new_color.g,0,1)
+									var clamped_b = clamp(old_color.b+new_color.b,0,1)
+									mixed_color = Color(clamped_r,clamped_g,clamped_b)
+
+								LightLayer.BLENDING_METHODS.SUBTRACT:
+									#print("blend | SUBTRACT")
+									var clamped_r = clamp(old_color.r-new_color.r,0,1)
+									var clamped_g = clamp(old_color.g-new_color.g,0,1)
+									var clamped_b = clamp(old_color.b-new_color.b,0,1)
+									mixed_color = Color(clamped_r,clamped_g,clamped_b)
+
+							data.set_vertex_color(i,lerp(old_color,mixed_color,light.MIX*linear_distance))
+							#data.set_vertex_color(i,mixed_color)
 				var mesh_:Mesh = mesh.mesh;
 				mesh_.clear_surfaces()
 				for index in count:
@@ -218,7 +284,7 @@ func _on_open_file_selected(path: String) -> void:
 		var last_layer =  DATA.LAYERS[DATA.LAYERS.size()-1]
 		for light_data:VBLightData in result.LIGHTS:
 			if(light_data.PARENT_LAYER_ID == layer_data.ID):
-				on_add_light_to_layer(last_layer.MENU_ITEM,last_layer,light_data.POSITION, Color(light_data.COLOR.x,light_data.COLOR.y,light_data.COLOR.z),light_data.RADIUS,light_data.MIX)
+				on_add_light_to_layer(last_layer.LIST_ITEM,last_layer,light_data.POSITION, Color(light_data.COLOR.x,light_data.COLOR.y,light_data.COLOR.z),light_data.RADIUS,light_data.MIX)
 
 	for scene:VBSceneData in result.SCENES:
 		print(scene.PATH)
@@ -248,17 +314,17 @@ func _on_import_file_selected(path: String) -> void:
 
 func on_rotate_pressed(node):
 	gizmo.clear_selection()
-	$SubViewportContainer/SubViewport/Gizmo3D_MOVE.mode = Gizmo3D.ToolMode.ROTATE
+	gizmo.mode = Gizmo3D.ToolMode.ROTATE
 	gizmo.select(node)
 
 func on_scale_pressed(node):
 	gizmo.clear_selection()
-	$SubViewportContainer/SubViewport/Gizmo3D_MOVE.mode = Gizmo3D.ToolMode.SCALE
+	gizmo.mode = Gizmo3D.ToolMode.SCALE
 	gizmo.select(node)
 
-func on_move_pressed(node):
+func on_move_scene_pressed(node):
 	gizmo.clear_selection()
-	$SubViewportContainer/SubViewport/Gizmo3D_MOVE.mode = Gizmo3D.ToolMode.MOVE
+	gizmo.mode = Gizmo3D.ToolMode.MOVE
 	gizmo.select(node)
 
 func on_scale_changed(node,scene_list_item):
@@ -313,11 +379,20 @@ func on_bake_toggle_pressed(imported_scene:ImportedScene):
 	var check_box:CheckBox = imported_scene.LIST_ITEM.get_node("HBoxContainer/BAKE");
 	imported_scene.EXCLUDE = !check_box.button_pressed
 	if(imported_scene.EXCLUDE==true):
-		imported_scene.EXCLUDE = false
 		imported_scene.LIST_ITEM.get_node("ICON/ICON_NO_BAKE").show()
 	elif(imported_scene.EXCLUDE==false):
-		imported_scene.EXCLUDE = true
 		imported_scene.LIST_ITEM.get_node("ICON/ICON_NO_BAKE").hide()
+
+func on_delete_light(light:VertexLight):
+	_on_reset_pressed()
+	gizmo.clear_selection()
+
+	var index = 	light.LAYER.LIGHTS.find(light)
+	light.LIGHT_MESH.queue_free()
+	light.LIST_ITEM.queue_free()
+	var lights = light.LAYER.LIGHTS
+	lights.remove_at(index)
+
 
 func on_delete_scene_pressed(imported_scene:ImportedScene):
 	_on_reset_pressed()
@@ -363,7 +438,7 @@ func load_from_path(path,imported_position:Vector3=Vector3.ZERO, imported_scale:
 		imported_scene.LIST_ITEM = scene_list_item
 		scene_list_item.get_node("HBoxContainer/ROTATE").connect("pressed",on_rotate_pressed.bind(mesh))
 		scene_list_item.get_node("HBoxContainer/SCALE").connect("pressed",on_scale_pressed.bind(mesh))
-		scene_list_item.get_node("HBoxContainer/MOVE").connect("pressed",on_move_pressed.bind(mesh))
+		scene_list_item.get_node("HBoxContainer/MOVE").connect("pressed",on_move_scene_pressed.bind(mesh))
 		scene_list_item.get_node("HBoxContainer/DUPLICATE").connect("pressed",on_duplicated_pressed.bind(imported_scene))
 		scene_list_item.get_node("ICON/MORE_MENU/DELETE").connect("pressed",on_delete_scene_pressed.bind(imported_scene))
 		scene_list_item.get_node("HBoxContainer/BAKE").connect("pressed",on_bake_toggle_pressed.bind(imported_scene))
@@ -404,7 +479,8 @@ func _on_bake_pressed() -> void:
 	_on_reset_pressed()
 	for scene in DATA.SCENES:
 		for child:MeshInstance3D in scene.SCENE.get_children():
-			update_mesh(child)
+			if(scene.EXCLUDE == false):
+				update_mesh(child)
 			#for og_child:MeshInstance3D in scene.OG_SCENE.get_children():
 				#if(og_child.name == child.name):
 
@@ -416,12 +492,27 @@ func _on_gizmo_3d_transform_begin(mode: Gizmo3D.TransformMode) -> void:
 
 func _on_gizmo_3d_transform_changed(mode: Gizmo3D.TransformMode, value: Vector3) -> void:
 	#print(_on_gizmo_3d_transform_changed)
+	if(CURRENT_LIGHT != null && mode == Gizmo3D.TransformMode.SCALE):
+		CURRENT_LIGHT.LIGHT_MESH.scale =Vector3.ONE
+		var mesh:MeshInstance3D = CURRENT_LIGHT.LIGHT_MESH.get_node("MeshInstance3D")
+		mesh.scale = Vector3.ONE *CURRENT_LIGHT.RADIUS;
+		CURRENT_LIGHT.ACTUAL_LIGHT.omni_range = CURRENT_LIGHT.RADIUS;
 
+		CURRENT_LIGHT.RADIUS+=value.x/10.0
+		CURRENT_LIGHT.RADIUS+=value.y/10.0
+		CURRENT_LIGHT.RADIUS+=value.z/10.0
+		CURRENT_LIGHT.LIST_ITEM.get_node("VBoxContainer/RADIUS_CONTAINER/SpinBox").value = 	CURRENT_LIGHT.RADIUS
 	pass # Replace with function body.
 
 
 func _on_gizmo_3d_transform_end(mode: Gizmo3D.TransformMode) -> void:
+	if(CURRENT_LIGHT != null && mode == Gizmo3D.TransformMode.SCALE):
 
+		CURRENT_LIGHT.ACTUAL_LIGHT.omni_range = CURRENT_LIGHT.RADIUS;
+		var mesh:MeshInstance3D = CURRENT_LIGHT.LIGHT_MESH.get_node("MeshInstance3D")
+		mesh.scale = Vector3.ONE *CURRENT_LIGHT.RADIUS;
+		CURRENT_LIGHT.LIGHT_MESH.scale =Vector3.ONE
+		CURRENT_LIGHT.LIST_ITEM.get_node("VBoxContainer/RADIUS_CONTAINER/SpinBox").value = 	CURRENT_LIGHT.RADIUS
 	$HBoxContainer.visible = false
 	$MENU_BUTTON.visible = true;
 	#print(_on_gizmo_3d_transform_end)

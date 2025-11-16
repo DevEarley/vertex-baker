@@ -145,7 +145,6 @@ texture = SubResource("GradientTexture2D_7mycd")
 [node name="TextureRect2" type="TextureRect" parent="PALETTE_INSPECTOR"]
 texture_filter = 1
 custom_minimum_size = Vector2(32, 32)
-anchors_preset = -1
 offset_left = 2.0
 offset_top = 5.0
 offset_right = 32.0
@@ -295,7 +294,7 @@ script = ExtResource("4_1bvp3")
 MAIN = NodePath("..")
 
 [node name="ADD_LAYER" type="Button" parent="LAYER_INSPECTOR"]
-anchors_preset = -1
+anchors_preset = 2
 anchor_top = 1.0
 anchor_bottom = 1.0
 offset_left = 4.0
@@ -314,7 +313,6 @@ texture = SubResource("GradientTexture2D_7mycd")
 [node name="TextureRect2" type="TextureRect" parent="LAYER_INSPECTOR"]
 texture_filter = 1
 custom_minimum_size = Vector2(32, 32)
-anchors_preset = -1
 offset_left = 4.0
 offset_top = 5.0
 offset_right = 36.0
@@ -331,7 +329,7 @@ text = "LIGHT LAYERS
 
 [node name="ScrollContainer" type="ScrollContainer" parent="LAYER_INSPECTOR"]
 custom_minimum_size = Vector2(490, 0)
-anchors_preset = -1
+anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_top = 40.0
@@ -397,7 +395,7 @@ MAIN = NodePath("..")
 
 [node name="IMPORT_MESH" type="Button" parent="MESH_INSPECTOR"]
 custom_minimum_size = Vector2(490, 0)
-anchors_preset = -1
+anchors_preset = 2
 anchor_top = 1.0
 anchor_bottom = 1.0
 offset_left = 4.0
@@ -409,7 +407,7 @@ text = "IMPORT MESH"
 
 [node name="ScrollContainer" type="ScrollContainer" parent="MESH_INSPECTOR"]
 custom_minimum_size = Vector2(494, 300)
-anchors_preset = -1
+anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = 2.0
@@ -435,7 +433,6 @@ texture = SubResource("GradientTexture2D_7mycd")
 [node name="TextureRect2" type="TextureRect" parent="MESH_INSPECTOR"]
 texture_filter = 1
 custom_minimum_size = Vector2(32, 32)
-anchors_preset = -1
 offset_left = 7.0
 offset_top = 4.0
 offset_right = 32.0

@@ -1,5 +1,5 @@
 extends Node
-var LAYERS:Array[Layer]=[]
+var LAYERS:Array[LightLayer]=[]
 var SCENES:Array[ImportedScene]=[]
 var MATERIALS:Array[ImportedMaterial]=[]
 
