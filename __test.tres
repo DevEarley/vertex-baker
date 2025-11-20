@@ -1,73 +1,72 @@
-[gd_resource type="Resource" script_class="VBData" load_steps=15 format=3]
+[gd_resource type="Resource" script_class="VBData" load_steps=16 format=3]
 
-[ext_resource type="Script" path="res://VBLayerData.gd" id="1_gdi2u"]
-[ext_resource type="Script" path="res://VBLayerMaskData.gd" id="2_ttsc7"]
-[ext_resource type="Script" path="res://VBLightData.gd" id="3_q68e3"]
-[ext_resource type="Script" path="res://VBSceneData.gd" id="4_vs2rp"]
-[ext_resource type="Script" path="res://VBData.gd" id="5_46b78"]
-
-[sub_resource type="Resource" id="Resource_v8n4k"]
-script = ExtResource("1_gdi2u")
-NAME = "UNTITLED #0"
-
-[sub_resource type="Resource" id="Resource_ap4hm"]
-script = ExtResource("1_gdi2u")
-ID = 1
-NAME = "UNTITLED #1"
-BLENDING_METHOD = 9
+[ext_resource type="Script" path="res://VBLayerData.gd" id="1_ttsc7"]
+[ext_resource type="Script" path="res://VBLayerMaskData.gd" id="2_q68e3"]
+[ext_resource type="Script" path="res://VBLightData.gd" id="3_vs2rp"]
+[ext_resource type="Script" path="res://VBMaterialOverride.gd" id="4_46b78"]
+[ext_resource type="Script" path="res://VBSceneData.gd" id="5_v8n4k"]
+[ext_resource type="Script" path="res://VBData.gd" id="6_ap4hm"]
 
 [sub_resource type="Resource" id="Resource_u1luq"]
-script = ExtResource("2_ttsc7")
-SCENE_ID = 1763328927
-MESH_NAME = "Cube1"
-SURFACE_ID = 1
+script = ExtResource("1_ttsc7")
+ID = 1763596522
+NAME = "UNTITLED #1763596522"
+BLENDING_METHOD = 1
 
 [sub_resource type="Resource" id="Resource_lfu16"]
-script = ExtResource("2_ttsc7")
-LAYER_ID = 1
-SCENE_ID = 1763328927
-MESH_NAME = "Cube1"
-SURFACE_ID = 1
+script = ExtResource("1_ttsc7")
+ID = 1763596526
+NAME = "UNTITLED #1763596526"
+BLENDING_METHOD = 1
 
 [sub_resource type="Resource" id="Resource_yxuit"]
-script = ExtResource("2_ttsc7")
-LAYER_ID = 1
-SCENE_ID = 1763328928
+script = ExtResource("2_q68e3")
+LAYER_ID = 1763596522
+SCENE_ID = 1763596520
 MESH_NAME = "Cube1"
 
 [sub_resource type="Resource" id="Resource_h2qsc"]
-script = ExtResource("3_q68e3")
-POSITION = Vector3(-1.7253425, 5.111719, 0)
-COLOR = Vector3(1, 0, 0)
-MIX = 1.0
-RADIUS = 10.0
+script = ExtResource("2_q68e3")
+LAYER_ID = 1763596526
+SCENE_ID = 1763596520
+MESH_NAME = "Cube1"
+SURFACE_ID = 1
 
 [sub_resource type="Resource" id="Resource_glos5"]
-script = ExtResource("3_q68e3")
-POSITION = Vector3(12.710029, 0, 0.7344856)
-COLOR = Vector3(1, 0, 0)
+script = ExtResource("3_vs2rp")
+POSITION = Vector3(0, 19.693422, -1.9150963)
+COLOR = Vector3(0.03125, 1, 0)
 MIX = 1.0
-RADIUS = 10.0
-PARENT_LAYER_ID = 1
+RADIUS = 100.0
+PARENT_LAYER_ID = 1763596522
 
 [sub_resource type="Resource" id="Resource_qt5kl"]
-script = ExtResource("4_vs2rp")
+script = ExtResource("3_vs2rp")
+COLOR = Vector3(1, 0, 0)
+MIX = 1.0
+RADIUS = 100.0
+PARENT_LAYER_ID = 1763596526
+
+[sub_resource type="Resource" id="Resource_gyei6"]
+script = ExtResource("4_46b78")
+MATERIAL_NAME = "green-glass"
+OVERRIDE_ID = 4
+
+[sub_resource type="Resource" id="Resource_o0dt4"]
+script = ExtResource("4_46b78")
+MATERIAL_NAME = "Cube1_auv"
+
+[sub_resource type="Resource" id="Resource_wliv4"]
+script = ExtResource("5_v8n4k")
 PATH = "C:/Repos/vertex-baker/lamp-001.glb"
-ID = 1763328927
+ID = 1763596520
 NAME = "LightMeshPrefab"
 SCALE = Vector3(1, 1, 1)
 
-[sub_resource type="Resource" id="Resource_gyei6"]
-script = ExtResource("4_vs2rp")
-PATH = "C:/Repos/vertex-baker/lamp-001.glb"
-ID = 1763328928
-NAME = "@Sprite3D@533"
-POSITION = Vector3(6.415794, 0, 0)
-SCALE = Vector3(1, 1, 1)
-
 [resource]
-script = ExtResource("5_46b78")
-LAYERS = Array[ExtResource("1_gdi2u")]([SubResource("Resource_v8n4k"), SubResource("Resource_ap4hm")])
-LIGHTS = Array[ExtResource("3_q68e3")]([SubResource("Resource_h2qsc"), SubResource("Resource_glos5")])
-SCENES = Array[ExtResource("4_vs2rp")]([SubResource("Resource_qt5kl"), SubResource("Resource_gyei6")])
-LAYER_MASKS = Array[ExtResource("2_ttsc7")]([SubResource("Resource_u1luq"), SubResource("Resource_lfu16"), SubResource("Resource_yxuit")])
+script = ExtResource("6_ap4hm")
+LAYERS = Array[ExtResource("1_ttsc7")]([SubResource("Resource_u1luq"), SubResource("Resource_lfu16")])
+LIGHTS = Array[ExtResource("3_vs2rp")]([SubResource("Resource_glos5"), SubResource("Resource_qt5kl")])
+SCENES = Array[ExtResource("5_v8n4k")]([SubResource("Resource_wliv4")])
+MATERIAL_OVERRIDES = Array[ExtResource("4_46b78")]([SubResource("Resource_gyei6"), SubResource("Resource_o0dt4")])
+LAYER_MASKS = Array[ExtResource("2_q68e3")]([SubResource("Resource_yxuit"), SubResource("Resource_h2qsc")])

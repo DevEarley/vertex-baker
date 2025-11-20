@@ -1,0 +1,13 @@
+[gd_resource type="ShaderMaterial" load_steps=3 format=3 uid="uid://6vy62c7xkidj"]
+
+[ext_resource type="Shader" uid="uid://c4jw1e43bipwv" path="res://shaders/cave_water_shader.tres" id="1_6gfwt"]
+[ext_resource type="Texture2D" uid="uid://b73nubjgcryrv" path="res://textures/water.png" id="2_4lgl7"]
+
+[resource]
+render_priority = 2
+shader = ExtResource("1_6gfwt")
+shader_parameter/SPEED = 0.1
+shader_parameter/MAIN_TEX = ExtResource("2_4lgl7")
+shader_parameter/HIGHLIGHT = Color(0, 0.6947574, 0.6959366, 1)
+shader_parameter/LIGHTER_COLOR = Color(0.8732984, 0.8732984, 0.8732984, 1)
+shader_parameter/DEEP_COLOR = Color(1.2273341e-06, 0, 0.47234738, 1)

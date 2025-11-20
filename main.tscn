@@ -1,11 +1,16 @@
-[gd_scene load_steps=19 format=3 uid="uid://egxf4avoauls"]
+[gd_scene load_steps=24 format=3 uid="uid://egxf4avoauls"]
 
 [ext_resource type="Script" uid="uid://bxhfyvkolmnms" path="res://vertex-painter.gd" id="1_ig7tw"]
 [ext_resource type="Script" uid="uid://hdlai2as1f4i" path="res://free-look.gd" id="2_0xm2m"]
+[ext_resource type="Material" uid="uid://bvk1be4yn36ct" path="res://materials/default.tres" id="2_074og"]
+[ext_resource type="Material" uid="uid://6vy62c7xkidj" path="res://materials/water.tres" id="3_cegan"]
 [ext_resource type="Script" uid="uid://e3f1ox6y6cvg" path="res://addons/Gizmo3DScript/gizmo3D.gd" id="3_h2yge"]
 [ext_resource type="Script" uid="uid://x6hxn1ffvby6" path="res://window_mover.gd" id="4_1bvp3"]
+[ext_resource type="Material" uid="uid://fnapai20ru5g" path="res://materials/water-flow.tres" id="4_82xsv"]
+[ext_resource type="Material" uid="uid://cq6wm4511nias" path="res://materials/windy.tres" id="5_getpj"]
 [ext_resource type="Script" uid="uid://dev0gohk766sy" path="res://minimize.gd" id="5_lquwl"]
 [ext_resource type="Theme" uid="uid://2h4h4f0sagcw" path="res://main_theme.tres" id="6_7mycd"]
+[ext_resource type="Material" uid="uid://brkiydmnhih7q" path="res://materials/glass.tres" id="6_ryguw"]
 [ext_resource type="Texture2D" uid="uid://c12b0vjqpapia" path="res://icon_palette.png" id="7_4c57u"]
 [ext_resource type="Texture2D" uid="uid://c8a5er8tacab3" path="res://icon_material.png" id="8_4c57u"]
 [ext_resource type="Texture2D" uid="uid://bf325cwloju67" path="res://icon_geo.png" id="8_efxa6"]
@@ -42,6 +47,11 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_ig7tw")
 gizmo = NodePath("SubViewportContainer/SubViewport/Gizmo3D_MOVE")
+DEFAULT_MATERIAL = ExtResource("2_074og")
+WATER_MATERIAL = ExtResource("3_cegan")
+WATER_FLOW_MATERIAL = ExtResource("4_82xsv")
+WINDY_MATERIAL = ExtResource("5_getpj")
+GLASS_MATERIAL = ExtResource("6_ryguw")
 
 [node name="TextureRect" type="TextureRect" parent="."]
 layout_mode = 1
@@ -67,11 +77,12 @@ handle_input_locally = false
 size = Vector2i(3840, 2160)
 render_target_update_mode = 4
 
-[node name="Camera3D" type="Camera3D" parent="SubViewportContainer/SubViewport" node_paths=PackedStringArray("gizmo")]
+[node name="Camera3D" type="Camera3D" parent="SubViewportContainer/SubViewport" node_paths=PackedStringArray("gizmo", "H_SLIDER")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 2.4474885)
 environment = SubResource("Environment_0xm2m")
 script = ExtResource("2_0xm2m")
 gizmo = NodePath("../Gizmo3D_MOVE")
+H_SLIDER = NodePath("../../../HSlider")
 
 [node name="Gizmo3D_MOVE" type="Node3D" parent="SubViewportContainer/SubViewport"]
 script = ExtResource("3_h2yge")
@@ -128,7 +139,7 @@ text = "BAKE"
 [node name="PALETTE_INSPECTOR" type="Window" parent="." node_paths=PackedStringArray("MAIN")]
 oversampling_override = 1.0
 title = "PALETTE INSPECTOR"
-position = Vector2i(25, 1190)
+position = Vector2i(1400, 80)
 size = Vector2i(500, 40)
 borderless = true
 unfocusable = true
@@ -197,7 +208,7 @@ FOLD_BUTTON = NodePath(".")
 [node name="MATERIAL_INSPECTOR" type="Window" parent="." node_paths=PackedStringArray("MAIN")]
 oversampling_override = 1.0
 title = "MESH INSPECTOR"
-position = Vector2i(36, 1119)
+position = Vector2i(1400, 160)
 size = Vector2i(500, 40)
 transient = true
 borderless = true
@@ -484,28 +495,37 @@ FOLD_BUTTON = NodePath(".")
 
 [node name="IMPORT" type="FileDialog" parent="."]
 title = "Open a File"
+initial_position = 2
 ok_button_text = "IMPORT MESH"
 file_mode = 0
 display_mode = 1
 access = 2
+filters = PackedStringArray("*.glb", "*.gltf")
 
 [node name="EXPORT" type="FileDialog" parent="."]
 title = "EXPORT MESH"
+initial_position = 2
 ok_button_text = "EXPORT MESH"
 display_mode = 1
 access = 2
+filters = PackedStringArray("*.gltf", "*.glb")
 
 [node name="OPEN" type="FileDialog" parent="."]
 title = "Open a File"
+initial_position = 2
 ok_button_text = "OPEN LIGHT DATA"
 file_mode = 0
 display_mode = 1
 access = 2
+filters = PackedStringArray("*.tres")
 
 [node name="SAVE" type="FileDialog" parent="."]
 title = "SAVE LIGHT DATA"
-ok_button_text = "SAVE LIGHT DATA"
+initial_position = 2
+ok_button_text = "SAVE PROJECT"
+display_mode = 1
 access = 2
+filters = PackedStringArray("*.tres")
 
 [node name="MENU_BUTTON" type="Button" parent="."]
 layout_mode = 1
@@ -544,6 +564,35 @@ offset_left = -49.0
 offset_bottom = 31.0
 grow_horizontal = 0
 text = "BAKE"
+
+[node name="HSlider" type="HSlider" parent="."]
+custom_minimum_size = Vector2(500, 20)
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -250.0
+offset_top = -16.0
+offset_right = 250.0
+grow_horizontal = 2
+grow_vertical = 0
+min_value = 0.2
+max_value = 20.0
+step = 0.2
+value = 0.2
+editable = false
+scrollable = false
+ticks_position = 1
+
+[node name="Label" type="Label" parent="HSlider"]
+layout_mode = 0
+offset_left = -122.0
+offset_top = -6.0
+offset_right = -4.0
+offset_bottom = 17.0
+text = "CAMERA SPEED"
 
 [connection signal="transform_begin" from="SubViewportContainer/SubViewport/Gizmo3D_MOVE" to="." method="_on_gizmo_3d_transform_begin"]
 [connection signal="transform_changed" from="SubViewportContainer/SubViewport/Gizmo3D_MOVE" to="." method="_on_gizmo_3d_transform_changed"]

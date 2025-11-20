@@ -3,6 +3,7 @@ var LAYERS:Array[LightLayer]=[]
 var SCENES:Array[ImportedScene]=[]
 var MATERIALS:Array[ImportedMaterial]=[]
 var LAYER_MASKS:Array[LightLayerMask]=[]
+var MATERIAL_OVERRIDES:Array[MaterialOverride]=[]
 
 func to_project_data():
 	var project_data:VBData = VBData.new()
@@ -10,6 +11,13 @@ func to_project_data():
 	project_data.LAYERS = []
 	project_data.LIGHTS = []
 	project_data.LAYER_MASKS = []
+	project_data.MATERIAL_OVERRIDES = []
+
+	for mat_override in MATERIAL_OVERRIDES:
+		var vb_mat_override:VBMaterialOverride =VBMaterialOverride.new()
+		vb_mat_override.MATERIAL_NAME = mat_override.MATERIAL_NAME
+		vb_mat_override.OVERRIDE_ID = mat_override.OVERRIDE_ID
+		project_data.MATERIAL_OVERRIDES.push_back(vb_mat_override);
 
 	for layer_mask in LAYER_MASKS:
 		var vb_layer_mask:VBLayerMaskData =VBLayerMaskData.new()

@@ -9,6 +9,7 @@ radius = 1.0
 height = 2.0
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ggcam"]
+render_priority = 99
 transparency = 1
 cull_mode = 1
 shading_mode = 2
@@ -20,7 +21,7 @@ billboard = 2
 no_depth_test = true
 fixed_size = true
 texture_filter = 0
-render_priority = 1
+render_priority = 101
 texture = ExtResource("1_ggcam")
 
 [node name="StaticBody3D" type="StaticBody3D" parent="."]

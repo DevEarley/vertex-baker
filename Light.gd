@@ -3,7 +3,7 @@ class_name VertexLight;
 var COLOR:Color;
 var MIX:float;
 var RADIUS:float
-var ID:int
+var PARENT_LAYER_ID:int
 #var ACTUAL_LIGHT:OmniLight3D
 var LIGHT_MESH:Sprite3D
 var IMPORTED_POSITION:Vector3

@@ -1,0 +1,11 @@
+[gd_resource type="ShaderMaterial" load_steps=3 format=3 uid="uid://fnapai20ru5g"]
+
+[ext_resource type="Shader" uid="uid://bl4olak8rg52h" path="res://shaders/water_flow_shader.tres" id="1_85ijp"]
+[ext_resource type="Texture2D" uid="uid://57umowdtroa3" path="res://textures/water-flow.png" id="2_t1yrq"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_85ijp")
+shader_parameter/ColorParameter = Color(1, 1, 1, 1)
+shader_parameter/SPEED2 = 0.1
+shader_parameter/MAIN_TEX = ExtResource("2_t1yrq")

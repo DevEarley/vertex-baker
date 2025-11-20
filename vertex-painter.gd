@@ -7,16 +7,31 @@ var mesh_list_item_prefab = preload("res://list_item_mesh_prefab.tscn")
 var scene_list_item_prefab = preload("res://list_item_scene_prefab.tscn")
 var surface_list_item_prefab = preload("res://list_item_surface_prefab.tscn")
 var material_list_item_prefab = preload("res://list_item_material_prefab.tscn")
+var material_override_list_item_prefab = preload("res://list_item_material_override_prefab.tscn")
 var light_mesh = preload("res://light_mesh_prefab.tscn")
 var imported_mesh_prefab = preload("res://imported_mesh_prefab.tscn")
 var scene_prefab = preload("res://scene_prefab.tscn")
 var surface_prefab = preload("res://surface_prefab.tscn")
+
 @export var gizmo : Gizmo3D
+enum OVERRIDE_MATERIALS {
+	DEFAULT = 0,
+	WATER = 1,
+	WATER_FLOW = 2,
+	WINDY = 3,
+	GLASS = 4
+	}
+@export var DEFAULT_MATERIAL:Material
+@export var WATER_MATERIAL:Material
+@export var WATER_FLOW_MATERIAL:Material
+@export var WINDY_MATERIAL:Material
+@export var GLASS_MATERIAL:Material
 
 var OG_MESH
 var brush_hardness = 1.0
 var calculated_size:float = 5.0
 var PREVIOUS_COLOR:Color = Color.WHITE
+var LIGHT_SPHERES_ON = true
 
 var CURRENT_WINDOW:WindowMover
 
@@ -44,7 +59,7 @@ func _on_add_layer_pressed(
 	if(imported_id == -1):
 		layer.ID = Time.get_unix_time_from_system()
 	else:
-		layer.ID == imported_id
+		layer.ID = imported_id
 	if(layer_name == "UNTITLED"):
 		layer.NAME = "%s #%s"%[layer_name,layer.ID]
 	else:
@@ -105,6 +120,7 @@ func on_add_light_to_layer(
 	light.LIGHT_MESH.modulate = light.COLOR
 	light.RADIUS = imported_radius
 	light.LAYER = light_layer
+	light.PARENT_LAYER_ID = light_layer.ID
 	#if(imported_mix ==0):
 		#light.ACTUAL_LIGHT.hide()
 	#else:
@@ -112,11 +128,13 @@ func on_add_light_to_layer(
 
 	#light.ACTUAL_LIGHT.omni_attenuation =2-imported_mix;
 	light.MIX = imported_mix
-	light.ID = light_layer.LIGHTS.size()
+	#light.LAYER = light_layer.LIGHTS.size()
 	light_layer.LIGHTS.push_back(light)
 	$SubViewportContainer/SubViewport.add_child(light.LIGHT_MESH)
 	var new_light = light_prefab.instantiate()
 	light.LIST_ITEM = new_light;
+	var name_label:Label = new_light.get_node("VBoxContainer/LIGHT_NAME")
+	name_label.text ="%s"% light.PARENT_LAYER_ID
 	var radius_control:SpinBox = new_light.get_node("VBoxContainer/RADIUS_CONTAINER/SpinBox")
 	radius_control.value =imported_radius
 	radius_control.connect("value_changed",on_radius_value_changed.bind(light,radius_control))
@@ -175,14 +193,17 @@ func on_mix_value_changed(value:float,light:VertexLight,mix:SpinBox):
 
 
 func on_duplicate_light(light:VertexLight):
-	on_add_light_to_layer(light.LAYER.LIST_ITEM,light.LAYER,light.LIGHT_MESH.global_position,light.COLOR,light.RADIUS,light.MIX)
+	on_add_light_to_layer(light.LAYER.LIST_ITEM,
+		light.LAYER,
+		light.LIGHT_MESH.global_position,
+		light.COLOR,
+		light.RADIUS,
+		light.MIX)
 
 func on_move_light(light:VertexLight):
 	gizmo.clear_selection()
 	gizmo.mode = Gizmo3D.ToolMode.MOVE
 	gizmo.select(light.LIGHT_MESH)
-	pass
-
 
 func _on_import_button_pressed() -> void:
 	$HBoxContainer.visible = false
@@ -195,17 +216,14 @@ func _on_save_button_pressed() -> void:
 	$SAVE.show()
 
 func _on_export_button_pressed() -> void:
-
 	$HBoxContainer.visible = false
 	$MENU_BUTTON.visible = true;
 	$EXPORT.show()
 
 func _on_open_button_pressed() -> void:
-
 	$HBoxContainer.visible = false
 	$MENU_BUTTON.visible = true;
 	$OPEN.show()
-
 
 func on_toggle_layer(layer:Control):
 	var children =  layer.get_node("VBoxContainer/LIGHTS").get_children();
@@ -220,148 +238,137 @@ func on_toggle_layer(layer:Control):
 	else:
 		toggle.text = "show"
 		add.hide()
-
-
 	for child in layer.get_node("VBoxContainer/LIGHTS").get_children():
 		child.visible = showing
 
 func show_palette(for_light:VBoxContainer):
 	pass
 
-func update_mesh(mesh:MeshInstance3D, imported_scene:ImportedScene) -> void:
-
-		var surface_count =mesh.mesh.get_surface_count()
-
-		var tools = []
-
-		for index in surface_count:
-			tools.push_back(MeshDataTool.new())
-#
-		#for layer in DATA.LAYERS:
-				#for light in layer.LIGHTS:
-					#light.ACTUAL_LIGHT.show()
-
-		for layer in DATA.LAYERS:
-			for light in layer.LIGHTS:
-				for index in surface_count:
-					var is_masked = DATA.LAYER_MASKS.any(func(layer_mask:LightLayerMask):
+func blend_lights_into_vertex_colors(
+	mesh:MeshInstance3D,
+	imported_scene:ImportedScene,
+	layer,
+	light,
+	index,
+	tools):
+	var is_masked = DATA.LAYER_MASKS.any(func(layer_mask:LightLayerMask):
 						return (layer_mask.LAYER_ID == layer.ID &&
 						layer_mask.MESH_NAME == mesh.name &&
 						layer_mask.SURFACE_ID == index &&
 						layer_mask.SCENE_ID == imported_scene.ID))
 
-					var data:MeshDataTool = tools[index-1]
-					data.create_from_surface(mesh.mesh, index)
-					if(is_masked == false):
-						for i in range(data.get_vertex_count()):
-							var vertex = mesh.to_global(data.get_vertex(i))
-							var vertex_distance:float = vertex.distance_to(light.LIGHT_MESH.global_position)
-							if vertex_distance < light.RADIUS:
-								var linear_distance = 1 - (vertex_distance / (light.RADIUS))
-								var old_color:Color = data.get_vertex_color(i)
-								var new_color:Color = light.COLOR
-								var mixed_color:Color = light.COLOR
-								var mix = 1.0
-								#print("blend %s"% layer.BLENDING_METHOD)
-								match(layer.BLENDING_METHOD):
+	var data:MeshDataTool = tools[index-1]
+	data.create_from_surface(mesh.mesh, index)
+	if(is_masked == false):
+		for i in range(data.get_vertex_count()):
+			var vertex = mesh.to_global(data.get_vertex(i))
+			var vertex_distance:float = vertex.distance_to(light.LIGHT_MESH.global_position)
+			if vertex_distance < light.RADIUS:
+				var linear_distance = 1 - (vertex_distance / (light.RADIUS))
+				var old_color:Color = data.get_vertex_color(i)
+				var new_color:Color = light.COLOR
+				var mixed_color:Color = light.COLOR
+				var mix = 1.0
+				match(layer.BLENDING_METHOD):
 
-									LightLayer.BLENDING_METHODS.MIN:
-										#print("blend | MIN")
-										var max_r = minf(old_color.r,new_color.r)
-										var max_g = minf(old_color.g,new_color.g)
-										var max_b = minf(old_color.b,new_color.b)
-										mix = light.MIX*linear_distance
+					LightLayer.BLENDING_METHODS.MIN:
+						var max_r = minf(old_color.r,new_color.r)
+						var max_g = minf(old_color.g,new_color.g)
+						var max_b = minf(old_color.b,new_color.b)
+						mix = light.MIX*linear_distance
 
-									LightLayer.BLENDING_METHODS.MAX:
-										#print("blend | MAX")
-										var max_r = maxf(old_color.r,new_color.r)
-										var max_g = maxf(old_color.g,new_color.g)
-										var max_b = maxf(old_color.b,new_color.b)
-										mix = light.MIX*linear_distance
+					LightLayer.BLENDING_METHODS.MAX:
+						var max_r = maxf(old_color.r,new_color.r)
+						var max_g = maxf(old_color.g,new_color.g)
+						var max_b = maxf(old_color.b,new_color.b)
+						mix = light.MIX*linear_distance
 
-									LightLayer.BLENDING_METHODS.DIVIDE:
-										#print("blend | DIVIDE")
-										mixed_color = Color(
-											old_color.r/(new_color.r+0.001),
-											old_color.g/(new_color.g+0.001),
-											old_color.b/(new_color.b+0.001))
-										mix = light.MIX*linear_distance
+					LightLayer.BLENDING_METHODS.DIVIDE:
+						mixed_color = Color(
+							old_color.r/(new_color.r+0.001),
+							old_color.g/(new_color.g+0.001),
+							old_color.b/(new_color.b+0.001))
+						mix = light.MIX*linear_distance
 
-									LightLayer.BLENDING_METHODS.MULTIPLY,	LightLayer.BLENDING_METHODS.DEFAULT:
-										#print("blend | MULTIPLY")
-										mixed_color = Color(old_color.r*new_color.r,old_color.g*new_color.g,old_color.b*new_color.b)
-										mix = light.MIX*linear_distance
+					LightLayer.BLENDING_METHODS.MULTIPLY,LightLayer.BLENDING_METHODS.DEFAULT:
 
-									LightLayer.BLENDING_METHODS.ADD:
-										#print("blend | MIX or ADD")
-										var clamped_r = clamp(old_color.r+new_color.r,0,1)
-										var clamped_g = clamp(old_color.g+new_color.g,0,1)
-										var clamped_b = clamp(old_color.b+new_color.b,0,1)
-										mixed_color = Color(clamped_r,clamped_g,clamped_b)
+						mixed_color = Color(old_color.r*new_color.r,old_color.g*new_color.g,old_color.b*new_color.b)
+						mix = light.MIX*linear_distance
 
-										mix = light.MIX*linear_distance
+					LightLayer.BLENDING_METHODS.ADD:
+						var clamped_r = clamp(old_color.r+new_color.r,0,1)
+						var clamped_g = clamp(old_color.g+new_color.g,0,1)
+						var clamped_b = clamp(old_color.b+new_color.b,0,1)
+						mixed_color = Color(clamped_r,clamped_g,clamped_b)
 
-									LightLayer.BLENDING_METHODS.MIX:#add flat
-										#print("blend | MIX or ADD")
-										var clamped_r = clamp(old_color.r+new_color.r,0,1)
-										var clamped_g = clamp(old_color.g+new_color.g,0,1)
-										var clamped_b = clamp(old_color.b+new_color.b,0,1)
-										mixed_color = Color(clamped_r,clamped_g,clamped_b)
-										mix = light.MIX
+						mix = light.MIX*linear_distance
 
-									LightLayer.BLENDING_METHODS.SUBTRACT:
-										#print("blend | SUBTRACT")
-										var clamped_r = clamp(old_color.r-new_color.r,0,1)
-										var clamped_g = clamp(old_color.g-new_color.g,0,1)
-										var clamped_b = clamp(old_color.b-new_color.b,0,1)
-										mixed_color = Color(clamped_r,clamped_g,clamped_b)
-										mix = light.MIX*linear_distance
+					LightLayer.BLENDING_METHODS.MIX:
+						var clamped_r = clamp(old_color.r+new_color.r,0,1)
+						var clamped_g = clamp(old_color.g+new_color.g,0,1)
+						var clamped_b = clamp(old_color.b+new_color.b,0,1)
+						mixed_color = Color(clamped_r,clamped_g,clamped_b)
+						mix = light.MIX
 
-									LightLayer.BLENDING_METHODS.MIN_FLAT:
-										#print("blend | MIN")
-										var max_r = minf(old_color.r,new_color.r)
-										var max_g = minf(old_color.g,new_color.g)
-										var max_b = minf(old_color.b,new_color.b)
-										mix = light.MIX
+					LightLayer.BLENDING_METHODS.SUBTRACT:
+						var clamped_r = clamp(old_color.r-new_color.r,0,1)
+						var clamped_g = clamp(old_color.g-new_color.g,0,1)
+						var clamped_b = clamp(old_color.b-new_color.b,0,1)
+						mixed_color = Color(clamped_r,clamped_g,clamped_b)
+						mix = light.MIX*linear_distance
 
-									LightLayer.BLENDING_METHODS.MAX_FLAT:
-										#print("blend | MAX")
-										var max_r = maxf(old_color.r,new_color.r)
-										var max_g = maxf(old_color.g,new_color.g)
-										var max_b = maxf(old_color.b,new_color.b)
-										mix = light.MIX
+					LightLayer.BLENDING_METHODS.MIN_FLAT:
+						var max_r = minf(old_color.r,new_color.r)
+						var max_g = minf(old_color.g,new_color.g)
+						var max_b = minf(old_color.b,new_color.b)
+						mix = light.MIX
 
-									LightLayer.BLENDING_METHODS.DIVIDE_FLAT:
-										#print("blend | DIVIDE")
-										mixed_color = Color(
-											old_color.r/(new_color.r+0.001),
-											old_color.g/(new_color.g+0.001),
-											old_color.b/(new_color.b+0.001))
-										mix = light.MIX
+					LightLayer.BLENDING_METHODS.MAX_FLAT:
+						var max_r = maxf(old_color.r,new_color.r)
+						var max_g = maxf(old_color.g,new_color.g)
+						var max_b = maxf(old_color.b,new_color.b)
+						mix = light.MIX
 
-									LightLayer.BLENDING_METHODS.MULTIPLY_FLAT:
-										#print("blend | MULTIPLY")
-										mixed_color = Color(old_color.r*new_color.r,old_color.g*new_color.g,old_color.b*new_color.b)
-										mix = light.MIX
+					LightLayer.BLENDING_METHODS.DIVIDE_FLAT:
+						mixed_color = Color(
+							old_color.r/(new_color.r+0.001),
+							old_color.g/(new_color.g+0.001),
+							old_color.b/(new_color.b+0.001))
+						mix = light.MIX
 
-									LightLayer.BLENDING_METHODS.SUBTRACT_FLAT:
-										#print("blend | SUBTRACT")
-										var clamped_r = clamp(old_color.r-new_color.r,0,1)
-										var clamped_g = clamp(old_color.g-new_color.g,0,1)
-										var clamped_b = clamp(old_color.b-new_color.b,0,1)
-										mixed_color = Color(clamped_r,clamped_g,clamped_b)
-										mix = light.MIX
-								data.set_vertex_color(i,lerp(old_color,mixed_color,mix))
+					LightLayer.BLENDING_METHODS.MULTIPLY_FLAT:
+						mixed_color = Color(old_color.r*new_color.r,old_color.g*new_color.g,old_color.b*new_color.b)
+						mix = light.MIX
 
+					LightLayer.BLENDING_METHODS.SUBTRACT_FLAT:
+						var clamped_r = clamp(old_color.r-new_color.r,0,1)
+						var clamped_g = clamp(old_color.g-new_color.g,0,1)
+						var clamped_b = clamp(old_color.b-new_color.b,0,1)
+						mixed_color = Color(clamped_r,clamped_g,clamped_b)
+						mix = light.MIX
+				data.set_vertex_color(i,lerp(old_color,mixed_color,mix))
+
+
+func update_mesh(mesh:MeshInstance3D, imported_scene:ImportedScene) -> void:
+		var surface_count =mesh.mesh.get_surface_count()
+		var tools = []
+		for index in surface_count:
+			tools.push_back(MeshDataTool.new())
+		for layer in DATA.LAYERS:
+			for light in layer.LIGHTS:
+				for index in surface_count:
+					blend_lights_into_vertex_colors(
+						mesh,
+						imported_scene,
+						layer,
+						light,
+						index,
+						tools)
 				var mesh_:Mesh = mesh.mesh;
 				mesh_.clear_surfaces()
 				for index in surface_count:
 					var data = tools[index-1]
 					data.commit_to_surface(mesh.mesh)
-
-		#for layer in DATA.LAYERS:
-				#for light in layer.LIGHTS:
-					#light.ACTUAL_LIGHT.hide()
 
 
 func _on_open_file_selected(path: String) -> void:
@@ -370,6 +377,13 @@ func _on_open_file_selected(path: String) -> void:
 		result =  load(path)
 	else:
 		return
+
+	for vb_material_override:VBMaterialOverride in result.MATERIAL_OVERRIDES:
+		var material_override:MaterialOverride = MaterialOverride.new()
+		material_override.MATERIAL_NAME = vb_material_override.MATERIAL_NAME
+		material_override.OVERRIDE_ID = vb_material_override.OVERRIDE_ID
+		DATA.MATERIAL_OVERRIDES.push_back(material_override)
+
 
 	for layer_mask_data:VBLayerMaskData in result.LAYER_MASKS:
 		var layer_mask:LightLayerMask = LightLayerMask.new()
@@ -380,21 +394,32 @@ func _on_open_file_selected(path: String) -> void:
 		DATA.LAYER_MASKS.push_back(layer_mask)
 	for layer_data:VBLayerData in result.LAYERS:
 		_on_add_layer_pressed(layer_data.NAME,layer_data.BLENDING_METHOD,layer_data.ID)
-		var last_layer =  DATA.LAYERS[DATA.LAYERS.size()-1]
 		for light_data:VBLightData in result.LIGHTS:
 			if(light_data.PARENT_LAYER_ID == layer_data.ID):
-				on_add_light_to_layer(
-					last_layer.LIST_ITEM,
-					last_layer,
-					light_data.POSITION,
-					Color(light_data.COLOR.x,light_data.COLOR.y,light_data.COLOR.z),
-					light_data.RADIUS,
-					light_data.MIX)
+				var last_layer_array =  DATA.LAYERS.filter(func(layer):return layer.ID == light_data.PARENT_LAYER_ID)
+				if(last_layer_array!=null && last_layer_array.size()>0):
+					var last_layer = last_layer_array[0]
+					on_add_light_to_layer(
+						last_layer.LIST_ITEM,
+						last_layer,
+						light_data.POSITION,
+						Color(light_data.COLOR.x,light_data.COLOR.y,light_data.COLOR.z),
+						light_data.RADIUS,
+						light_data.MIX)
 
 	for scene:VBSceneData in result.SCENES:
 		print(scene.PATH)
 		load_from_path(scene.PATH, scene.POSITION,scene.ROTATION,scene.SCALE,scene.ID)
 	_on_bake_pressed()
+
+	for override in DATA.MATERIAL_OVERRIDES:
+		for scene in DATA.SCENES:
+			for child in scene.SCENE.get_children():
+				recursively_apply_material_to_scene(
+					scene,
+					child,
+					override.OVERRIDE_ID,
+					override.MATERIAL_NAME);
 
 func _on_save_file_selected(path: String) -> void:
 	var data = DATA.to_project_data();
@@ -604,6 +629,7 @@ func load_from_path(
 	imported_ID:int=-1):
 	if(path == ""):return
 	print("load_from_current_path")
+
 	var gltf_state_load = GLTFState.new()
 	var gltf_state_load_2 = GLTFState.new()
 	var gltf_document_load_2 = GLTFDocument.new()
@@ -661,15 +687,83 @@ func update_material_inspector():
 		child.queue_free()
 	var grouped_materials = DATA.MATERIALS.map(func (imported_material:ImportedMaterial):
 		var grouped_material_count = DATA.MATERIALS.filter(func(mat):return imported_material.NAME == mat.NAME).size()
-		return "%s (%s)" % [imported_material.NAME,grouped_material_count] )
+		return [imported_material.NAME,grouped_material_count] )
 	var distinct_grouped_materials = []
+
 	for mat in grouped_materials:
 		if(distinct_grouped_materials.has(mat) == false):
 			distinct_grouped_materials.push_back(mat)
+
 	for mat in distinct_grouped_materials:
-		var material_list_item = material_list_item_prefab.instantiate()
-		material_list_item.get_node("ICON/NAME").text = mat
+		var material_list_item = material_override_list_item_prefab.instantiate()
+		material_list_item.get_node("ICON/NAME").text = "%s (%s)"%[mat[0],mat[1]]
+		material_list_item.get_node("VBoxContainer/SHADER_OPTIONS").connect(
+			"toggled",on_toggle_shader_options.bind(material_list_item,mat[0]))
+		material_list_item.get_node("VBoxContainer/SHADER_OPTIONS").connect(
+			"item_selected",on_select_shader_option.bind(material_list_item,mat[0]))
 		$MATERIAL_INSPECTOR/ScrollContainer/CONTAINER/MATERIALS.add_child(material_list_item)
+
+func recursively_apply_material_to_scene(scene:ImportedScene,
+	child:Node3D,
+	override_material_index:int,
+	material_name:String,
+	recursive_index:int=0):
+	var recursive_max = 100;
+	if(recursive_index>recursive_max):
+		return;
+	if(child is MeshInstance3D):
+		for surface in child.mesh.get_surface_count():
+			var surface_material = child.mesh.surface_get_material(surface)
+			if(surface_material.resource_name == material_name):
+				child.set_surface_override_material(surface,null)
+				var new_material:Material = get_material_for_override_id(override_material_index)
+				if(override_material_index== 0):
+					child.set_surface_override_material(surface,null)
+				else:
+					child.set_surface_override_material(surface,new_material)
+	else:
+		recursive_index+=1;
+		for grand_child in child.get_children():
+			recursively_apply_material_to_scene(scene, child,override_material_index,material_name,recursive_index)
+
+
+func get_material_for_override_id(override_material_index:int):
+	match(override_material_index):
+		OVERRIDE_MATERIALS.DEFAULT:
+			return DEFAULT_MATERIAL
+		OVERRIDE_MATERIALS.WATER:
+			return WATER_MATERIAL
+		OVERRIDE_MATERIALS.WINDY:
+			return WINDY_MATERIAL
+		OVERRIDE_MATERIALS.GLASS:
+			return GLASS_MATERIAL
+		OVERRIDE_MATERIALS.WATER_FLOW:
+			return WATER_FLOW_MATERIAL
+
+func on_select_shader_option(index:int,material_list_item:VBoxContainer,mat_name:String):
+	var matching_override = DATA.MATERIAL_OVERRIDES.filter(func (mat_override:MaterialOverride):
+			return mat_override.MATERIAL_NAME== mat_name;)
+	if(matching_override!=null && matching_override.size()>0):
+		matching_override[0].OVERRIDE_ID = index;
+	else:
+		var new_mat_override:MaterialOverride = MaterialOverride.new()
+		new_mat_override.MATERIAL_NAME = mat_name;
+		new_mat_override.OVERRIDE_ID = index;
+
+		DATA.MATERIAL_OVERRIDES.push_back(new_mat_override)
+	for scene in DATA.SCENES:
+		for child in scene.SCENE.get_children():
+			recursively_apply_material_to_scene(scene,child,index,mat_name);
+func on_toggle_shader_options(toggled_on:bool,material_list_item:VBoxContainer,mat_name:String):
+	if(toggled_on):
+		var mat_override = DATA.MATERIAL_OVERRIDES.filter(func (mat_override:MaterialOverride):
+			return mat_override.MATERIAL_NAME== mat_name;)
+		var options:OptionButton = material_list_item.get_node("VBoxContainer/SHADER_OPTIONS");
+		if(mat_override!=null && mat_override.size()>0):
+			options.select(mat_override[0].OVERRIDE_ID)
+		else:
+			options.select(-1)
+
 
 var baking_timer:Timer
 func _ready():
@@ -760,7 +854,6 @@ func _on_reset_pressed() -> void:
 						var data = tools[index-1]
 						data.commit_to_surface(mesh.mesh)
 
-var LIGHT_SPHERES_ON = true
 
 func _on_light_sphere_checkbox_toggled(toggled_on: bool) -> void:
 	LIGHT_SPHERES_ON = toggled_on
