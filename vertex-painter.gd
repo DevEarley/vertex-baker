@@ -12,7 +12,7 @@ var light_mesh = preload("res://light_mesh_prefab.tscn")
 var imported_mesh_prefab = preload("res://imported_mesh_prefab.tscn")
 var scene_prefab = preload("res://scene_prefab.tscn")
 var surface_prefab = preload("res://surface_prefab.tscn")
-
+var AUTO_BAKE = true
 @export var gizmo : Gizmo3D
 enum OVERRIDE_MATERIALS {
 	DEFAULT = 0,
@@ -84,7 +84,7 @@ var CURRENT_LAYER:LightLayer = null
 func on_blending_method_dropdown_selected(index:int):
 	if(CURRENT_LAYER != null):
 		CURRENT_LAYER.BLENDING_METHOD = index
-	_on_bake_pressed()
+	auto_bake()
 
 func on_blending_method_dropdown_pressed(light_layer:LightLayer):
 		CURRENT_LAYER = light_layer
@@ -97,7 +97,7 @@ func on_delete_layer_pressed(layer:Control,light_layer:LightLayer):
 	#remove from UI
 	light_layer.LIST_ITEM.queue_free()
 	DATA.LAYERS.remove_at(index_to_remove)
-	_on_bake_pressed()
+	auto_bake()
 
 func on_add_light_to_layer(
 	layer:Control,light_layer:LightLayer,
@@ -155,7 +155,7 @@ func on_add_light_to_layer(
 	scale_button.connect("pressed",on_scale_light_pressed.bind(light))
 
 	layer.get_node("VBoxContainer/LIGHTS").add_child(new_light)
-	_on_bake_pressed()
+	auto_bake()
 
 var CURRENT_LIGHT: VertexLight= null
 
@@ -164,7 +164,7 @@ func on_scale_light_pressed(light:VertexLight):
 	CURRENT_LIGHT = light
 	gizmo.mode = Gizmo3D.ToolMode.SCALE
 	gizmo.select(light.LIGHT_MESH)
-	_on_bake_pressed()
+	auto_bake()
 
 func on_radius_value_changed(value:float,light:VertexLight,radius:SpinBox):
 	light.RADIUS = value
@@ -172,14 +172,14 @@ func on_radius_value_changed(value:float,light:VertexLight,radius:SpinBox):
 	#light.ACTUAL_LIGHT.omni_range = value;
 	var mesh:MeshInstance3D = light.LIGHT_MESH.get_node("MeshInstance3D")
 	mesh.scale = Vector3.ONE *value;
-	_on_bake_pressed()
+	auto_bake()
 
 func on_color_picker_changed(color:Color,light:VertexLight,color_button:ColorPickerButton):
 	light.COLOR = color_button.color;
 	#light.ACTUAL_LIGHT.light_color =light.COLOR;
 	light.LIGHT_MESH.modulate = light.COLOR
 	PREVIOUS_COLOR = light.COLOR
-	_on_bake_pressed()
+	auto_bake()
 
 func on_mix_value_changed(value:float,light:VertexLight,mix:SpinBox):
 	light.MIX = value
@@ -189,7 +189,7 @@ func on_mix_value_changed(value:float,light:VertexLight,mix:SpinBox):
 		#light.ACTUAL_LIGHT.show()
 
 	#light.ACTUAL_LIGHT.omni_attenuation =2-value;
-	_on_bake_pressed()
+	auto_bake()
 
 
 func on_duplicate_light(light:VertexLight):
@@ -283,6 +283,12 @@ func blend_lights_into_vertex_colors(
 						var max_b = maxf(old_color.b,new_color.b)
 						mix = light.MIX*linear_distance
 
+					LightLayer.BLENDING_METHODS:
+						var max_r = maxf(old_color.r,new_color.r)
+						var max_g = maxf(old_color.g,new_color.g)
+						var max_b = maxf(old_color.b,new_color.b)
+						mix = light.MIX*linear_distance
+
 					LightLayer.BLENDING_METHODS.DIVIDE:
 						mixed_color = Color(
 							old_color.r/(new_color.r+0.001),
@@ -317,6 +323,18 @@ func blend_lights_into_vertex_colors(
 						mixed_color = Color(clamped_r,clamped_g,clamped_b)
 						mix = light.MIX*linear_distance
 
+					LightLayer.BLENDING_METHODS.INVERTED_SUBTRACT_FADE:
+						var hue =  new_color.h - 0.5
+						if(hue <0):
+							hue+=1.0
+						var inverted_hue_color = Color.from_hsv(hue,new_color.s,new_color.v,new_color.a)
+
+						var clamped_r = clamp(old_color.r-inverted_hue_color.r,0,1)
+						var clamped_g = clamp(old_color.g-inverted_hue_color.g,0,1)
+						var clamped_b = clamp(old_color.b-inverted_hue_color.b,0,1)
+						mixed_color = Color(clamped_r,clamped_g,clamped_b)
+						mix = light.MIX*linear_distance
+
 					LightLayer.BLENDING_METHODS.MIN_FLAT:
 						var max_r = minf(old_color.r,new_color.r)
 						var max_g = minf(old_color.g,new_color.g)
@@ -345,6 +363,18 @@ func blend_lights_into_vertex_colors(
 						var clamped_g = clamp(old_color.g-new_color.g,0,1)
 						var clamped_b = clamp(old_color.b-new_color.b,0,1)
 						mixed_color = Color(clamped_r,clamped_g,clamped_b)
+						mix = light.MIX
+
+					LightLayer.BLENDING_METHODS.INVERTED_SUBTRACT_FLAT:
+
+						var clamped_r = clamp(old_color.r-new_color.r,0,1)
+						var clamped_g = clamp(old_color.g-new_color.g,0,1)
+						var clamped_b = clamp(old_color.b-new_color.b,0,1)
+						mixed_color = Color(clamped_r,clamped_g,clamped_b)
+						var hue = mixed_color.h - 0.5
+						if(hue <0):
+							hue+=1.0
+						mixed_color = Color.from_hsv(hue,mixed_color.s,mixed_color.v,mixed_color.a)
 						mix = light.MIX
 				data.set_vertex_color(i,lerp(old_color,mixed_color,mix))
 
@@ -410,7 +440,7 @@ func _on_open_file_selected(path: String) -> void:
 	for scene:VBSceneData in result.SCENES:
 		print(scene.PATH)
 		load_from_path(scene.PATH, scene.POSITION,scene.ROTATION,scene.SCALE,scene.ID)
-	_on_bake_pressed()
+	auto_bake()
 
 	for override in DATA.MATERIAL_OVERRIDES:
 		for scene in DATA.SCENES:
@@ -513,7 +543,7 @@ func on_assign_layers_to_mesh_done(
 		elif(item_is_checked == true && already_has_a_mask == true):
 			var index_to_remove = DATA.LAYER_MASKS.find(light_layer)
 			DATA.LAYER_MASKS.remove_at(index_to_remove)
-	_on_bake_pressed()
+	auto_bake()
 
 func on_assign_layer_mask_state_changed(index:int,
 	mesh_list_item:VBoxContainer,
@@ -576,7 +606,7 @@ func load_mesh(child_mesh,scene_list_item, recursion,imported_scene, imported_sc
 					if(recursion>max_recursion):
 						print("ERR too much recursion in this mesh")
 						return
-					load_mesh(grand_child_mesh,scene_list_item,imported_scene,recursion)
+					load_mesh(grand_child_mesh,scene_list_item,recursion,imported_scene)
 
 func on_duplicated_pressed(imported_scene:ImportedScene):
 	load_from_path(
@@ -602,7 +632,7 @@ func on_delete_light(light:VertexLight):
 	light.LIST_ITEM.queue_free()
 	var lights = light.LAYER.LIGHTS
 	lights.remove_at(index)
-	_on_bake_pressed()
+	auto_bake()
 
 
 func on_delete_scene_pressed(imported_scene:ImportedScene):
@@ -787,7 +817,9 @@ func actually_bake():
 				#if(og_child.name == child.name):
 	$BAKE.text = ("BAKE")
 
-
+func auto_bake():
+	if(AUTO_BAKE == true):
+		_on_bake_pressed()
 func _on_bake_pressed() -> void:
 	$BAKE.text = ("QUEUING BAKE")
 	baking_timer.start()
@@ -827,7 +859,7 @@ func _on_gizmo_3d_transform_end(mode: Gizmo3D.TransformMode) -> void:
 			#for light in layer.LIGHTS:
 				#light.ACTUAL_LIGHT.show()
 	#load_from_current_path()
-	_on_bake_pressed()
+	auto_bake()
 
 func _on_menu_button_pressed() -> void:
 	$HBoxContainer.visible = true
@@ -861,3 +893,7 @@ func _on_light_sphere_checkbox_toggled(toggled_on: bool) -> void:
 		for light in layer.LIGHTS:
 			var sphere:MeshInstance3D = light.LIGHT_MESH.get_node("MeshInstance3D")
 			sphere.visible = toggled_on;
+
+
+func _on_autobake_checkbox_toggled(toggled_on: bool) -> void:
+	AUTO_BAKE = toggled_on

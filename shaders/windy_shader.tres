@@ -484,7 +484,6 @@ flags/world_vertex_coords = true
 flags/shadows_disabled = true
 flags/vertex_lighting = true
 nodes/vertex/0/position = Vector2(80, 1180)
-nodes/vertex/27/position = Vector2(0, 0)
 nodes/vertex/64/node = SubResource("VisualShaderNodeInput_fsmpi")
 nodes/vertex/64/position = Vector2(-4640, 2120)
 nodes/vertex/65/node = SubResource("VisualShaderNodeInput_pyuiv")

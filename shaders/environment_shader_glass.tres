@@ -282,7 +282,6 @@ flags/shadows_disabled = true
 flags/vertex_lighting = true
 varyings/distance = "0,0"
 nodes/vertex/0/position = Vector2(-340, 840)
-nodes/vertex/27/position = Vector2(0, 0)
 nodes/vertex/64/node = SubResource("VisualShaderNodeVaryingSetter_vm0yx")
 nodes/vertex/64/position = Vector2(360, 80)
 nodes/vertex/68/node = SubResource("VisualShaderNodeInput_qoy88")
