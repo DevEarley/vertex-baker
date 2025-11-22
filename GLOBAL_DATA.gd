@@ -4,6 +4,7 @@ var SCENES:Array[ImportedScene]=[]
 var MATERIALS:Array[ImportedMaterial]=[]
 var LAYER_MASKS:Array[LightLayerMask]=[]
 var MATERIAL_OVERRIDES:Array[MaterialOverride]=[]
+var MATERIAL_REPLACEMENTS:Array[MaterialReplacement]=[]
 
 func to_project_data():
 	var project_data:VBData = VBData.new()
@@ -12,12 +13,20 @@ func to_project_data():
 	project_data.LIGHTS = []
 	project_data.LAYER_MASKS = []
 	project_data.MATERIAL_OVERRIDES = []
+	project_data.MATERIAL_REPLACEMENTS = []
 
 	for mat_override in MATERIAL_OVERRIDES:
 		var vb_mat_override:VBMaterialOverride =VBMaterialOverride.new()
-		vb_mat_override.MATERIAL_NAME = mat_override.MATERIAL_NAME
-		vb_mat_override.OVERRIDE_ID = mat_override.OVERRIDE_ID
+		vb_mat_override.NEW_MATERIAL_NAME = mat_override.NEW_MATERIAL_NAME
+		vb_mat_override.TARGET_MATERIAL_NAME = mat_override.TARGET_MATERIAL_NAME
+		vb_mat_override.SHADER_ID = mat_override.SHADER_ID
 		project_data.MATERIAL_OVERRIDES.push_back(vb_mat_override);
+
+	for mat_replacement in MATERIAL_REPLACEMENTS:
+		var vb_mat_replacement:VBMaterialReplacement =VBMaterialReplacement.new()
+		vb_mat_replacement.NEW_MATERIAL_NAME = mat_replacement.NEW_MATERIAL_NAME
+		vb_mat_replacement.SHADER_ID = mat_replacement.SHADER_ID
+		project_data.MATERIAL_REPLACEMENTS.push_back(vb_mat_replacement);
 
 	for layer_mask in LAYER_MASKS:
 		var vb_layer_mask:VBLayerMaskData =VBLayerMaskData.new()

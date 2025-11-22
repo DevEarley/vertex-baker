@@ -1,0 +1,166 @@
+[gd_scene load_steps=7 format=3 uid="uid://c7ctcgis1ic5l"]
+
+[ext_resource type="Texture2D" uid="uid://2f05blbjguuq" path="res://icon_expand.png" id="1_8nmub"]
+[ext_resource type="Script" uid="uid://bkqu4vmypg2ug" path="res://more_menu.gd" id="1_xvwdt"]
+[ext_resource type="Script" uid="uid://chpfjrv1l0qdq" path="res://toggler.gd" id="2_dhelh"]
+[ext_resource type="Texture2D" uid="uid://bws3hgrn7bebm" path="res://icon_fold.png" id="3_dhelh"]
+
+[sub_resource type="Gradient" id="Gradient_dhelh"]
+colors = PackedColorArray(0.5132329, 0.5132329, 0.5132329, 1, 0.16745102, 0.16745102, 0.16745102, 1)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_b8k8h"]
+gradient = SubResource("Gradient_dhelh")
+fill_from = Vector2(0, 0.070512824)
+fill_to = Vector2(0, 0)
+
+[node name="LAYER_PREFAB" type="VBoxContainer"]
+custom_minimum_size = Vector2(490, 150)
+offset_right = 490.0
+offset_bottom = 150.0
+
+[node name="NAME" type="Label" parent="."]
+custom_minimum_size = Vector2(0, 68)
+layout_mode = 2
+text = "Layer #0"
+horizontal_alignment = 1
+
+[node name="BLENDING_METHOD" type="OptionButton" parent="NAME"]
+layout_mode = 0
+offset_left = 4.0
+offset_top = 29.0
+offset_right = 191.0
+offset_bottom = 60.0
+selected = 1
+allow_reselect = true
+item_count = 15
+popup/item_0/text = "BLENDING METHOD"
+popup/item_0/id = 0
+popup/item_0/separator = true
+popup/item_1/text = "MULTIPLY (FADE)"
+popup/item_1/id = 1
+popup/item_2/text = "ADD (FADE)"
+popup/item_2/id = 2
+popup/item_3/text = "SUBTRACT (FADE)"
+popup/item_3/id = 3
+popup/item_4/text = "DIVIDE (FADE)"
+popup/item_4/id = 4
+popup/item_5/text = "MIN (FADE)"
+popup/item_5/id = 5
+popup/item_6/text = "MAX (FADE)"
+popup/item_6/id = 6
+popup/item_7/text = "ADD (FLAT)"
+popup/item_7/id = 7
+popup/item_8/text = "MULTIPLY (FLAT)"
+popup/item_8/id = 8
+popup/item_9/text = "SUBTRACT (FLAT)"
+popup/item_9/id = 9
+popup/item_10/text = "DIVIDE (FLAT)"
+popup/item_10/id = 10
+popup/item_11/text = "MIN (FLAT)"
+popup/item_11/id = 11
+popup/item_12/text = "MAX (FLAT)"
+popup/item_12/id = 12
+popup/item_13/text = "INVERTED SUBTRACT (FADE)"
+popup/item_13/id = 13
+popup/item_14/text = "INVERTED SUBTRACT (FLAT)"
+popup/item_14/id = 14
+
+[node name="ADD_LIGHT_TO_LAYER" type="Button" parent="NAME"]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -239.0
+offset_top = 29.0
+offset_right = -68.0
+offset_bottom = 60.0
+grow_horizontal = 0
+text = "ADD LIGHT TO LAYER"
+
+[node name="EXPAND" type="Button" parent="NAME" node_paths=PackedStringArray("TOGGLE_TARGET")]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -493.0
+offset_top = -5.0
+offset_right = -453.0
+offset_bottom = 35.0
+grow_horizontal = 0
+icon = ExtResource("3_dhelh")
+flat = true
+script = ExtResource("2_dhelh")
+TOGGLE_TARGET = NodePath("../../VBoxContainer")
+EXPAND_ICON = ExtResource("1_8nmub")
+FOLD_ICON = ExtResource("3_dhelh")
+
+[node name="MORE_MENU_BUTTON" type="Button" parent="NAME" node_paths=PackedStringArray("TARGET")]
+layout_mode = 0
+offset_left = 469.0
+offset_top = 30.0
+offset_right = 492.0
+offset_bottom = 61.0
+mouse_filter = 1
+text = "..."
+script = ExtResource("1_xvwdt")
+TARGET = NodePath("../MORE_MENU")
+
+[node name="MORE_MENU" type="Control" parent="NAME"]
+visible = false
+top_level = true
+anchors_preset = 0
+offset_left = 347.0
+offset_top = 63.0
+offset_right = 504.0
+offset_bottom = 195.0
+
+[node name="TextureRect" type="TextureRect" parent="NAME/MORE_MENU"]
+visible = false
+show_behind_parent = true
+layout_mode = 0
+offset_left = 1.0
+offset_top = 8.0
+offset_right = 138.0
+offset_bottom = 126.0
+texture = SubResource("GradientTexture2D_b8k8h")
+
+[node name="DELETE" type="Button" parent="NAME/MORE_MENU"]
+visible = false
+layout_mode = 0
+offset_left = 14.0
+offset_top = 20.0
+offset_right = 132.0
+offset_bottom = 51.0
+text = "DELETE LAYER"
+
+[node name="RENAME" type="Button" parent="NAME/MORE_MENU"]
+visible = false
+layout_mode = 0
+offset_left = 6.0
+offset_top = 52.0
+offset_right = 133.0
+offset_bottom = 83.0
+text = "RENAME LAYER
+"
+script = ExtResource("1_xvwdt")
+
+[node name="LineEdit" type="LineEdit" parent="NAME/MORE_MENU/RENAME"]
+visible = false
+custom_minimum_size = Vector2(123, 0)
+layout_mode = 0
+offset_left = 4.0
+offset_top = 34.0
+offset_right = 72.5625
+offset_bottom = 65.0
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 34
+
+[node name="LIGHTS" type="VBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 34
+
+[connection signal="pressed" from="NAME/EXPAND" to="NAME/EXPAND" method="_on_pressed"]
+[connection signal="pressed" from="NAME/MORE_MENU_BUTTON" to="NAME/MORE_MENU_BUTTON" method="_on_pressed"]
+[connection signal="pressed" from="NAME/MORE_MENU/RENAME" to="NAME/MORE_MENU/RENAME" method="_on_pressed"]

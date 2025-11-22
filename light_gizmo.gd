@@ -1,6 +1,7 @@
 extends Node3D
 class_name LightGizmo
 
+@export var MAIN:VertexBakerMainWindow
 @export
 var gizmo : Gizmo3D
 @export

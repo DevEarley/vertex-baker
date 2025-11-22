@@ -1,23 +1,45 @@
-[gd_scene load_steps=2 format=3 uid="uid://c7ctcgis1ic5l"]
+[gd_scene load_steps=12 format=3 uid="uid://c7ctcgis1ic5l"]
 
+[ext_resource type="Texture2D" uid="uid://2f05blbjguuq" path="res://icon_expand.png" id="1_8nmub"]
 [ext_resource type="Script" uid="uid://bkqu4vmypg2ug" path="res://more_menu.gd" id="1_xvwdt"]
+[ext_resource type="Script" uid="uid://chpfjrv1l0qdq" path="res://toggler.gd" id="2_dhelh"]
+[ext_resource type="Texture2D" uid="uid://bws3hgrn7bebm" path="res://icon_fold.png" id="3_dhelh"]
+
+[sub_resource type="Gradient" id="Gradient_dhelh"]
+colors = PackedColorArray(0.5132329, 0.5132329, 0.5132329, 1, 0.16745102, 0.16745102, 0.16745102, 1)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_b8k8h"]
+gradient = SubResource("Gradient_dhelh")
+fill_from = Vector2(0, 0.070512824)
+fill_to = Vector2(0, 0)
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_dhelh"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_b8k8h"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_dj8hk"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_54ww8"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_pdps4"]
 
 [node name="LAYER_PREFAB" type="VBoxContainer"]
-custom_minimum_size = Vector2(490, 150)
+custom_minimum_size = Vector2(480, 83)
 offset_right = 490.0
-offset_bottom = 150.0
+offset_bottom = 83.0
 
 [node name="NAME" type="Label" parent="."]
 custom_minimum_size = Vector2(0, 68)
 layout_mode = 2
 text = "Layer #0"
+horizontal_alignment = 1
 
 [node name="BLENDING_METHOD" type="OptionButton" parent="NAME"]
 layout_mode = 0
 offset_left = 4.0
-offset_top = 29.0
-offset_right = 191.0
-offset_bottom = 60.0
+offset_top = 35.0
+offset_right = 251.0
+offset_bottom = 66.0
 selected = 1
 allow_reselect = true
 item_count = 15
@@ -58,36 +80,110 @@ layout_mode = 1
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = -239.0
-offset_top = 29.0
-offset_right = -68.0
-offset_bottom = 60.0
+offset_left = -217.0
+offset_top = 35.0
+offset_right = -46.0
+offset_bottom = 66.0
 grow_horizontal = 0
 text = "ADD LIGHT TO LAYER"
 
-[node name="MORE_MENU" type="Button" parent="NAME"]
+[node name="MORE_MENU_BUTTON" type="Button" parent="NAME" node_paths=PackedStringArray("TOGGLE_TARGET")]
 layout_mode = 0
-offset_left = 471.0
-offset_top = 2.0
-offset_right = 494.0
-offset_bottom = 33.0
+offset_left = 469.0
+offset_top = 36.0
+offset_right = 492.0
+offset_bottom = 67.0
+mouse_filter = 1
 text = "..."
+script = ExtResource("2_dhelh")
+TOGGLE_TARGET = NodePath("../../MORE_MENU")
+
+[node name="MORE_MENU" type="Control" parent="."]
+visible = false
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+
+[node name="TextureRect" type="TextureRect" parent="MORE_MENU"]
+show_behind_parent = true
+layout_mode = 0
+offset_right = 500.0
+offset_bottom = 40.0
+texture = SubResource("GradientTexture2D_b8k8h")
+expand_mode = 1
+
+[node name="DELETE" type="Button" parent="MORE_MENU"]
+layout_mode = 0
+offset_left = -1.0
+offset_top = 1.0
+offset_right = 182.0
+offset_bottom = 32.0
+text = "DELETE LAYER"
+
+[node name="RENAME" type="Button" parent="MORE_MENU"]
+layout_mode = 0
+offset_left = 187.0
+offset_top = 1.0
+offset_right = 369.0
+offset_bottom = 32.0
+text = "RENAME LAYER
+"
 script = ExtResource("1_xvwdt")
 
-[node name="DELETE" type="Button" parent="NAME/MORE_MENU"]
-visible = false
+[node name="LineEdit" type="LineEdit" parent="MORE_MENU/RENAME"]
+custom_minimum_size = Vector2(123, 0)
 layout_mode = 0
-offset_left = -127.0
-offset_right = -9.0
-offset_bottom = 31.0
-text = "DELETE LAYER"
+offset_left = 189.0
+offset_top = 3.0
+offset_right = 312.0
+offset_bottom = 34.0
 
 [node name="VBoxContainer" type="VBoxContainer" parent="."]
 layout_mode = 2
 theme_override_constants/separation = 34
 
+[node name="EXPAND" type="Button" parent="VBoxContainer" node_paths=PackedStringArray("TOGGLE_TARGET")]
+visible = false
+layout_mode = 2
+theme_override_styles/normal = SubResource("StyleBoxEmpty_dhelh")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_b8k8h")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_dj8hk")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_54ww8")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_pdps4")
+icon = ExtResource("3_dhelh")
+flat = true
+script = ExtResource("2_dhelh")
+TOGGLE_TARGET = NodePath("../LIGHTS")
+EXPAND_ICON = ExtResource("1_8nmub")
+FOLD_ICON = ExtResource("3_dhelh")
+
+[node name="Label" type="Label" parent="VBoxContainer/EXPAND"]
+layout_mode = 0
+offset_left = 37.0
+offset_top = 5.0
+offset_right = 527.0
+offset_bottom = 28.0
+text = "LIGHTS:"
+
 [node name="LIGHTS" type="VBoxContainer" parent="VBoxContainer"]
 layout_mode = 2
 theme_override_constants/separation = 34
 
-[connection signal="pressed" from="NAME/MORE_MENU" to="NAME/MORE_MENU" method="_on_pressed"]
+[node name="HSeparator" type="HSeparator" parent="."]
+self_modulate = Color(1, 1, 1, 0)
+layout_mode = 2
+
+[node name="Line2D2" type="Line2D" parent="HSeparator"]
+position = Vector2(0, 10.635)
+points = PackedVector2Array(0, 0, 500, 0)
+width = 2.0
+default_color = Color(0.18000486, 0.18000486, 0.18000486, 1)
+
+[node name="Line2D2" type="Line2D" parent="HSeparator/Line2D2"]
+position = Vector2(0, -4)
+points = PackedVector2Array(0, 0, 500, 0)
+width = 2.0
+default_color = Color(0.51125926, 0.51125884, 0.5112589, 1)
+
+[connection signal="pressed" from="NAME/MORE_MENU_BUTTON" to="NAME/MORE_MENU_BUTTON" method="_on_pressed"]
+[connection signal="pressed" from="MORE_MENU/RENAME" to="MORE_MENU/RENAME" method="_on_pressed"]
+[connection signal="pressed" from="VBoxContainer/EXPAND" to="VBoxContainer/EXPAND" method="_on_pressed"]

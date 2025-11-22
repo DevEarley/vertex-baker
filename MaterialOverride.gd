@@ -1,4 +1,4 @@
 class_name MaterialOverride;
 
-var MATERIAL_NAME:String
-var OVERRIDE_ID:int
+var NEW_MATERIAL_NAME:String
+var TARGET_MATERIAL_NAME:String

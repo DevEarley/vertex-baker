@@ -3,7 +3,7 @@ class_name ImportedScene;
 var ID:int
 var NAME:String
 var PATH:String
-var NODE: Node3D;
+var NODE: Sprite3D;
 var SCENE: Node3D;
 var OG_SCENE: Node3D;
 var LIST_ITEM: VBoxContainer;

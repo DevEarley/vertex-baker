@@ -1,8 +1,11 @@
-[gd_scene load_steps=4 format=3 uid="uid://bqqrn15xwihnq"]
+[gd_scene load_steps=7 format=3 uid="uid://bqqrn15xwihnq"]
 
 [ext_resource type="Texture2D" uid="uid://blkpo7j61hi23" path="res://icon_scene.png" id="1_wowo8"]
+[ext_resource type="Texture2D" uid="uid://bws3hgrn7bebm" path="res://icon_fold.png" id="2_ki0xg"]
 [ext_resource type="Texture2D" uid="uid://cyjxagq2wmdwn" path="res://icon_x.png" id="2_tpqlp"]
 [ext_resource type="Script" uid="uid://bkqu4vmypg2ug" path="res://more_menu.gd" id="3_atays"]
+[ext_resource type="Script" uid="uid://chpfjrv1l0qdq" path="res://toggler.gd" id="3_xx51c"]
+[ext_resource type="Texture2D" uid="uid://2f05blbjguuq" path="res://icon_expand.png" id="4_ldkuu"]
 
 [node name="SCENE_LIST_ITEM" type="VBoxContainer"]
 custom_minimum_size = Vector2(490, 0)
@@ -22,6 +25,19 @@ layout_mode = 2
 texture = ExtResource("1_wowo8")
 stretch_mode = 2
 
+[node name="EXPAND" type="Button" parent="ICON" node_paths=PackedStringArray("TOGGLE_TARGET")]
+layout_mode = 0
+offset_left = 31.0
+offset_top = -4.0
+offset_right = 71.0
+offset_bottom = 36.0
+icon = ExtResource("2_ki0xg")
+flat = true
+script = ExtResource("3_xx51c")
+TOGGLE_TARGET = NodePath("../../VBoxContainer")
+EXPAND_ICON = ExtResource("4_ldkuu")
+FOLD_ICON = ExtResource("2_ki0xg")
+
 [node name="ICON_NO_BAKE" type="TextureRect" parent="ICON"]
 visible = false
 custom_minimum_size = Vector2(32, 32)
@@ -35,12 +51,15 @@ stretch_mode = 2
 
 [node name="NAME" type="Label" parent="ICON"]
 layout_mode = 0
-offset_left = 39.0
-offset_top = 4.0
-offset_right = 326.0
-offset_bottom = 32.0
+offset_left = 75.0
+offset_top = 1.0
+offset_right = 362.0
+offset_bottom = 29.0
 text = "<SCENE NAME>"
+horizontal_alignment = 2
+clip_text = true
 text_overrun_behavior = 3
+text_direction = 2
 
 [node name="MORE_MENU" type="Button" parent="ICON"]
 layout_mode = 0
@@ -97,4 +116,5 @@ size_flags_horizontal = 4
 [node name="MESHES" type="VBoxContainer" parent="VBoxContainer"]
 layout_mode = 2
 
+[connection signal="pressed" from="ICON/EXPAND" to="ICON/EXPAND" method="_on_pressed"]
 [connection signal="pressed" from="ICON/MORE_MENU" to="ICON/MORE_MENU" method="_on_pressed"]
