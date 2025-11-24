@@ -49,6 +49,7 @@ func _input(event):
 			gizmo.clear_selection();
 			TARGET = node;
 			gizmo.select(node)
+
 	if event is InputEventMouseMotion:
 		_mouse_position = event.relative
 	if event is InputEventMouseButton:
@@ -71,6 +72,11 @@ func _input(event):
 					MAIN.p2log("")
 					MAIN.enable_collision_shapes()
 					gizmo.clear_selection()
+
+					Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+			KEY_ESCAPE:
+					Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+
 			KEY_W:
 				_w = event.pressed
 			KEY_S:

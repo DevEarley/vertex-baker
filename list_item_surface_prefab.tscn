@@ -14,7 +14,7 @@ grow_horizontal = 2
 grow_vertical = 2
 
 [node name="ICON" type="TextureRect" parent="."]
-custom_minimum_size = Vector2(32, 58)
+custom_minimum_size = Vector2(32, 30)
 layout_mode = 2
 texture = ExtResource("1_tgnmm")
 stretch_mode = 2

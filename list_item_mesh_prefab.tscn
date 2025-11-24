@@ -1,6 +1,19 @@
-[gd_scene load_steps=2 format=3 uid="uid://csqrlhl4l633e"]
+[gd_scene load_steps=10 format=3 uid="uid://csqrlhl4l633e"]
 
 [ext_resource type="Texture2D" uid="uid://ca7k24h4m6ddd" path="res://icon_mesh.png" id="1_kestx"]
+[ext_resource type="Texture2D" uid="uid://bws3hgrn7bebm" path="res://icon_fold.png" id="2_x0q0p"]
+[ext_resource type="Script" uid="uid://chpfjrv1l0qdq" path="res://toggler.gd" id="3_g8v8h"]
+[ext_resource type="Texture2D" uid="uid://2f05blbjguuq" path="res://icon_expand.png" id="4_34pap"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_n34by"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_ecbgt"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_i4qir"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_4qnr3"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_kk87n"]
 
 [node name="MESH_LIST_ITEM" type="VBoxContainer"]
 custom_minimum_size = Vector2(454, 0)
@@ -23,17 +36,38 @@ stretch_mode = 2
 [node name="NAME" type="Label" parent="ICON"]
 custom_minimum_size = Vector2(490, 50)
 layout_mode = 0
-offset_left = 39.0
-offset_top = 3.0
-offset_right = 529.0
-offset_bottom = 53.0
+offset_left = 73.0
+offset_top = 1.0
+offset_right = 563.0
+offset_bottom = 51.0
 text = "<MESH NAME>"
 autowrap_mode = 1
 
+[node name="EXPAND" type="Button" parent="ICON" node_paths=PackedStringArray("TOGGLE_TARGET")]
+layout_mode = 0
+offset_left = 36.0
+offset_top = -1.0
+offset_right = 68.0
+offset_bottom = 31.0
+theme_override_styles/normal = SubResource("StyleBoxEmpty_n34by")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_ecbgt")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_i4qir")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_4qnr3")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_kk87n")
+icon = ExtResource("4_34pap")
+flat = true
+script = ExtResource("3_g8v8h")
+TOGGLE_TARGET = NodePath("../../VBoxContainer")
+EXPAND_ICON = ExtResource("4_34pap")
+FOLD_ICON = ExtResource("2_x0q0p")
+
 [node name="VBoxContainer" type="VBoxContainer" parent="."]
+visible = false
 custom_minimum_size = Vector2(418, 0)
 layout_mode = 2
 size_flags_horizontal = 4
 
 [node name="SURFACES" type="VBoxContainer" parent="VBoxContainer"]
 layout_mode = 2
+
+[connection signal="pressed" from="ICON/EXPAND" to="ICON/EXPAND" method="_on_pressed"]

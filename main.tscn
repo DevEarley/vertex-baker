@@ -141,6 +141,11 @@ icon = ExtResource("10_xuqvo")
 [node name="VBoxContainer3" type="VBoxContainer" parent="HBoxContainer"]
 layout_mode = 2
 
+[node name="BAKE" type="Button" parent="HBoxContainer/VBoxContainer3"]
+layout_mode = 2
+text = "BAKE"
+icon = ExtResource("20_82xsv")
+
 [node name="RESET" type="Button" parent="HBoxContainer/VBoxContainer3"]
 layout_mode = 2
 text = "UNBAKE"
@@ -152,11 +157,6 @@ custom_minimum_size = Vector2(153, 0)
 layout_mode = 2
 text = "NORMALIZE SIZES"
 icon = ExtResource("12_qsp4k")
-
-[node name="BAKE" type="Button" parent="HBoxContainer/VBoxContainer3"]
-layout_mode = 2
-text = "BAKE"
-icon = ExtResource("20_82xsv")
 
 [node name="VBoxContainer" type="VBoxContainer" parent="HBoxContainer"]
 layout_mode = 2
@@ -305,7 +305,7 @@ anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_top = 40.0
-offset_bottom = -42.0
+offset_bottom = -160.0
 grow_horizontal = 2
 grow_vertical = 2
 
@@ -373,7 +373,7 @@ EXPAND_BUTTON = NodePath("../EXPAND")
 FOLD_BUTTON = NodePath(".")
 
 [node name="Line2D" type="Line2D" parent="REPLACEMENT_MATERIALS"]
-position = Vector2(0, 384)
+position = Vector2(0, 355.425)
 points = PackedVector2Array(0, 0, 500, 0)
 width = 2.0
 default_color = Color(0.18000486, 0.18000486, 0.18000486, 1)
@@ -385,6 +385,13 @@ width = 2.0
 default_color = Color(0.51125926, 0.51125884, 0.5112589, 1)
 
 [node name="Label2" type="Label" parent="REPLACEMENT_MATERIALS"]
+offset_left = 25.0
+offset_top = 366.0
+offset_right = 77.0
+offset_bottom = 389.0
+text = "NAME:"
+
+[node name="Label3" type="Label" parent="REPLACEMENT_MATERIALS"]
 offset_left = 25.0
 offset_top = 401.0
 offset_right = 77.0
@@ -418,12 +425,29 @@ popup/item_4/id = 4
 
 [node name="LineEdit" type="LineEdit" parent="REPLACEMENT_MATERIALS"]
 offset_left = 88.0
-offset_top = 395.0
+offset_top = 360.0
 offset_right = 487.0
-offset_bottom = 426.0
+offset_bottom = 391.0
 placeholder_text = "MATERIAL NAME"
 keep_editing_on_text_submit = true
 select_all_on_focus = true
+
+[node name="PATH" type="LineEdit" parent="REPLACEMENT_MATERIALS"]
+offset_left = 123.0
+offset_top = 395.0
+offset_right = 487.0
+offset_bottom = 426.0
+placeholder_text = "TEXTURE PATH"
+keep_editing_on_text_submit = true
+select_all_on_focus = true
+
+[node name="OPEN_TEXTURE" type="Button" parent="REPLACEMENT_MATERIALS/PATH"]
+layout_mode = 0
+offset_left = -42.0
+offset_top = -5.0
+offset_right = -2.0
+offset_bottom = 35.0
+icon = ExtResource("9_a6jrf")
 
 [node name="MATERIAL_INSPECTOR" type="Window" parent="." node_paths=PackedStringArray("MAIN")]
 oversampling_override = 1.0
@@ -737,6 +761,14 @@ display_mode = 1
 access = 2
 filters = PackedStringArray("*.gltf", "*.glb")
 
+[node name="OPEN_TEXTURE" type="FileDialog" parent="."]
+title = "Open a Texture"
+initial_position = 2
+ok_button_text = "OPEN TEXTURE"
+file_mode = 0
+access = 2
+filters = PackedStringArray("*.png")
+
 [node name="OPEN" type="FileDialog" parent="."]
 title = "Open a File"
 initial_position = 2
@@ -888,9 +920,9 @@ texture = ExtResource("21_getpj")
 [connection signal="transform_end" from="SubViewportContainer/SubViewport/Gizmo3D_MOVE" to="." method="_on_gizmo_3d_transform_end"]
 [connection signal="pressed" from="HBoxContainer/VBoxContainer2/OPEN_BUTTON" to="." method="_on_open_button_pressed"]
 [connection signal="pressed" from="HBoxContainer/VBoxContainer2/SAVE_BUTTON" to="." method="_on_save_button_pressed"]
+[connection signal="pressed" from="HBoxContainer/VBoxContainer3/BAKE" to="." method="_on_bake_pressed"]
 [connection signal="pressed" from="HBoxContainer/VBoxContainer3/RESET" to="." method="_on_reset_pressed"]
 [connection signal="pressed" from="HBoxContainer/VBoxContainer3/NORMALIZE_SIZES" to="." method="_on_normalize_sizes_pressed"]
-[connection signal="pressed" from="HBoxContainer/VBoxContainer3/BAKE" to="." method="_on_bake_pressed"]
 [connection signal="toggled" from="HBoxContainer/VBoxContainer/NORMALIZE_SCALE_ON_EXPORT" to="." method="_on_normalize_scale_on_export_toggled"]
 [connection signal="toggled" from="HBoxContainer/VBoxContainer/BAKE_ROTATION_EXPORT" to="." method="_on_bake_rotation_export_toggled"]
 [connection signal="pressed" from="HBoxContainer/VBoxContainer/EXPORT_BUTTON" to="." method="_on_export_button_pressed"]
@@ -901,6 +933,8 @@ texture = ExtResource("21_getpj")
 [connection signal="pressed" from="REPLACEMENT_MATERIALS/EXPAND" to="REPLACEMENT_MATERIALS/EXPAND" method="ON_EXPAND"]
 [connection signal="pressed" from="REPLACEMENT_MATERIALS/FOLD" to="REPLACEMENT_MATERIALS/FOLD" method="ON_FOLD"]
 [connection signal="mouse_entered" from="REPLACEMENT_MATERIALS/LineEdit" to="REPLACEMENT_MATERIALS" method="_on_scroll_container_mouse_entered"]
+[connection signal="mouse_entered" from="REPLACEMENT_MATERIALS/PATH" to="REPLACEMENT_MATERIALS" method="_on_scroll_container_mouse_entered"]
+[connection signal="pressed" from="REPLACEMENT_MATERIALS/PATH/OPEN_TEXTURE" to="." method="_on_open_texture_pressed"]
 [connection signal="pressed" from="MATERIAL_INSPECTOR/EXPAND" to="MATERIAL_INSPECTOR/EXPAND" method="ON_EXPAND"]
 [connection signal="pressed" from="MATERIAL_INSPECTOR/FOLD" to="MATERIAL_INSPECTOR/FOLD" method="ON_FOLD"]
 [connection signal="mouse_entered" from="LAYER_INSPECTOR/ADD_LAYER" to="LAYER_INSPECTOR" method="_on_scroll_container_mouse_entered"]
@@ -915,6 +949,7 @@ texture = ExtResource("21_getpj")
 [connection signal="pressed" from="MESH_INSPECTOR/FOLD" to="MESH_INSPECTOR/FOLD" method="ON_FOLD"]
 [connection signal="file_selected" from="IMPORT" to="." method="_on_import_file_selected"]
 [connection signal="file_selected" from="EXPORT" to="." method="_on_export_file_selected"]
+[connection signal="file_selected" from="OPEN_TEXTURE" to="." method="_on_open_texture_file_selected"]
 [connection signal="file_selected" from="OPEN" to="." method="_on_open_file_selected"]
 [connection signal="file_selected" from="SAVE" to="." method="_on_save_file_selected"]
 [connection signal="pressed" from="MENU_BUTTON" to="." method="_on_menu_button_pressed"]

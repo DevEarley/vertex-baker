@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3 uid="uid://dvnxp1x46bn3a"]
+[gd_scene load_steps=3 format=3 uid="uid://dvnxp1x46bn3a"]
 
 [ext_resource type="Texture2D" uid="uid://c8a5er8tacab3" path="res://icon_material.png" id="1_hx58n"]
+[ext_resource type="Script" uid="uid://chpfjrv1l0qdq" path="res://toggler.gd" id="2_7axnu"]
 
 [node name="MATERIAL_LIST_ITEM" type="VBoxContainer"]
 custom_minimum_size = Vector2(382, 0)
@@ -8,7 +9,7 @@ offset_right = 382.0
 offset_bottom = 67.0
 
 [node name="ICON" type="TextureRect" parent="."]
-custom_minimum_size = Vector2(32, 32)
+custom_minimum_size = Vector2(32, 48.65)
 layout_mode = 2
 texture = ExtResource("1_hx58n")
 stretch_mode = 2
@@ -16,28 +17,34 @@ stretch_mode = 2
 [node name="NAME" type="Label" parent="ICON"]
 custom_minimum_size = Vector2(490, 50)
 layout_mode = 0
-offset_left = 35.0
-offset_top = 6.0
-offset_right = 525.0
-offset_bottom = 56.0
+offset_left = 36.0
+offset_top = 3.0
+offset_right = 526.0
+offset_bottom = 53.0
 text = "<MATERIAL NAME>"
 autowrap_mode = 1
 
+[node name="MORE_MENU" type="Button" parent="ICON" node_paths=PackedStringArray("TOGGLE_TARGET")]
+layout_mode = 0
+offset_left = 462.0
+offset_right = 485.0
+offset_bottom = 31.0
+text = "..."
+script = ExtResource("2_7axnu")
+TOGGLE_TARGET = NodePath("../../VBoxContainer")
+
 [node name="VBoxContainer" type="HBoxContainer" parent="."]
+visible = false
 layout_mode = 2
 size_flags_horizontal = 4
 
 [node name="REPLACE_MATERIAL" type="OptionButton" parent="VBoxContainer"]
+custom_minimum_size = Vector2(336, 0)
 layout_mode = 2
 selected = 0
-item_count = 5
-popup/item_0/text = "DEFAULT MATERIAL"
+allow_reselect = true
+item_count = 1
+popup/item_0/text = "                                                                         "
 popup/item_0/id = 0
-popup/item_1/text = "WATER MAT (BUILT-IN)"
-popup/item_1/id = 1
-popup/item_2/text = "WATER FLOW MAT (BUILT-IN)"
-popup/item_2/id = 2
-popup/item_3/text = "WINDY MAT (BUILT-IN)"
-popup/item_3/id = 3
-popup/item_4/text = "GLASS MAT (BUILT-IN)"
-popup/item_4/id = 4
+
+[connection signal="pressed" from="ICON/MORE_MENU" to="ICON/MORE_MENU" method="_on_pressed"]

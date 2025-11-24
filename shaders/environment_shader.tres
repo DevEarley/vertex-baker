@@ -61,7 +61,6 @@ operator = 2
 
 [sub_resource type="VisualShaderNodeTexture2DParameter" id="VisualShaderNodeTexture2DParameter_ks813"]
 parameter_name = "Texture2DParameter"
-color_default = 2
 texture_filter = 1
 texture_repeat = 1
 
@@ -73,7 +72,7 @@ input_name = "inv_view_matrix"
 linked_parent_graph_frame = 44
 
 [sub_resource type="VisualShaderNodeFrame" id="VisualShaderNodeFrame_4tcrs"]
-size = Vector2(2455.9998, 1424)
+size = Vector2(2455.9998, 1424.0005)
 title = "CLOUDS"
 attached_nodes = PackedInt32Array(16, 12, 41, 30, 26, 25, 24, 23, 21, 18, 17, 15, 14)
 
@@ -134,7 +133,7 @@ constant = 2.0
 linked_parent_graph_frame = 77
 
 [sub_resource type="VisualShaderNodeFrame" id="VisualShaderNodeFrame_8vose"]
-size = Vector2(2156, 899.99994)
+size = Vector2(2156, 900)
 title = "Cloud Intensity"
 attached_nodes = PackedInt32Array(73, 76, 27, 82, 80)
 
@@ -187,7 +186,7 @@ default_value = Color(0.09803922, 0.03137255, 0.21960784, 1)
 code = "shader_type spatial;
 render_mode blend_mix, depth_draw_opaque, depth_test_default, cull_disabled, diffuse_lambert, specular_schlick_ggx, unshaded, world_vertex_coords, shadows_disabled, vertex_lighting;
 
-uniform sampler2D Texture2DParameter : hint_default_transparent, filter_nearest, repeat_enable;
+uniform sampler2D Texture2DParameter : filter_nearest, repeat_enable;
 uniform float brightness = 1.0;
 uniform sampler2D CLOUDS : filter_linear, repeat_enable;
 uniform vec4 ColorParameter : source_color = vec4(0.098039, 0.031373, 0.219608, 1.000000);

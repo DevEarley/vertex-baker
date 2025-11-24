@@ -92,7 +92,7 @@ func _on_add_layer_pressed(
 	layer.LIGHTS = []
 	layer.BLENDING_METHOD = blending_method
 	if(imported_id == -1):
-		layer.ID = Time.get_unix_time_from_system()
+		layer.ID =generate_id()
 	else:
 		layer.ID = imported_id
 	if(layer_name == "UNTITLED"):
@@ -412,8 +412,6 @@ func blend_lights_into_vertex_colors(
 				data.set_vertex_color(i,lerp(old_color,mixed_color,mix))
 
 func scale_mesh(mesh:MeshInstance3D, target_scale):
-
-		#mesh.global_scale(target_scale)
 		var surface_count =mesh.mesh.get_surface_count()
 		var tools = []
 		for index_ in surface_count:
@@ -426,13 +424,11 @@ func scale_mesh(mesh:MeshInstance3D, target_scale):
 				var normal = data.get_vertex_normal(i) * target_scale
 				data.set_vertex(i, vertex)
 				data.set_vertex_normal(i, normal)
-
-
 		mesh.scale = Vector3.ONE
 		var mesh_:Mesh = mesh.mesh;
 		mesh_.clear_surfaces()
 		for index in surface_count:
-			var data = tools[index-1]
+			var data:MeshDataTool = tools[index-1]
 			data.commit_to_surface(mesh.mesh)
 
 func update_mesh(mesh:MeshInstance3D, imported_scene:ImportedScene) -> void:
@@ -465,17 +461,18 @@ func _on_open_file_selected(path: String) -> void:
 	for vb_replacement:VBMaterialReplacement in result.MATERIAL_REPLACEMENTS:
 		var mat_replacement:MaterialReplacement = MaterialReplacement.new()
 		mat_replacement.NEW_MATERIAL_NAME = vb_replacement.NEW_MATERIAL_NAME
+		mat_replacement.TEXTURE_PATH = vb_replacement.TEXTURE_PATH
 		mat_replacement.SHADER_ID = vb_replacement.SHADER_ID
 		var new_material = ShaderMaterial.new()
 		var shader = get_shader(mat_replacement.SHADER_ID)
 		new_material.shader = shader;
+		new_material.resource_name = mat_replacement.NEW_MATERIAL_NAME;
 		mat_replacement.MATERIAL=new_material;
 		DATA.MATERIAL_REPLACEMENTS.push_back(mat_replacement)
 
 	for vb_material_override:VBMaterialOverride in result.MATERIAL_OVERRIDES:
 		var material_override:MaterialOverride = MaterialOverride.new()
 		material_override.NEW_MATERIAL_NAME = vb_material_override.NEW_MATERIAL_NAME
-		material_override.TARGET_MATERIAL_NAME = vb_material_override.TARGET_MATERIAL_NAME
 		DATA.MATERIAL_OVERRIDES.push_back(material_override)
 
 	for layer_mask_data:VBLayerMaskData in result.LAYER_MASKS:
@@ -511,8 +508,7 @@ func _on_open_file_selected(path: String) -> void:
 				recursively_apply_material_to_scene(
 					scene,
 					child,
-					override.OVERRIDE_ID,
-					override.MATERIAL_NAME);
+					override);
 
 func _on_save_file_selected(path: String) -> void:
 	var data = DATA.to_project_data();
@@ -532,6 +528,10 @@ func _on_export_file_selected(path: String) -> void:
 				child_mesh.reparent(gltf_scene_root_node)
 	var gltf_document_save := GLTFDocument.new()
 	var gltf_state_save := GLTFState.new()
+	var mats:Array[Material]=[]
+	for mat_replacement in DATA.MATERIAL_REPLACEMENTS:
+		mats.push_back(mat_replacement.MATERIAL)
+	gltf_state_save.set_materials(mats)
 	gltf_document_save.append_from_scene(gltf_scene_root_node, gltf_state_save)
 	gltf_document_save.write_to_filesystem(gltf_state_save, path)
 
@@ -747,7 +747,7 @@ func load_from_path(
 		imported_scene.PATH = path
 		imported_scene.OG_SCENE = scene_2;
 		if(imported_ID==-1):
-			imported_scene.ID = Time.get_unix_time_from_system()
+			imported_scene.ID = generate_id()
 		else:
 			imported_scene.ID = imported_ID
 
@@ -954,6 +954,8 @@ func rotate_mesh(mesh:MeshInstance3D, rotation_target:Vector3):
 		for index_ in surface_count:
 			tools.push_back(MeshDataTool.new())
 		for index in surface_count:
+			var array_mesh:ArrayMesh = mesh.mesh
+			print(array_mesh.surface_get_name(index))
 			var data:MeshDataTool = tools[index-1]
 			data.create_from_surface(mesh.mesh, index)
 			for i in range(data.get_vertex_count()):
@@ -991,25 +993,27 @@ func update_material_inspector():
 func recursively_apply_override_material_to_scene(scene:ImportedScene,
 	child:Node3D,
 	new_material,
-	target_material_name:String,
+	target_mat_name:String,
 	recursive_index:int=0):
 	var recursive_max = 100;
 	if(recursive_index>recursive_max):
 		return;
 	if(child is MeshInstance3D):
-		for surface in child.mesh.get_surface_count():
-			var surface_material = child.mesh.surface_get_material(surface)
-			if(surface_material.resource_name == target_material_name):
+		var mesh_array:ArrayMesh = child.mesh;
+		for surface in mesh_array.get_surface_count():
+			var surf_name = mesh_array.surface_get_name(surface)
+			var surface_material = mesh_array.surface_get_material(surface)
+			if(surface_material!=null && surface_material.resource_name == target_mat_name):
+				print("recursively_apply_override_material_to_scene | %s" % surf_name)
 				child.set_surface_override_material(surface,new_material)
 	else:
 		recursive_index+=1;
 		for grand_child in child.get_children():
-			recursively_apply_override_material_to_scene(scene, child,new_material,target_material_name,recursive_index)
+			recursively_apply_override_material_to_scene(scene, child,new_material,target_mat_name,recursive_index)
 
 func recursively_apply_material_to_scene(scene:ImportedScene,
 	child:Node3D,
-	override_material_index:int,
-	material_name:String,
+	override:MaterialOverride,
 	recursive_index:int=0):
 	var recursive_max = 100;
 	if(recursive_index>recursive_max):
@@ -1017,78 +1021,109 @@ func recursively_apply_material_to_scene(scene:ImportedScene,
 	if(child is MeshInstance3D):
 		for surface in child.mesh.get_surface_count():
 			var surface_material = child.mesh.surface_get_material(surface)
-			if(surface_material.resource_name == material_name):
-				child.set_surface_override_material(surface,null)
-				var new_material:Material = get_material_for_override_id(override_material_index)
-				if(override_material_index== 0):
-					child.set_surface_override_material(surface,null)
-				else:
-					child.set_surface_override_material(surface,new_material)
+			var material_index = DATA.MATERIAL_OVERRIDES.find(func (mo:MaterialOverride): return mo.TARGET_MATERIAL_NAME == surface_material.resource_name)
+			var material_ = DATA.MATERIAL_OVERRIDES[material_index]
+			if(material_!=null):
+
+				if(surface_material.resource_name == override.TARGET_MATERIAL_NAME):
+
+					child.set_surface_override_material(surface,material_)
 	else:
 		recursive_index+=1;
 		for grand_child in child.get_children():
-			recursively_apply_material_to_scene(scene, child,override_material_index,material_name,recursive_index)
+			recursively_apply_material_to_scene(scene, child,override,recursive_index)
 
-func on_select_replace_mat_options(index:int,material_list_item:VBoxContainer,mat_name:String):
-	if(index>5):
+func on_select_replace_mat_options(index:int,material_list_item:VBoxContainer,target_mat_name:String):
+	if(index>=5):
 		index-=5
-		selected_replacement(index,material_list_item,mat_name)
+		selected_replacement(index,material_list_item,target_mat_name)
 	else:
-		selected_built_in_replacement(index,material_list_item,mat_name)
+		selected_built_in_replacement(index,material_list_item,target_mat_name)
+		pass
 
 func selected_built_in_replacement(index,material_list_item,target_mat_name):
 	var material_to_apply:ShaderMaterial = null
 	match(index):
 		BUILT_IN_MATERIALS.DEFAULT:
-			material_to_apply = DEFAULT_MATERIAL
+			#remove override?
+			select_material(index,material_list_item,target_mat_name,target_mat_name,null);
+			return
 		BUILT_IN_MATERIALS.WATER:
 			material_to_apply = WATER_MATERIAL
+			material_to_apply.resource_name = "WATER_MATERIAL"
 		BUILT_IN_MATERIALS.WATER_FLOW:
 			material_to_apply = WATER_FLOW_MATERIAL
+			material_to_apply.resource_name = "WATER_FLOW_MATERIAL"
 		BUILT_IN_MATERIALS.WINDY:
 			material_to_apply = WINDY_MATERIAL
+			material_to_apply.resource_name = "WINDY_MATERIAL"
 		BUILT_IN_MATERIALS.GLASS:
 			material_to_apply = GLASS_MATERIAL
-	for scene in DATA.SCENES:
-		for child in scene.SCENE.get_children():
-			recursively_apply_override_material_to_scene(scene,child,material_to_apply,target_mat_name);
+			material_to_apply.resource_name = "GLASS_MATERIAL"
+	select_material(index,material_list_item,target_mat_name,material_to_apply.resource_name,material_to_apply);
 
 func selected_replacement(index,material_list_item,target_mat_name):
 		var replacement: = DATA.MATERIAL_REPLACEMENTS[index]
+		select_material(index,material_list_item,target_mat_name,replacement.NEW_MATERIAL_NAME,replacement.MATERIAL);
+
+func select_material(index,material_list_item,target_mat_name,new_mat_name,material_):
+		print("%s >  %s" %[new_mat_name,target_mat_name])
 		var existing_override_for_this_material = DATA.MATERIAL_OVERRIDES.filter(func (mat_override:MaterialOverride):
 			return ( mat_override.TARGET_MATERIAL_NAME == target_mat_name ))
 		var already_selected = DATA.MATERIAL_OVERRIDES.any(func (mat_override:MaterialOverride):
 			return ( mat_override.TARGET_MATERIAL_NAME == target_mat_name &&
-			mat_override.NEW_MATERIAL_NAME == replacement.NEW_MATERIAL_NAME))
+			mat_override.NEW_MATERIAL_NAME == new_mat_name))
 		if(already_selected):
 			print("Already selected this one")
 			return
 		if(existing_override_for_this_material!=null && existing_override_for_this_material.size()>0):
-			existing_override_for_this_material.NEW_MATERIAL_NAME= replacement.NEW_MATERIAL_NAME
+			existing_override_for_this_material[0].NEW_MATERIAL_NAME= new_mat_name
 		else:
 			var new_mat_override:MaterialOverride = MaterialOverride.new()
-			new_mat_override.NEW_MATERIAL_NAME = replacement.NEW_MATERIAL_NAME;
+			new_mat_override.NEW_MATERIAL_NAME = new_mat_name
 			new_mat_override.TARGET_MATERIAL_NAME = target_mat_name;
 			DATA.MATERIAL_OVERRIDES.push_back(new_mat_override)
 		for scene in DATA.SCENES:
 			for child in scene.SCENE.get_children():
-				recursively_apply_override_material_to_scene(scene,child,replacement.MATERIAL,target_mat_name);
+				recursively_apply_override_material_to_scene(scene,child,material_,target_mat_name);
+				pass
+		pass
 
 func on_toggle_replace_mat_options(toggled_on:bool,material_list_item:VBoxContainer,mat_name:String):
 	if(toggled_on):
 		var mat_override = DATA.MATERIAL_OVERRIDES.filter(func (mat_override:MaterialOverride):
 			return mat_override.TARGET_MATERIAL_NAME== mat_name;)
 		var options:OptionButton = material_list_item.get_node("VBoxContainer/REPLACE_MATERIAL");
+		options.clear()
+		options.add_item(mat_name)
+		options.add_item("WATER_MATERIAL")
+		options.add_item("WATER_FLOW_MATERIAL")
+		options.add_item("WINDY_MATERIAL")
+		options.add_item("GLASS_MATERIAL")
+		for replacement in DATA.MATERIAL_REPLACEMENTS:
+			options.add_item(replacement.NEW_MATERIAL_NAME)
+
 		if(mat_override!=null && mat_override.size()>0):
-			options.select(mat_override[0].OVERRIDE_ID)
+			var override_:MaterialOverride = mat_override[0];
+			var option_index_target = 0
+			for option_index in options.item_count:
+				print("%s == %s ?" % [options.get_item_text(option_index),override_.NEW_MATERIAL_NAME])
+				if(options.get_item_text(option_index) == override_.NEW_MATERIAL_NAME):
+					option_index_target = option_index
+			options.select(option_index_target)
 		else:
 			options.select(-1)
 
 func get_mat_override_for_surface(surf:int,mesh:MeshInstance3D,scene:ImportedScene):
 	var override:MaterialOverride = null
-	var mat_name = mesh.mesh.surface_get_material(surf)
+	var mesh_array:ArrayMesh = mesh.mesh
+	var og_material = mesh_array.surface_get_material(surf)
+	if(og_material == null):
+		print("%s has no material" % mesh_array.surface_get_name(surf))
+		return null
+	var og_mat_name = og_material.resource_name
 	for mat_override in DATA.MATERIAL_OVERRIDES:
-		if(mat_override.TARGET_MATERIAL_NAME == mat_name):
+		if(mat_override.TARGET_MATERIAL_NAME == og_mat_name):
 			override = mat_override;
 	if(override== null):return null;
 	var material_to_return:Material = null
@@ -1102,10 +1137,26 @@ func merge_materials():
 		for child in scene.SCENE.get_children():
 			if (child is MeshInstance3D):
 				var mesh:MeshInstance3D  = child
-				for surf in mesh.mesh.get_surface_count():
+				var surf_array:ArrayMesh = mesh.mesh
+				for surf in surf_array.get_surface_count():
+					var surf_name = surf_array.surface_get_name(surf);
+					var material_: = surf_array.surface_get_material(surf)
+					var override_ = child.get_surface_override_material(surf)
+					if override_ != null:
+						var override_name = override_.resource_name;
+						print("Merge Materials | override: %s" %override_name)
+
+					if(material_!=null):
+						var mat_name =material_.resource_name
+						print("Merge Materials | %s: %s" % [surf_name,mat_name])
+					else:
+						print("Merge Materials | %s has no material" % surf_name);
 					var material_override:Material = get_mat_override_for_surface(surf,mesh,scene)
 					if(material_override!=null):
+						print("merged!")
 						mesh.mesh.surface_set_material(surf,material_override)
+					else:
+						print("not merged")
 
 func update_material_replacements_window():
 	for child in $REPLACEMENT_MATERIALS/ScrollContainer/CONTAINER/MATERIALS.get_children():
@@ -1113,20 +1164,25 @@ func update_material_replacements_window():
 	for replacement:MaterialReplacement in DATA.MATERIAL_REPLACEMENTS:
 		var material_replacement_list_item = material_replacement_list_item_prefab.instantiate()
 		material_replacement_list_item.get_node("ICON/SHADER_ID").text = "%s" % replacement.SHADER_ID
+		material_replacement_list_item.get_node("ICON/PATH").text = replacement.TEXTURE_PATH
 		material_replacement_list_item.get_node("ICON/NAME").text = replacement.NEW_MATERIAL_NAME
 		$REPLACEMENT_MATERIALS/ScrollContainer/CONTAINER/MATERIALS.add_child(material_replacement_list_item)
 
 func _on_create_material_pressed() -> void:
+	var PATH = $REPLACEMENT_MATERIALS/PATH.text;
 	var mat_name = $REPLACEMENT_MATERIALS/LineEdit.text;
 	$REPLACEMENT_MATERIALS/LineEdit.text = ""
 	var shader_id = $REPLACEMENT_MATERIALS/OptionButton.selected;
 	$REPLACEMENT_MATERIALS/OptionButton.selected = 0;
 	var new_mat_override := MaterialReplacement.new()
+	if(mat_name == ""):mat_name="UNTITLED %s" % generate_id()
 	new_mat_override.NEW_MATERIAL_NAME = mat_name;
 	new_mat_override.SHADER_ID = shader_id;
 	var shader = get_shader(new_mat_override.SHADER_ID)
 	new_mat_override.MATERIAL = ShaderMaterial.new()
 	new_mat_override.MATERIAL.shader = shader;
+	new_mat_override.TEXTURE_PATH = PATH;
+	new_mat_override.MATERIAL.resource_name = new_mat_override.NEW_MATERIAL_NAME;
 	DATA.MATERIAL_REPLACEMENTS.push_back(new_mat_override)
 	update_material_replacements_window();
 
@@ -1161,3 +1217,14 @@ func _on_bake_rotation_export_toggled(toggled_on: bool) -> void:
 
 func _on_normalize_scale_on_export_toggled(toggled_on: bool) -> void:
 	BAKE_SCALE_ON_EXPORT= toggled_on
+
+func generate_id():
+	return ceili(Time.get_unix_time_from_system()*100)
+
+
+func _on_open_texture_file_selected(path: String) -> void:
+	$REPLACEMENT_MATERIALS/PATH.text = path
+
+
+func _on_open_texture_pressed() -> void:
+	$OPEN_TEXTURE.show()
