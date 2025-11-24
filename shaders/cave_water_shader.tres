@@ -140,7 +140,7 @@ parameter_name = "LIGHTER_COLOR"
 parameter_name = "HIGHLIGHT"
 
 [sub_resource type="VisualShaderNodeTexture2DParameter" id="VisualShaderNodeTexture2DParameter_nqehg"]
-parameter_name = "MAIN_TEX"
+parameter_name = "MAIN"
 texture_filter = 1
 
 [sub_resource type="VisualShaderNodeTexture" id="VisualShaderNodeTexture_ho15u"]
@@ -331,7 +331,7 @@ code = "shader_type spatial;
 render_mode blend_mix, depth_draw_opaque, depth_test_default, cull_disabled, diffuse_lambert, specular_schlick_ggx, unshaded, world_vertex_coords;
 
 uniform float SPEED = 0.10000000149012;
-uniform sampler2D MAIN_TEX : filter_nearest;
+uniform sampler2D MAIN : filter_nearest;
 uniform vec4 HIGHLIGHT : source_color;
 uniform vec4 LIGHTER_COLOR : source_color;
 uniform vec4 DEEP_COLOR : source_color;
@@ -621,7 +621,7 @@ void fragment() {
 
 	vec4 n_out298p0;
 // Texture2D:298
-	n_out298p0 = texture(MAIN_TEX, n_out300p0);
+	n_out298p0 = texture(MAIN, n_out300p0);
 	float n_out298p4 = n_out298p0.a;
 
 

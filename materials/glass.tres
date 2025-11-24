@@ -1,11 +1,11 @@
 [gd_resource type="ShaderMaterial" load_steps=3 format=3 uid="uid://brkiydmnhih7q"]
 
 [ext_resource type="Shader" uid="uid://bmwqppa82mjjc" path="res://shaders/environment_shader_glass.tres" id="1_2wd1j"]
-[ext_resource type="Texture2D" uid="uid://du60cmevijpcs" path="res://textures/glass.png" id="2_bcsi8"]
+[ext_resource type="Texture2D" uid="uid://bru2t1g022cso" path="res://textures/default.png" id="2_bcsi8"]
 
 [resource]
 render_priority = 1
 shader = ExtResource("1_2wd1j")
 shader_parameter/TINT = Color(0.5911141, 0.591114, 0.59111404, 1)
-shader_parameter/Texture2DParameter = ExtResource("2_bcsi8")
+shader_parameter/MAIN = ExtResource("2_bcsi8")
 shader_parameter/MANUAL_ALPHA = 0.2

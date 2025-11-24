@@ -3,7 +3,7 @@
 [ext_resource type="Texture2D" uid="uid://b7i4lix3xxgnj" path="res://icon_material_replacement.png" id="1_ktamo"]
 
 [node name="MATERIAL_REPLACEMENT_LIST_ITEM" type="VBoxContainer"]
-custom_minimum_size = Vector2(382, 0)
+custom_minimum_size = Vector2(382, 82)
 offset_right = 382.0
 offset_bottom = 67.0
 
@@ -14,14 +14,15 @@ texture = ExtResource("1_ktamo")
 stretch_mode = 2
 
 [node name="PATH" type="Label" parent="ICON"]
-custom_minimum_size = Vector2(490, 50)
+custom_minimum_size = Vector2(400, 50)
 layout_mode = 0
 offset_left = 88.0
 offset_top = 32.0
-offset_right = 578.0
+offset_right = 488.0
 offset_bottom = 82.0
 text = "PATH"
-autowrap_mode = 1
+text_overrun_behavior = 3
+text_direction = 2
 
 [node name="Label" type="Label" parent="ICON/PATH"]
 layout_mode = 0

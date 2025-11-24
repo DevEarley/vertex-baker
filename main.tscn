@@ -36,7 +36,8 @@
 [ext_resource type="Texture2D" uid="uid://bp677qlpye2rd" path="res://vl.png" id="26_a6jrf"]
 
 [sub_resource type="Gradient" id="Gradient_4c57u"]
-colors = PackedColorArray(0, 0, 0, 1, 0, 0, 1, 1)
+offsets = PackedFloat32Array(0, 0.91198504, 1)
+colors = PackedColorArray(0.0574, 0.05866, 0.07, 1, 0, 0.060000088, 0.6, 1, 0.03655767, 0.069676705, 0.36774755, 1)
 
 [sub_resource type="GradientTexture2D" id="GradientTexture2D_efxa6"]
 gradient = SubResource("Gradient_4c57u")
@@ -418,10 +419,10 @@ popup/item_1/text = "WATER SHADER"
 popup/item_1/id = 1
 popup/item_2/text = "WATER FLOW SHADER"
 popup/item_2/id = 2
-popup/item_3/text = "GLASS SHADER"
-popup/item_3/id = 3
-popup/item_4/text = "WINDY SHADER"
-popup/item_4/id = 4
+popup/item_3/text = "WINDY SHADER"
+popup/item_3/id = 4
+popup/item_4/text = "GLASS SHADER"
+popup/item_4/id = 3
 
 [node name="LineEdit" type="LineEdit" parent="REPLACEMENT_MATERIALS"]
 offset_left = 88.0
@@ -752,6 +753,7 @@ file_mode = 0
 display_mode = 1
 access = 2
 filters = PackedStringArray("*.glb", "*.gltf")
+use_native_dialog = true
 
 [node name="EXPORT" type="FileDialog" parent="."]
 title = "EXPORT MESH"
@@ -760,14 +762,16 @@ ok_button_text = "EXPORT MESH"
 display_mode = 1
 access = 2
 filters = PackedStringArray("*.gltf", "*.glb")
+use_native_dialog = true
 
 [node name="OPEN_TEXTURE" type="FileDialog" parent="."]
-title = "Open a Texture"
+title = "Open a File"
 initial_position = 2
 ok_button_text = "OPEN TEXTURE"
 file_mode = 0
 access = 2
 filters = PackedStringArray("*.png")
+use_native_dialog = true
 
 [node name="OPEN" type="FileDialog" parent="."]
 title = "Open a File"
@@ -777,6 +781,7 @@ file_mode = 0
 display_mode = 1
 access = 2
 filters = PackedStringArray("*.tres")
+use_native_dialog = true
 
 [node name="SAVE" type="FileDialog" parent="."]
 title = "SAVE LIGHT DATA"
@@ -785,6 +790,7 @@ ok_button_text = "SAVE PROJECT"
 display_mode = 1
 access = 2
 filters = PackedStringArray("*.tres")
+use_native_dialog = true
 
 [node name="MENU_BUTTON" type="Button" parent="."]
 visible = false

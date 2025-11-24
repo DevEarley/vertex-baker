@@ -7,6 +7,6 @@
 [resource]
 render_priority = 0
 shader = ExtResource("1_7btsc")
-shader_parameter/Texture2DParameter = ExtResource("3_gnnmk")
+shader_parameter/MAIN = ExtResource("3_gnnmk")
 shader_parameter/CLOUDS = ExtResource("2_7baa4")
 shader_parameter/brightness = 1.0

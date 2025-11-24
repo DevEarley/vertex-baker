@@ -9,7 +9,7 @@ expanded_output_ports = [0]
 input_name = "uv"
 
 [sub_resource type="VisualShaderNodeTexture2DParameter" id="VisualShaderNodeTexture2DParameter_nqehg"]
-parameter_name = "MAIN_TEX"
+parameter_name = "MAIN"
 texture_filter = 1
 
 [sub_resource type="VisualShaderNodeTexture" id="VisualShaderNodeTexture_ho15u"]
@@ -41,7 +41,7 @@ operator = 2
 
 [sub_resource type="VisualShaderNodeColorParameter" id="VisualShaderNodeColorParameter_0egpi"]
 expanded_output_ports = [0]
-parameter_name = "ColorParameter"
+parameter_name = "TINT"
 default_value_enabled = true
 default_value = Color(1, 1, 1, 0)
 
@@ -69,7 +69,7 @@ op_type = 0
 operator = 2
 
 [sub_resource type="VisualShaderNodeFloatParameter" id="VisualShaderNodeFloatParameter_lmrnx"]
-parameter_name = "SPEED2"
+parameter_name = "SPEED"
 default_value_enabled = true
 default_value = 0.1
 
@@ -159,9 +159,9 @@ input_name = "vertex"
 code = "shader_type spatial;
 render_mode blend_mix, depth_draw_opaque, depth_test_default, cull_back, diffuse_lambert, specular_schlick_ggx;
 
-uniform vec4 ColorParameter : source_color = vec4(1.000000, 1.000000, 1.000000, 0.000000);
-uniform float SPEED2 = 0.10000000149012;
-uniform sampler2D MAIN_TEX : filter_nearest;
+uniform vec4 TINT : source_color = vec4(1.000000, 1.000000, 1.000000, 0.000000);
+uniform float SPEED = 0.10000000149012;
+uniform sampler2D MAIN : filter_nearest;
 
 
 
@@ -256,7 +256,7 @@ void vertex() {
 
 void fragment() {
 // ColorParameter:359
-	vec4 n_out359p0 = ColorParameter;
+	vec4 n_out359p0 = TINT;
 	float n_out359p4 = n_out359p0.a;
 
 
@@ -274,7 +274,7 @@ void fragment() {
 
 
 // FloatParameter:372
-	float n_out372p0 = SPEED2;
+	float n_out372p0 = SPEED;
 
 
 // FloatOp:380
@@ -321,7 +321,7 @@ void fragment() {
 
 	vec4 n_out298p0;
 // Texture2D:298
-	n_out298p0 = texture(MAIN_TEX, n_out300p0);
+	n_out298p0 = texture(MAIN, n_out300p0);
 	float n_out298p4 = n_out298p0.a;
 
 

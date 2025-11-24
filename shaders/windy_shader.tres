@@ -61,7 +61,7 @@ op_type = 2
 operator = 2
 
 [sub_resource type="VisualShaderNodeTexture2DParameter" id="VisualShaderNodeTexture2DParameter_ks813"]
-parameter_name = "Texture2DParameter"
+parameter_name = "MAIN"
 color_default = 2
 texture_filter = 1
 texture_repeat = 1
@@ -83,7 +83,7 @@ default_input_values = [0, Quaternion(0, 0, 0, 0), 1, Quaternion(0.3, 0.3, 0.01,
 op_type = 5
 
 [sub_resource type="VisualShaderNodeFrame" id="VisualShaderNodeFrame_4tcrs"]
-size = Vector2(2796, 1324.0002)
+size = Vector2(2796, 1324)
 title = "CLOUDS"
 attached_nodes = PackedInt32Array(16, 27, 41, 30, 26, 25, 24, 23, 21, 18, 17, 15, 14, 12)
 
@@ -258,7 +258,9 @@ operator = 2
 code = "shader_type spatial;
 render_mode blend_mix, depth_draw_opaque, depth_test_default, cull_disabled, diffuse_lambert, specular_schlick_ggx, unshaded, world_vertex_coords, shadows_disabled, vertex_lighting;
 
-uniform sampler2D Texture2DParameter : hint_default_transparent, filter_nearest, repeat_enable;
+uniform sampler2D MAIN : hint_default_transparent, filter_nearest, repeat_enable;
+uniform sampler2D CLOUDS : hint_default_transparent, filter_linear, repeat_enable;
+uniform float brightness = 1.0;
 
 
 
@@ -455,15 +457,111 @@ void vertex() {
 }
 
 void fragment() {
+// ColorConstant:49
+	vec4 n_out49p0 = vec4(0.054600, 0.144040, 0.390000, 1.000000);
+
+
+	vec4 n_out5p0;
+// Texture2D:5
+	n_out5p0 = texture(MAIN, UV);
+	float n_out5p4 = n_out5p0.a;
+
+
 // Input:6
 	vec4 n_out6p0 = COLOR;
 	float n_out6p3 = n_out6p0.b;
 
 
-	vec4 n_out5p0;
-// Texture2D:5
-	n_out5p0 = texture(Texture2DParameter, UV);
-	float n_out5p4 = n_out5p0.a;
+// VectorCompose:45
+	vec3 n_out45p0 = vec3(n_out6p3, n_out6p3, n_out6p3);
+
+
+// Input:30
+	mat4 n_out30p0 = INV_VIEW_MATRIX;
+
+
+// Input:21
+	vec3 n_out21p0 = VERTEX;
+
+
+// TransformVectorMult:41
+	vec3 n_out41p0 = (n_out30p0 * vec4(n_out21p0, 1.0)).xyz;
+
+
+// VectorDecompose:24
+	float n_out24p0 = vec4(n_out41p0, 0.0).x;
+	float n_out24p1 = vec4(n_out41p0, 0.0).y;
+	float n_out24p2 = vec4(n_out41p0, 0.0).z;
+	float n_out24p3 = vec4(n_out41p0, 0.0).w;
+
+
+// VectorCompose:23
+	vec2 n_out23p0 = vec2(n_out24p0, n_out24p2);
+
+
+// VectorOp:25
+	vec2 n_in25p1 = vec2(64.00000, 64.00000);
+	vec2 n_out25p0 = n_out23p0 / n_in25p1;
+
+
+// Input:12
+	float n_out12p0 = TIME;
+
+
+// FloatOp:26
+	float n_in26p1 = 0.01000;
+	float n_out26p0 = n_out12p0 * n_in26p1;
+
+
+// VectorCompose:17
+	float n_in17p0 = 0.00000;
+	vec2 n_out17p0 = vec2(n_in17p0, n_out26p0);
+
+
+// VectorOp:18
+	vec2 n_in18p1 = vec2(1.00000, 1.00000);
+	vec2 n_out18p0 = mod(n_out17p0, n_in18p1);
+
+
+// UVFunc:14
+	vec2 n_in14p1 = vec2(1.00000, 1.00000);
+	vec2 n_out14p0 = n_out18p0 * n_in14p1 + n_out25p0;
+
+
+	vec4 n_out16p0;
+// Texture2D:16
+	n_out16p0 = texture(CLOUDS, n_out14p0);
+
+
+// VectorOp:27
+	vec4 n_in27p1 = vec4(0.30000, 0.30000, 0.03000, 1.00000);
+	vec4 n_out27p0 = n_out16p0 * n_in27p1;
+
+
+// VectorOp:42
+	vec4 n_out42p0 = vec4(n_out45p0, 0.0) - n_out27p0;
+
+
+// Clamp:43
+	vec4 n_in43p1 = vec4(0.30000, 0.30000, 0.01000, 0.00000);
+	vec4 n_in43p2 = vec4(1.00000, 1.00000, 1.00000, 1.00000);
+	vec4 n_out43p0 = clamp(n_out42p0, n_in43p1, n_in43p2);
+
+
+// VectorOp:8
+	vec4 n_out8p0 = n_out5p0 * n_out43p0;
+
+
+// ColorOp:48
+	vec3 n_out48p0 = vec3(1.0) - (vec3(1.0) - vec3(n_out49p0.xyz)) / (vec3(n_out8p0.xyz));
+
+
+// FloatParameter:46
+	float n_out46p0 = brightness;
+
+
+// Mix:47
+	vec3 n_out47p0 = mix(n_out48p0, vec3(n_out8p0.xyz), vec3(n_out46p0));
 
 
 // FloatConstant:9
@@ -471,7 +569,7 @@ void fragment() {
 
 
 // Output:0
-	ALBEDO = vec3(n_out6p0.xyz);
+	ALBEDO = n_out47p0;
 	ALPHA = n_out5p4;
 	ALPHA_SCISSOR_THRESHOLD = n_out9p0;
 
@@ -569,7 +667,7 @@ nodes/vertex/110/position = Vector2(-264.6439, 862.86584)
 nodes/vertex/connections = PackedInt32Array(66, 0, 70, 0, 70, 0, 67, 1, 67, 0, 69, 1, 66, 0, 71, 0, 71, 0, 72, 1, 72, 0, 69, 0, 73, 0, 74, 1, 66, 0, 73, 0, 74, 0, 69, 2, 75, 0, 66, 0, 76, 2, 77, 0, 77, 0, 75, 1, 79, 0, 80, 0, 80, 0, 81, 0, 82, 0, 79, 0, 84, 0, 83, 0, 83, 0, 85, 0, 85, 0, 86, 0, 81, 0, 87, 0, 86, 0, 87, 1, 87, 0, 78, 1, 64, 2, 90, 0, 78, 0, 75, 0, 65, 0, 92, 0, 90, 0, 93, 0, 93, 0, 74, 0, 93, 0, 72, 0, 93, 0, 67, 0, 69, 0, 94, 0, 94, 0, 91, 0, 64, 1, 97, 1, 99, 0, 94, 1, 100, 0, 99, 0, 100, 0, 99, 1, 100, 0, 99, 2, 101, 0, 102, 0, 101, 0, 104, 0, 104, 0, 103, 0, 103, 0, 105, 0, 105, 0, 97, 0, 97, 0, 106, 0, 106, 0, 100, 0, 102, 0, 107, 0, 107, 0, 105, 1, 92, 0, 108, 1, 108, 0, 78, 0, 108, 0, 82, 0, 108, 0, 84, 0, 109, 0, 110, 0, 91, 0, 110, 1, 110, 0, 0, 0)
 nodes/fragment/0/position = Vector2(1180, 80)
 nodes/fragment/3/node = SubResource("VisualShaderNodeTexture2DParameter_ks813")
-nodes/fragment/3/position = Vector2(-1780, -120)
+nodes/fragment/3/position = Vector2(-2300, -340)
 nodes/fragment/5/node = SubResource("VisualShaderNodeTexture_blee1")
 nodes/fragment/5/position = Vector2(-1060, -160)
 nodes/fragment/6/node = SubResource("VisualShaderNodeInput_lrnus")
@@ -622,4 +720,4 @@ nodes/fragment/48/node = SubResource("VisualShaderNodeColorOp_itsdx")
 nodes/fragment/48/position = Vector2(1060, -600)
 nodes/fragment/49/node = SubResource("VisualShaderNodeColorConstant_asv7m")
 nodes/fragment/49/position = Vector2(660, -940)
-nodes/fragment/connections = PackedInt32Array(3, 0, 5, 2, 5, 0, 8, 0, 9, 0, 0, 19, 15, 0, 16, 2, 18, 0, 14, 2, 14, 0, 16, 0, 24, 0, 23, 0, 25, 0, 14, 0, 23, 0, 25, 0, 24, 2, 23, 1, 12, 0, 26, 0, 17, 0, 18, 0, 16, 0, 27, 0, 21, 0, 41, 1, 30, 0, 41, 0, 41, 0, 24, 0, 5, 4, 0, 1, 42, 0, 43, 0, 43, 0, 8, 1, 27, 0, 42, 1, 6, 3, 45, 0, 6, 3, 45, 1, 6, 3, 45, 2, 45, 0, 42, 0, 26, 0, 17, 1, 49, 0, 48, 0, 48, 0, 47, 0, 46, 0, 47, 2, 8, 0, 48, 1, 8, 0, 47, 1, 6, 0, 0, 0)
+nodes/fragment/connections = PackedInt32Array(3, 0, 5, 2, 5, 0, 8, 0, 9, 0, 0, 19, 15, 0, 16, 2, 18, 0, 14, 2, 14, 0, 16, 0, 24, 0, 23, 0, 25, 0, 14, 0, 23, 0, 25, 0, 24, 2, 23, 1, 12, 0, 26, 0, 17, 0, 18, 0, 16, 0, 27, 0, 21, 0, 41, 1, 30, 0, 41, 0, 41, 0, 24, 0, 5, 4, 0, 1, 42, 0, 43, 0, 43, 0, 8, 1, 27, 0, 42, 1, 6, 3, 45, 0, 6, 3, 45, 1, 6, 3, 45, 2, 45, 0, 42, 0, 26, 0, 17, 1, 49, 0, 48, 0, 48, 0, 47, 0, 46, 0, 47, 2, 8, 0, 48, 1, 8, 0, 47, 1, 47, 0, 0, 0)

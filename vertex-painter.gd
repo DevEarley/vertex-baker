@@ -1,6 +1,7 @@
 extends Control
 class_name VertexBakerMainWindow
 var MOVING_WINDOW = false
+var default_texture = ("res://textures/default.png")
 var layer_prefab = preload("res://layer_prefab.tscn")
 var light_prefab = preload("res://light_prefab.tscn")
 var mesh_list_item_prefab = preload("res://list_item_mesh_prefab.tscn")
@@ -32,11 +33,11 @@ enum SHADERS {
 	GLASS = 4
 	}
 
-@export var DEFAULT_MATERIAL:Material
-@export var WATER_MATERIAL:Material
-@export var WATER_FLOW_MATERIAL:Material
-@export var WINDY_MATERIAL:Material
-@export var GLASS_MATERIAL:Material
+@export var DEFAULT_MATERIAL:ShaderMaterial
+@export var WATER_MATERIAL:ShaderMaterial
+@export var WATER_FLOW_MATERIAL:ShaderMaterial
+@export var WINDY_MATERIAL:ShaderMaterial
+@export var GLASS_MATERIAL:ShaderMaterial
 
 @export var DEFAULT_SHADER:VisualShader
 @export var WATER_SHADER:VisualShader
@@ -284,15 +285,10 @@ func blend_lights_into_vertex_colors(
 	light,
 	index,
 	tools):
-	var is_masked = DATA.LAYER_MASKS.any(func(layer_mask:LightLayerMask):
-						return (layer_mask.LAYER_ID == layer.ID &&
-						layer_mask.MESH_NAME == mesh.name &&
-						layer_mask.SURFACE_ID == index &&
-						layer_mask.SCENE_ID == imported_scene.ID))
+		var data:MeshDataTool = tools[index]
+		var mesh_array:ArrayMesh = mesh.mesh
 
-	var data:MeshDataTool = tools[index-1]
-	data.create_from_surface(mesh.mesh, index)
-	if(is_masked == false):
+		data.create_from_surface(mesh_array, index)
 		for i in range(data.get_vertex_count()):
 			var vertex = mesh.to_global(data.get_vertex(i))
 			var vertex_distance:float = vertex.distance_to(light.LIGHT_MESH.global_position)
@@ -409,48 +405,83 @@ func blend_lights_into_vertex_colors(
 							hue+=1.0
 						mixed_color = Color.from_hsv(hue,mixed_color.s,mixed_color.v,mixed_color.a)
 						mix = light.MIX
-				data.set_vertex_color(i,lerp(old_color,mixed_color,mix))
+				var is_masked = is_masked(layer,mesh,index,imported_scene)
+				if(is_masked==false):
+					data.set_vertex_color(i,lerp(old_color,mixed_color,mix))
+				else:
+					data.set_vertex_color(i,old_color)
 
 func scale_mesh(mesh:MeshInstance3D, target_scale):
-		var surface_count =mesh.mesh.get_surface_count()
+		var mesh_array:ArrayMesh = mesh.mesh;
+		var surface_count =mesh_array.get_surface_count()
 		var tools = []
 		for index_ in surface_count:
 			tools.push_back(MeshDataTool.new())
 		for index in surface_count:
-			var data:MeshDataTool = tools[index-1]
-			data.create_from_surface(mesh.mesh, index)
+			var data:MeshDataTool = tools[index]
+			data.create_from_surface(mesh_array, index)
 			for i in range(data.get_vertex_count()):
 				var vertex = data.get_vertex(i) * target_scale
 				var normal = data.get_vertex_normal(i) * target_scale
 				data.set_vertex(i, vertex)
 				data.set_vertex_normal(i, normal)
 		mesh.scale = Vector3.ONE
-		var mesh_:Mesh = mesh.mesh;
+		var mesh_:Mesh = mesh_array;
 		mesh_.clear_surfaces()
 		for index in surface_count:
-			var data:MeshDataTool = tools[index-1]
-			data.commit_to_surface(mesh.mesh)
+			var data:MeshDataTool = tools[index]
+			data.commit_to_surface(mesh_array)
+
+func is_masked(layer,mesh,surf,imported_scene):
+	return DATA.LAYER_MASKS.any(func(layer_mask:LightLayerMask):
+						return (layer_mask.LAYER_ID == layer.ID &&
+						layer_mask.MESH_NAME == mesh.name &&
+						layer_mask.SURFACE_ID == surf &&
+						layer_mask.SCENE_ID == imported_scene.ID))
 
 func update_mesh(mesh:MeshInstance3D, imported_scene:ImportedScene) -> void:
-		var surface_count =mesh.mesh.get_surface_count()
+		var mesh_array:ArrayMesh =  mesh.mesh
+		var surface_count =mesh_array.get_surface_count()
 		var tools = []
+		var surface_names = []
 		for index in surface_count:
+			var surf_name = mesh_array.surface_get_name(index)
+			surface_names.push_back(surf_name)
 			tools.push_back(MeshDataTool.new())
 		for layer in DATA.LAYERS:
 			for light in layer.LIGHTS:
+				for surf in surface_count:
+
+						blend_lights_into_vertex_colors(
+							mesh,
+							imported_scene,
+							layer,
+							light,
+							surf,
+							tools)
+
+				mesh_array.clear_surfaces()
 				for index in surface_count:
-					blend_lights_into_vertex_colors(
-						mesh,
-						imported_scene,
-						layer,
-						light,
-						index,
-						tools)
-				var mesh_:Mesh = mesh.mesh;
-				mesh_.clear_surfaces()
-				for index in surface_count:
-					var data = tools[index-1]
-					data.commit_to_surface(mesh.mesh)
+					#var is_masked = is_masked(layer,mesh,index,imported_scene)
+					#if(is_masked):
+						var surf_name = surface_names[index]
+						print("update_mesh | %s: %s" % [mesh.name,index])
+						var data = tools[index]
+						data.commit_to_surface(mesh_array)
+						mesh_array.surface_set_name(index,surf_name)
+						var mat = get_mat_override_for_surface(index,mesh,imported_scene)
+						if(mat!=null):
+							mesh_array.surface_set_material(index,mat)
+						else:
+							var og_mat = mesh_array.surface_get_material(index)
+							if(og_mat is StandardMaterial3D):
+								var shader_material:=ShaderMaterial.new()
+								shader_material.shader = DEFAULT_SHADER
+								shader_material.set_shader_parameter("MAIN",og_mat.albedo_texture)
+								mesh_array.surface_set_material(index,shader_material)
+							#elif(og_mat is ShaderMaterial):
+
+
 
 func _on_open_file_selected(path: String) -> void:
 	var result:VBData;
@@ -458,22 +489,6 @@ func _on_open_file_selected(path: String) -> void:
 		result =  load(path)
 	else:
 		return
-	for vb_replacement:VBMaterialReplacement in result.MATERIAL_REPLACEMENTS:
-		var mat_replacement:MaterialReplacement = MaterialReplacement.new()
-		mat_replacement.NEW_MATERIAL_NAME = vb_replacement.NEW_MATERIAL_NAME
-		mat_replacement.TEXTURE_PATH = vb_replacement.TEXTURE_PATH
-		mat_replacement.SHADER_ID = vb_replacement.SHADER_ID
-		var new_material = ShaderMaterial.new()
-		var shader = get_shader(mat_replacement.SHADER_ID)
-		new_material.shader = shader;
-		new_material.resource_name = mat_replacement.NEW_MATERIAL_NAME;
-		mat_replacement.MATERIAL=new_material;
-		DATA.MATERIAL_REPLACEMENTS.push_back(mat_replacement)
-
-	for vb_material_override:VBMaterialOverride in result.MATERIAL_OVERRIDES:
-		var material_override:MaterialOverride = MaterialOverride.new()
-		material_override.NEW_MATERIAL_NAME = vb_material_override.NEW_MATERIAL_NAME
-		DATA.MATERIAL_OVERRIDES.push_back(material_override)
 
 	for layer_mask_data:VBLayerMaskData in result.LAYER_MASKS:
 		var layer_mask:LightLayerMask = LightLayerMask.new()
@@ -482,6 +497,7 @@ func _on_open_file_selected(path: String) -> void:
 		layer_mask.SCENE_ID = layer_mask_data.SCENE_ID
 		layer_mask.SURFACE_ID = layer_mask_data.SURFACE_ID
 		DATA.LAYER_MASKS.push_back(layer_mask)
+
 	for layer_data:VBLayerData in result.LAYERS:
 		_on_add_layer_pressed(layer_data.NAME,layer_data.BLENDING_METHOD,layer_data.ID)
 		for light_data:VBLightData in result.LIGHTS:
@@ -500,16 +516,39 @@ func _on_open_file_selected(path: String) -> void:
 	for scene:VBSceneData in result.SCENES:
 		p2log(scene.PATH)
 		load_from_path(scene.PATH, scene.POSITION,scene.ROTATION,scene.SCALE,scene.ID)
+
+	for vb_replacement:VBMaterialReplacement in result.MATERIAL_REPLACEMENTS:
+		var mat_replacement:MaterialReplacement = MaterialReplacement.new()
+
+		mat_replacement.NEW_MATERIAL_NAME = vb_replacement.NEW_MATERIAL_NAME
+		mat_replacement.TEXTURE_PATH = vb_replacement.TEXTURE_PATH
+		mat_replacement.SHADER_ID = vb_replacement.SHADER_ID
+		create_replacement (vb_replacement.TEXTURE_PATH,vb_replacement.NEW_MATERIAL_NAME,mat_replacement.SHADER_ID)
+
+	for vb_material_override:VBMaterialOverride in result.MATERIAL_OVERRIDES:
+
+		var replacements_ = DATA.MATERIAL_REPLACEMENTS.filter(func (rep:MaterialReplacement): return rep.NEW_MATERIAL_NAME == vb_material_override.NEW_MATERIAL_NAME)
+		if(replacements_!=null && replacements_.size()>0):
+			var replacement = replacements_[0]
+			select_material(
+				vb_material_override.TARGET_MATERIAL_NAME,
+				vb_material_override.NEW_MATERIAL_NAME ,
+				replacement.MATERIAL);
+		else:
+			var index = get_index_for_built_in_replacement(vb_material_override.NEW_MATERIAL_NAME )
+			selected_built_in_replacement(index,vb_material_override.TARGET_MATERIAL_NAME )
 	auto_bake()
 
-	for override in DATA.MATERIAL_OVERRIDES:
-		for scene in DATA.SCENES:
-			for child in scene.SCENE.get_children():
-				recursively_apply_material_to_scene(
-					scene,
-					child,
-					override);
+	#for override in DATA.MATERIAL_OVERRIDES:
+		#for scene in DATA.SCENES:
+			#for child in scene.SCENE.get_children():
+				#recursively_apply_material_to_scene(
+					#scene,
+					#child,
+					#override);
 
+	update_material_replacements_window();
+	update_material_inspector()
 func _on_save_file_selected(path: String) -> void:
 	var data = DATA.to_project_data();
 	var err=ResourceSaver.save(data,path,ResourceSaver.FLAG_NONE)
@@ -530,7 +569,7 @@ func _on_export_file_selected(path: String) -> void:
 	var gltf_state_save := GLTFState.new()
 	var mats:Array[Material]=[]
 	for mat_replacement in DATA.MATERIAL_REPLACEMENTS:
-		mats.push_back(mat_replacement.MATERIAL)
+		mats.push_back(mat_replacement.MATERIAL as Material)
 	gltf_state_save.set_materials(mats)
 	gltf_document_save.append_from_scene(gltf_scene_root_node, gltf_state_save)
 	gltf_document_save.write_to_filesystem(gltf_state_save, path)
@@ -608,6 +647,7 @@ func on_assign_layers_to_mesh_done(
 				new_layer_mask.SCENE_ID = imported_scene.ID
 				DATA.LAYER_MASKS.push_back(new_layer_mask)
 		elif(item_is_checked == true && already_has_a_mask == true):
+			#TODO fix - replace find with filter
 			var index_to_remove = DATA.LAYER_MASKS.find(light_layer)
 			DATA.LAYER_MASKS.remove_at(index_to_remove)
 	auto_bake()
@@ -655,16 +695,21 @@ func load_mesh(child_mesh,scene_list_item, recursion,imported_scene, imported_sc
 				surface))
 			surface_list_item.get_node("ICON/NAME").text = "Surface %s" % surface
 			mesh_list_item.get_node("VBoxContainer/SURFACES").add_child(surface_list_item)
-			var material:Material = child_mesh.get_active_material(surface)
+			var material__:StandardMaterial3D = child_mesh.get_active_material(surface)
+			var shader_mat :ShaderMaterial = ShaderMaterial.new()
+			shader_mat.shader = DEFAULT_SHADER;
+			shader_mat.resource_name = material__.resource_name
+			shader_mat.set_shader_parameter("MAIN",material__.albedo_texture)
+			child_mesh.mesh.surface_set_material(surface,shader_mat)
 			var material_list_item = material_list_item_prefab.instantiate()
 			var imported_material = ImportedMaterial.new()
 			imported_material.SCENE = imported_scene
 			imported_scene.MATERIALS.push_back(imported_material)
-			imported_material.MATERIAL = material
-			imported_material.NAME = material.resource_name
+			imported_material.MATERIAL = shader_mat
+			imported_material.NAME = material__.resource_name
 			imported_material.LIST_ITEM = material_list_item;
 			DATA.MATERIALS.push_back(imported_material)
-			material_list_item.get_node("ICON/NAME").text = material.resource_name
+			material_list_item.get_node("ICON/NAME").text = shader_mat.resource_name
 			surface_list_item.get_node("VBoxContainer/MATERIALS").add_child(material_list_item)
 	elif(child_mesh is Node3D && child_mesh.get_children().size()>0):
 				for grand_child_mesh in child_mesh.get_children():
@@ -862,21 +907,33 @@ func _on_reset_pressed() -> void:
 
 	for scene in DATA.SCENES:
 		for mesh:MeshInstance3D in scene.SCENE.get_children():
+			var mesh_array:ArrayMesh=mesh.mesh;
 			for og_mesh:MeshInstance3D in scene.OG_SCENE.get_children():
 				if(og_mesh.name == mesh.name):
-					var count =mesh.mesh.get_surface_count()
+					var count =mesh_array.get_surface_count()
 					var tools = []
 					for index in count:
 						tools.push_back(MeshDataTool.new())
 
 					for index in count:
-						var data:MeshDataTool = tools[index-1]
+						var data:MeshDataTool = tools[index]
 						data.create_from_surface(og_mesh.mesh, index)
 
-					mesh.mesh.clear_surfaces()
+					mesh_array.clear_surfaces()
 					for index in count:
-						var data = tools[index-1]
-						data.commit_to_surface(mesh.mesh)
+						print(index)
+						var data = tools[index]
+						data.commit_to_surface(mesh_array)
+						var mat = get_mat_override_for_surface(index,mesh,scene)
+						if(mat!=null):
+							mesh_array.surface_set_material(index,mat)
+						else:
+							var og_mat:StandardMaterial3D = mesh_array.surface_get_material(index)
+							var shader_material:=ShaderMaterial.new()
+							shader_material.shader = DEFAULT_SHADER
+							shader_material.set_shader_parameter("MAIN",og_mat.albedo_texture)
+							mesh_array.surface_set_material(index,shader_material)
+
 
 func _on_light_sphere_checkbox_toggled(toggled_on: bool) -> void:
 	LIGHT_SPHERES_ON = toggled_on
@@ -949,26 +1006,25 @@ func bake_rotation(scene:MeshInstance3D,rotation_target:Vector3):
 		rotated_faces.set(i, rotated_faces[i].rotated(Vector3(0,1,0), rotation_target.y))
 
 func rotate_mesh(mesh:MeshInstance3D, rotation_target:Vector3):
-		var surface_count =mesh.mesh.get_surface_count()
+		var array_mesh:ArrayMesh = mesh.mesh
+		var surface_count =array_mesh.get_surface_count()
 		var tools = []
 		for index_ in surface_count:
 			tools.push_back(MeshDataTool.new())
 		for index in surface_count:
-			var array_mesh:ArrayMesh = mesh.mesh
 			print(array_mesh.surface_get_name(index))
-			var data:MeshDataTool = tools[index-1]
-			data.create_from_surface(mesh.mesh, index)
+			var data:MeshDataTool = tools[index]
+			data.create_from_surface(array_mesh, index)
 			for i in range(data.get_vertex_count()):
 				var vertex = data.get_vertex(i)
 				data.set_vertex(i, vertex.rotated(Vector3(0,0,1),rotation_target.z))
 				data.set_vertex(i, vertex.rotated(Vector3(1,0,0),rotation_target.x))
 				data.set_vertex(i, vertex.rotated(Vector3(0,1,0),rotation_target.y))
 		mesh.scale = Vector3.ONE
-		var mesh_:Mesh = mesh.mesh;
-		mesh_.clear_surfaces()
+		array_mesh.clear_surfaces()
 		for index in surface_count:
-			var data = tools[index-1]
-			data.commit_to_surface(mesh.mesh)
+			var data = tools[index]
+			data.commit_to_surface(array_mesh)
 
 func update_material_inspector():
 	print("update_material_inspector")
@@ -988,6 +1044,13 @@ func update_material_inspector():
 			"toggled",on_toggle_replace_mat_options.bind(material_list_item,mat[0]))
 		material_list_item.get_node("VBoxContainer/REPLACE_MATERIAL").connect(
 			"item_selected",on_select_replace_mat_options.bind(material_list_item,mat[0]))
+		var override = DATA.MATERIAL_OVERRIDES.filter(func (mo:MaterialOverride):return mo.TARGET_MATERIAL_NAME == mat[0])
+		if(override != null && override.size()>0):
+			var mat_override:MaterialOverride = override[0]
+			var mat_name = mat_override.NEW_MATERIAL_NAME
+			var ob:OptionButton = material_list_item.get_node("VBoxContainer/REPLACE_MATERIAL")
+			ob.add_item(mat_name,0)
+			ob.select(0)
 		$MATERIAL_INSPECTOR/ScrollContainer/CONTAINER/MATERIALS.add_child(material_list_item)
 
 func recursively_apply_override_material_to_scene(scene:ImportedScene,
@@ -1019,34 +1082,48 @@ func recursively_apply_material_to_scene(scene:ImportedScene,
 	if(recursive_index>recursive_max):
 		return;
 	if(child is MeshInstance3D):
-		for surface in child.mesh.get_surface_count():
-			var surface_material = child.mesh.surface_get_material(surface)
-			var material_index = DATA.MATERIAL_OVERRIDES.find(func (mo:MaterialOverride): return mo.TARGET_MATERIAL_NAME == surface_material.resource_name)
-			var material_ = DATA.MATERIAL_OVERRIDES[material_index]
-			if(material_!=null):
-
-				if(surface_material.resource_name == override.TARGET_MATERIAL_NAME):
-
+		var mesh_array:ArrayMesh = child.mesh;
+		for surface in mesh_array.get_surface_count():
+			var surface_material = mesh_array.surface_get_material(surface)
+			if(surface_material.resource_name == override.TARGET_MATERIAL_NAME):
+				var materials = DATA.MATERIAL_OVERRIDES.filter(
+					func (mo:MaterialOverride): return mo.TARGET_MATERIAL_NAME == surface_material.resource_name)
+				if(materials!=null && materials.size()>0):
+					var material_ = materials[0]
 					child.set_surface_override_material(surface,material_)
 	else:
 		recursive_index+=1;
 		for grand_child in child.get_children():
 			recursively_apply_material_to_scene(scene, child,override,recursive_index)
 
-func on_select_replace_mat_options(index:int,material_list_item:VBoxContainer,target_mat_name:String):
+func on_select_replace_mat_options(index:int,Container,target_mat_name:String):
 	if(index>=5):
 		index-=5
-		selected_replacement(index,material_list_item,target_mat_name)
+		selected_replacement(index,target_mat_name)
 	else:
-		selected_built_in_replacement(index,material_list_item,target_mat_name)
+		selected_built_in_replacement(index,target_mat_name)
 		pass
+func get_index_for_built_in_replacement(mat_name):
+	match(mat_name):
+		"WATER_MATERIAL":
+			return BUILT_IN_MATERIALS.WATER
 
-func selected_built_in_replacement(index,material_list_item,target_mat_name):
+		"WATER_FLOW_MATERIAL":
+			return BUILT_IN_MATERIALS.WATER_FLOW
+
+		"WINDY_MATERIAL":
+			return BUILT_IN_MATERIALS.WINDY
+
+		"GLASS_MATERIAL":
+			return BUILT_IN_MATERIALS.GLASS
+	return BUILT_IN_MATERIALS.DEFAULT
+
+func selected_built_in_replacement(index,target_mat_name):
 	var material_to_apply:ShaderMaterial = null
 	match(index):
 		BUILT_IN_MATERIALS.DEFAULT:
 			#remove override?
-			select_material(index,material_list_item,target_mat_name,target_mat_name,null);
+			select_material(target_mat_name,target_mat_name,null);
 			return
 		BUILT_IN_MATERIALS.WATER:
 			material_to_apply = WATER_MATERIAL
@@ -1060,35 +1137,45 @@ func selected_built_in_replacement(index,material_list_item,target_mat_name):
 		BUILT_IN_MATERIALS.GLASS:
 			material_to_apply = GLASS_MATERIAL
 			material_to_apply.resource_name = "GLASS_MATERIAL"
-	select_material(index,material_list_item,target_mat_name,material_to_apply.resource_name,material_to_apply);
+	select_material(target_mat_name,material_to_apply.resource_name,material_to_apply);
 
-func selected_replacement(index,material_list_item,target_mat_name):
+func selected_replacement(index,target_mat_name):
 		var replacement: = DATA.MATERIAL_REPLACEMENTS[index]
-		select_material(index,material_list_item,target_mat_name,replacement.NEW_MATERIAL_NAME,replacement.MATERIAL);
+		select_material(target_mat_name,replacement.NEW_MATERIAL_NAME,replacement.MATERIAL);
 
-func select_material(index,material_list_item,target_mat_name,new_mat_name,material_):
-		print("%s >  %s" %[new_mat_name,target_mat_name])
-		var existing_override_for_this_material = DATA.MATERIAL_OVERRIDES.filter(func (mat_override:MaterialOverride):
-			return ( mat_override.TARGET_MATERIAL_NAME == target_mat_name ))
-		var already_selected = DATA.MATERIAL_OVERRIDES.any(func (mat_override:MaterialOverride):
-			return ( mat_override.TARGET_MATERIAL_NAME == target_mat_name &&
-			mat_override.NEW_MATERIAL_NAME == new_mat_name))
-		if(already_selected):
-			print("Already selected this one")
-			return
-		if(existing_override_for_this_material!=null && existing_override_for_this_material.size()>0):
-			existing_override_for_this_material[0].NEW_MATERIAL_NAME= new_mat_name
-		else:
-			var new_mat_override:MaterialOverride = MaterialOverride.new()
-			new_mat_override.NEW_MATERIAL_NAME = new_mat_name
-			new_mat_override.TARGET_MATERIAL_NAME = target_mat_name;
-			DATA.MATERIAL_OVERRIDES.push_back(new_mat_override)
-		for scene in DATA.SCENES:
-			for child in scene.SCENE.get_children():
-				recursively_apply_override_material_to_scene(scene,child,material_,target_mat_name);
-				pass
-		pass
+func select_material(target_mat_name,new_mat_name,material_):
+	if(target_mat_name == "" || new_mat_name == "" ||target_mat_name == null|| new_mat_name == null):
+		print("select_material | BLANK MATERIAL")
+		return
+	print("select_material | %s >  %s" %[new_mat_name,target_mat_name])
+	var existing_override_for_this_material = DATA.MATERIAL_OVERRIDES.filter(func (mat_override:MaterialOverride):
+		return ( mat_override.TARGET_MATERIAL_NAME == target_mat_name ))
+	var already_selected = DATA.MATERIAL_OVERRIDES.any(func (mat_override:MaterialOverride):
+		return ( mat_override.TARGET_MATERIAL_NAME == target_mat_name &&
+		mat_override.NEW_MATERIAL_NAME == new_mat_name))
+	if(already_selected):
+		print("select_material | Already selected this one")
+		return
+	if(existing_override_for_this_material!=null && existing_override_for_this_material.size()>0):
+		print("select_material | UPDATE")
 
+		existing_override_for_this_material[0].NEW_MATERIAL_NAME= new_mat_name
+	else:
+		print("select_material | NEW")
+
+		var new_mat_override:MaterialOverride = MaterialOverride.new()
+		new_mat_override.NEW_MATERIAL_NAME = new_mat_name
+		new_mat_override.TARGET_MATERIAL_NAME = target_mat_name;
+		DATA.MATERIAL_OVERRIDES.push_back(new_mat_override)
+	for scene in DATA.SCENES:
+		for child in scene.SCENE.get_children():
+			recursively_apply_override_material_to_scene(scene,child,material_,target_mat_name);
+			pass
+	#
+	if(AUTO_BAKE):
+		auto_bake()
+	else:
+		_on_reset_pressed()
 func on_toggle_replace_mat_options(toggled_on:bool,material_list_item:VBoxContainer,mat_name:String):
 	if(toggled_on):
 		var mat_override = DATA.MATERIAL_OVERRIDES.filter(func (mat_override:MaterialOverride):
@@ -1119,17 +1206,25 @@ func get_mat_override_for_surface(surf:int,mesh:MeshInstance3D,scene:ImportedSce
 	var mesh_array:ArrayMesh = mesh.mesh
 	var og_material = mesh_array.surface_get_material(surf)
 	if(og_material == null):
-		print("%s has no material" % mesh_array.surface_get_name(surf))
+		print("get_mat_override_for_surface | %s has no material" % mesh_array.surface_get_name(surf))
 		return null
 	var og_mat_name = og_material.resource_name
 	for mat_override in DATA.MATERIAL_OVERRIDES:
 		if(mat_override.TARGET_MATERIAL_NAME == og_mat_name):
 			override = mat_override;
-	if(override== null):return null;
-	var material_to_return:Material = null
+	if(override== null):
+		print("get_mat_override_for_surface | could not find override")
+
+		return null;
+	var material_to_return:ShaderMaterial = null
 	for mat_replacement:MaterialReplacement in DATA.MATERIAL_REPLACEMENTS:
 		if(mat_replacement.NEW_MATERIAL_NAME== override.NEW_MATERIAL_NAME):
 			material_to_return = mat_replacement.MATERIAL
+	if(material_to_return==null):
+		print("get_mat_override_for_surface | could not find replacement")
+	else:
+		print("get_mat_override_for_surface | found replacement")
+
 	return material_to_return
 
 func merge_materials():
@@ -1137,10 +1232,10 @@ func merge_materials():
 		for child in scene.SCENE.get_children():
 			if (child is MeshInstance3D):
 				var mesh:MeshInstance3D  = child
-				var surf_array:ArrayMesh = mesh.mesh
-				for surf in surf_array.get_surface_count():
-					var surf_name = surf_array.surface_get_name(surf);
-					var material_: = surf_array.surface_get_material(surf)
+				var mesh_array:ArrayMesh = mesh.mesh
+				for surf in mesh_array.get_surface_count():
+					var surf_name = mesh_array.surface_get_name(surf);
+					var material_: = mesh_array.surface_get_material(surf)
 					var override_ = child.get_surface_override_material(surf)
 					if override_ != null:
 						var override_name = override_.resource_name;
@@ -1154,7 +1249,7 @@ func merge_materials():
 					var material_override:Material = get_mat_override_for_surface(surf,mesh,scene)
 					if(material_override!=null):
 						print("merged!")
-						mesh.mesh.surface_set_material(surf,material_override)
+						mesh_array.surface_set_material(surf,material_override)
 					else:
 						print("not merged")
 
@@ -1174,6 +1269,10 @@ func _on_create_material_pressed() -> void:
 	$REPLACEMENT_MATERIALS/LineEdit.text = ""
 	var shader_id = $REPLACEMENT_MATERIALS/OptionButton.selected;
 	$REPLACEMENT_MATERIALS/OptionButton.selected = 0;
+	create_replacement (PATH,mat_name,shader_id)
+	update_material_replacements_window();
+
+func create_replacement (PATH,mat_name,shader_id):
 	var new_mat_override := MaterialReplacement.new()
 	if(mat_name == ""):mat_name="UNTITLED %s" % generate_id()
 	new_mat_override.NEW_MATERIAL_NAME = mat_name;
@@ -1182,14 +1281,17 @@ func _on_create_material_pressed() -> void:
 	new_mat_override.MATERIAL = ShaderMaterial.new()
 	new_mat_override.MATERIAL.shader = shader;
 	new_mat_override.TEXTURE_PATH = PATH;
+	if(PATH == ""):
+		PATH = default_texture
+	var image = Image.load_from_file(PATH)
+	var texture_image = ImageTexture.create_from_image(image)
+	new_mat_override.MATERIAL.set_shader_parameter("MAIN",texture_image)
+
 	new_mat_override.MATERIAL.resource_name = new_mat_override.NEW_MATERIAL_NAME;
 	DATA.MATERIAL_REPLACEMENTS.push_back(new_mat_override)
-	update_material_replacements_window();
 
 func get_shader(shader_id:int):
 	match(shader_id):
-		SHADERS.DEFAULT:
-			return DEFAULT_SHADER
 		SHADERS.WATER:
 			return WATER_SHADER
 		SHADERS.WINDY:
@@ -1198,6 +1300,7 @@ func get_shader(shader_id:int):
 			return GLASS_SHADER
 		SHADERS.WATER_FLOW:
 			return WATER_FLOW_SHADER
+	return DEFAULT_SHADER
 
 func get_material_for_override_id(override_material_index:int):
 	match(override_material_index):

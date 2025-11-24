@@ -20,12 +20,14 @@ func to_project_data():
 		vb_mat_override.NEW_MATERIAL_NAME = mat_override.NEW_MATERIAL_NAME
 		vb_mat_override.TARGET_MATERIAL_NAME = mat_override.TARGET_MATERIAL_NAME
 		vb_mat_override.SHADER_ID = mat_override.SHADER_ID
+
 		project_data.MATERIAL_OVERRIDES.push_back(vb_mat_override);
 
 	for mat_replacement in MATERIAL_REPLACEMENTS:
 		var vb_mat_replacement:VBMaterialReplacement =VBMaterialReplacement.new()
 		vb_mat_replacement.NEW_MATERIAL_NAME = mat_replacement.NEW_MATERIAL_NAME
 		vb_mat_replacement.SHADER_ID = mat_replacement.SHADER_ID
+		vb_mat_replacement.TEXTURE_PATH = mat_replacement.TEXTURE_PATH
 		project_data.MATERIAL_REPLACEMENTS.push_back(vb_mat_replacement);
 
 	for layer_mask in LAYER_MASKS:
@@ -51,16 +53,13 @@ func to_project_data():
 		layer_data.ID = layer.ID;
 		layer_data.NAME = layer.NAME;
 		layer_data.BLENDING_METHOD = layer.BLENDING_METHOD;
-
 		project_data.LAYERS.push_back(layer_data)
 		for light in layer.LIGHTS:
 			var light_data:VBLightData = VBLightData.new()
 			light_data.COLOR = Vector3(light.COLOR.r,light.COLOR.g,light.COLOR.b)
-
 			light_data.POSITION = light.LIGHT_MESH.global_position
 			light_data.PARENT_LAYER_ID = layer.ID
 			light_data.MIX = light.MIX
 			light_data.RADIUS = light.RADIUS
 			project_data.LIGHTS.push_back(light_data)
-
 	return project_data

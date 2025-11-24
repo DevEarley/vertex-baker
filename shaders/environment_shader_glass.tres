@@ -89,7 +89,7 @@ expanded_output_ports = [0]
 parameter_name = "MANUAL_ALPHA"
 
 [sub_resource type="VisualShaderNodeTexture2DParameter" id="VisualShaderNodeTexture2DParameter_pavev"]
-parameter_name = "Texture2DParameter"
+parameter_name = "MAIN"
 
 [sub_resource type="VisualShaderNodeColorParameter" id="VisualShaderNodeColorParameter_ut3v3"]
 parameter_name = "TINT"
@@ -130,7 +130,7 @@ render_mode blend_mix, depth_draw_opaque, depth_test_default, cull_back, diffuse
 varying float var_distance;
 
 uniform vec4 TINT : source_color;
-uniform sampler2D Texture2DParameter;
+uniform sampler2D MAIN;
 uniform float MANUAL_ALPHA;
 
 
@@ -218,7 +218,7 @@ void fragment() {
 
 	vec4 n_out5p0;
 // Texture2D:5
-	n_out5p0 = texture(Texture2DParameter, n_out105p0);
+	n_out5p0 = texture(MAIN, n_out105p0);
 	float n_out5p4 = n_out5p0.a;
 
 

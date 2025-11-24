@@ -34,17 +34,12 @@ script = ExtResource("2_7axnu")
 TOGGLE_TARGET = NodePath("../../VBoxContainer")
 
 [node name="VBoxContainer" type="HBoxContainer" parent="."]
-visible = false
 layout_mode = 2
 size_flags_horizontal = 4
 
 [node name="REPLACE_MATERIAL" type="OptionButton" parent="VBoxContainer"]
 custom_minimum_size = Vector2(336, 0)
 layout_mode = 2
-selected = 0
 allow_reselect = true
-item_count = 1
-popup/item_0/text = "                                                                         "
-popup/item_0/id = 0
 
 [connection signal="pressed" from="ICON/MORE_MENU" to="ICON/MORE_MENU" method="_on_pressed"]
