@@ -1,6 +1,8 @@
-[gd_scene load_steps=2 format=3 uid="uid://c8ktc2bj4ysx7"]
+[gd_scene load_steps=4 format=3 uid="uid://c8ktc2bj4ysx7"]
 
 [ext_resource type="Texture2D" uid="uid://b7i4lix3xxgnj" path="res://icon_material_replacement.png" id="1_ktamo"]
+[ext_resource type="Texture2D" uid="uid://b3m4ua8c4tqsw" path="res://icon_open.png" id="2_vcxex"]
+[ext_resource type="Texture2D" uid="uid://cq5m5w00y7ep6" path="res://icon_warning.png" id="3_vcxex"]
 
 [node name="MATERIAL_REPLACEMENT_LIST_ITEM" type="VBoxContainer"]
 custom_minimum_size = Vector2(382, 82)
@@ -14,22 +16,41 @@ texture = ExtResource("1_ktamo")
 stretch_mode = 2
 
 [node name="PATH" type="Label" parent="ICON"]
-custom_minimum_size = Vector2(400, 50)
+custom_minimum_size = Vector2(340, 50)
 layout_mode = 0
-offset_left = 88.0
-offset_top = 32.0
-offset_right = 488.0
-offset_bottom = 82.0
+offset_left = 153.0
+offset_top = 34.0
+offset_right = 493.0
+offset_bottom = 84.0
 text = "PATH"
+horizontal_alignment = 1
 text_overrun_behavior = 3
 text_direction = 2
 
+[node name="EDIT" type="Button" parent="ICON/PATH"]
+layout_mode = 0
+offset_left = -72.0
+offset_top = -11.0
+offset_right = -32.0
+offset_bottom = 29.0
+icon = ExtResource("2_vcxex")
+
+[node name="MISSING" type="TextureRect" parent="ICON/PATH"]
+layout_mode = 0
+offset_left = -34.0
+offset_top = -8.0
+offset_right = -2.0
+offset_bottom = 24.0
+tooltip_text = "MISSING TEXTURE!"
+texture = ExtResource("3_vcxex")
+expand_mode = 1
+
 [node name="Label" type="Label" parent="ICON/PATH"]
 layout_mode = 0
-offset_left = -82.0
-offset_top = -1.0
-offset_right = -3.0
-offset_bottom = 22.0
+offset_left = -146.0
+offset_top = -4.0
+offset_right = -67.0
+offset_bottom = 19.0
 text = "TEX PATH:"
 
 [node name="NAME" type="Label" parent="ICON"]

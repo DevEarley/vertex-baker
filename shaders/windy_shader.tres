@@ -581,6 +581,7 @@ flags/unshaded = true
 flags/world_vertex_coords = true
 flags/shadows_disabled = true
 flags/vertex_lighting = true
+preview_params/CLOUDS = "Resource(\"uid://e267e0fm03ig\", \"res://textures/clouds.png\")"
 nodes/vertex/0/position = Vector2(80, 1180)
 nodes/vertex/64/node = SubResource("VisualShaderNodeInput_fsmpi")
 nodes/vertex/64/position = Vector2(-4640, 2120)

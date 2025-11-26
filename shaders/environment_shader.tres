@@ -393,6 +393,7 @@ flags/unshaded = true
 flags/world_vertex_coords = true
 flags/shadows_disabled = true
 flags/vertex_lighting = true
+preview_params/CLOUDS = "Resource(\"uid://e267e0fm03ig\", \"res://textures/clouds.png\")"
 nodes/vertex/0/position = Vector2(-660, 1040)
 nodes/fragment/0/position = Vector2(3720, -60)
 nodes/fragment/3/node = SubResource("VisualShaderNodeTexture2DParameter_ks813")

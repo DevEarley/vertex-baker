@@ -1,16 +1,11 @@
-[gd_scene load_steps=40 format=3 uid="uid://egxf4avoauls"]
+[gd_scene load_steps=35 format=3 uid="uid://egxf4avoauls"]
 
 [ext_resource type="Script" uid="uid://bxhfyvkolmnms" path="res://vertex-painter.gd" id="1_ig7tw"]
 [ext_resource type="Script" uid="uid://hdlai2as1f4i" path="res://free-look.gd" id="2_0xm2m"]
-[ext_resource type="Material" uid="uid://bvk1be4yn36ct" path="res://materials/default.tres" id="2_074og"]
-[ext_resource type="Material" uid="uid://6vy62c7xkidj" path="res://materials/water.tres" id="3_cegan"]
 [ext_resource type="Script" uid="uid://e3f1ox6y6cvg" path="res://addons/Gizmo3DScript/gizmo3D.gd" id="3_h2yge"]
 [ext_resource type="Script" uid="uid://x6hxn1ffvby6" path="res://window_mover.gd" id="4_1bvp3"]
-[ext_resource type="Material" uid="uid://fnapai20ru5g" path="res://materials/water-flow.tres" id="4_82xsv"]
-[ext_resource type="Material" uid="uid://cq6wm4511nias" path="res://materials/windy.tres" id="5_getpj"]
 [ext_resource type="Script" uid="uid://dev0gohk766sy" path="res://minimize.gd" id="5_lquwl"]
 [ext_resource type="Theme" uid="uid://2h4h4f0sagcw" path="res://main_theme.tres" id="6_7mycd"]
-[ext_resource type="Material" uid="uid://brkiydmnhih7q" path="res://materials/glass.tres" id="6_ryguw"]
 [ext_resource type="Texture2D" uid="uid://c12b0vjqpapia" path="res://icon_palette.png" id="7_4c57u"]
 [ext_resource type="Shader" uid="uid://chk0hj48j6tqh" path="res://shaders/environment_shader.tres" id="7_jq2sk"]
 [ext_resource type="Texture2D" uid="uid://c8a5er8tacab3" path="res://icon_material.png" id="8_4c57u"]
@@ -64,11 +59,6 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_ig7tw")
 gizmo = NodePath("SubViewportContainer/SubViewport/Gizmo3D_MOVE")
-DEFAULT_MATERIAL = ExtResource("2_074og")
-WATER_MATERIAL = ExtResource("3_cegan")
-WATER_FLOW_MATERIAL = ExtResource("4_82xsv")
-WINDY_MATERIAL = ExtResource("5_getpj")
-GLASS_MATERIAL = ExtResource("6_ryguw")
 DEFAULT_SHADER = ExtResource("7_jq2sk")
 WATER_SHADER = ExtResource("8_4k2k6")
 WATER_FLOW_SHADER = ExtResource("9_0rl1p")
@@ -96,7 +86,7 @@ stretch = true
 [node name="SubViewport" type="SubViewport" parent="SubViewportContainer"]
 transparent_bg = true
 handle_input_locally = false
-size = Vector2i(3840, 2160)
+size = Vector2i(2400, 1350)
 render_target_update_mode = 4
 
 [node name="Camera3D" type="Camera3D" parent="SubViewportContainer/SubViewport" node_paths=PackedStringArray("gizmo", "MAIN", "H_SLIDER")]
@@ -199,7 +189,7 @@ icon = ExtResource("15_seu75")
 [node name="PALETTE_INSPECTOR" type="Window" parent="." node_paths=PackedStringArray("MAIN")]
 oversampling_override = 1.0
 title = "PALETTE INSPECTOR"
-position = Vector2i(1688, 80)
+position = Vector2i(1868, 10)
 size = Vector2i(500, 40)
 borderless = true
 unfocusable = true
@@ -280,7 +270,7 @@ FOLD_BUTTON = NodePath(".")
 [node name="REPLACEMENT_MATERIALS" type="Window" parent="." node_paths=PackedStringArray("MAIN")]
 oversampling_override = 1.0
 title = "REPLACEMENT MATERIALS"
-position = Vector2i(1688, 240)
+position = Vector2i(1873, 85)
 size = Vector2i(500, 500)
 borderless = true
 unfocusable = true
@@ -453,8 +443,8 @@ icon = ExtResource("9_a6jrf")
 [node name="MATERIAL_INSPECTOR" type="Window" parent="." node_paths=PackedStringArray("MAIN")]
 oversampling_override = 1.0
 title = "MESH INSPECTOR"
-position = Vector2i(1688, 160)
-size = Vector2i(500, 40)
+position = Vector2i(1868, 620)
+size = Vector2i(500, 500)
 transient = true
 borderless = true
 unfocusable = true
@@ -512,6 +502,7 @@ offset_bottom = 30.0
 text = "MATERIALS"
 
 [node name="EXPAND" type="Button" parent="MATERIAL_INSPECTOR" node_paths=PackedStringArray("WINDOW", "EXPAND_BUTTON", "FOLD_BUTTON")]
+visible = false
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
@@ -529,7 +520,6 @@ EXPAND_BUTTON = NodePath(".")
 FOLD_BUTTON = NodePath("../FOLD")
 
 [node name="FOLD" type="Button" parent="MATERIAL_INSPECTOR" node_paths=PackedStringArray("WINDOW", "EXPAND_BUTTON", "FOLD_BUTTON")]
-visible = false
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
@@ -773,6 +763,15 @@ access = 2
 filters = PackedStringArray("*.png")
 use_native_dialog = true
 
+[node name="UPDATE_TEXTURE" type="FileDialog" parent="."]
+title = "Open a File"
+initial_position = 2
+ok_button_text = "OPEN TEXTURE"
+file_mode = 0
+access = 2
+filters = PackedStringArray("*.png")
+use_native_dialog = true
+
 [node name="OPEN" type="FileDialog" parent="."]
 title = "Open a File"
 initial_position = 2
@@ -956,6 +955,7 @@ texture = ExtResource("21_getpj")
 [connection signal="file_selected" from="IMPORT" to="." method="_on_import_file_selected"]
 [connection signal="file_selected" from="EXPORT" to="." method="_on_export_file_selected"]
 [connection signal="file_selected" from="OPEN_TEXTURE" to="." method="_on_open_texture_file_selected"]
+[connection signal="file_selected" from="UPDATE_TEXTURE" to="." method="_on_update_texture_file_selected"]
 [connection signal="file_selected" from="OPEN" to="." method="_on_open_file_selected"]
 [connection signal="file_selected" from="SAVE" to="." method="_on_save_file_selected"]
 [connection signal="pressed" from="MENU_BUTTON" to="." method="_on_menu_button_pressed"]

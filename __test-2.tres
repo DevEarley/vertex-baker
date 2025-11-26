@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="VBData" load_steps=71 format=3]
+[gd_resource type="Resource" script_class="VBData" load_steps=59 format=3]
 
 [ext_resource type="Script" path="res://VBLayerData.gd" id="1_xh4u3"]
 [ext_resource type="Script" path="res://VBLayerMaskData.gd" id="2_xx7nx"]
@@ -110,174 +110,159 @@ PARENT_LAYER_ID = 1763655512
 
 [sub_resource type="Resource" id="Resource_jk87h"]
 script = ExtResource("4_sqfny")
+NEW_MATERIAL_NAME = "GS-002"
+TARGET_MATERIAL_NAME = "green-tile"
 
 [sub_resource type="Resource" id="Resource_7r1r5"]
 script = ExtResource("4_sqfny")
-
-[sub_resource type="Resource" id="Resource_ncc78"]
-script = ExtResource("4_sqfny")
-
-[sub_resource type="Resource" id="Resource_omy81"]
-script = ExtResource("4_sqfny")
-
-[sub_resource type="Resource" id="Resource_0ahkm"]
-script = ExtResource("4_sqfny")
-
-[sub_resource type="Resource" id="Resource_ae1nm"]
-script = ExtResource("4_sqfny")
-
-[sub_resource type="Resource" id="Resource_tv07p"]
-script = ExtResource("4_sqfny")
-
-[sub_resource type="Resource" id="Resource_r7ll2"]
-script = ExtResource("4_sqfny")
-
-[sub_resource type="Resource" id="Resource_5w8la"]
-script = ExtResource("4_sqfny")
-
-[sub_resource type="Resource" id="Resource_r6821"]
-script = ExtResource("4_sqfny")
-
-[sub_resource type="Resource" id="Resource_14js4"]
-script = ExtResource("4_sqfny")
-
-[sub_resource type="Resource" id="Resource_2trxr"]
-script = ExtResource("4_sqfny")
-
-[sub_resource type="Resource" id="Resource_mvvgs"]
-script = ExtResource("4_sqfny")
-
-[sub_resource type="Resource" id="Resource_1c4v2"]
-script = ExtResource("4_sqfny")
-
-[sub_resource type="Resource" id="Resource_nd2sx"]
-script = ExtResource("4_sqfny")
-
-[sub_resource type="Resource" id="Resource_jttl3"]
-script = ExtResource("4_sqfny")
-
-[sub_resource type="Resource" id="Resource_difhw"]
-script = ExtResource("4_sqfny")
-
-[sub_resource type="Resource" id="Resource_7yd6j"]
-script = ExtResource("4_sqfny")
-NEW_MATERIAL_NAME = "MAIN"
+NEW_MATERIAL_NAME = "main_tex"
 TARGET_MATERIAL_NAME = "Cube1_00_auv"
 
-[sub_resource type="Resource" id="Resource_12a8d"]
+[sub_resource type="Resource" id="Resource_ncc78"]
 script = ExtResource("4_sqfny")
 NEW_MATERIAL_NAME = "STONE"
 TARGET_MATERIAL_NAME = "Cube1_auv"
 
-[sub_resource type="Resource" id="Resource_66oce"]
+[sub_resource type="Resource" id="Resource_omy81"]
 script = ExtResource("4_sqfny")
-NEW_MATERIAL_NAME = "windy2"
+NEW_MATERIAL_NAME = "WINDY_TEX"
 TARGET_MATERIAL_NAME = "WINDY"
 
-[sub_resource type="Resource" id="Resource_k6ton"]
+[sub_resource type="Resource" id="Resource_0ahkm"]
 script = ExtResource("4_sqfny")
-NEW_MATERIAL_NAME = "BIG_TREE"
+NEW_MATERIAL_NAME = "big_tree_tex"
 TARGET_MATERIAL_NAME = "big-tree"
 
-[sub_resource type="Resource" id="Resource_ycw5t"]
+[sub_resource type="Resource" id="Resource_ae1nm"]
 script = ExtResource("4_sqfny")
-NEW_MATERIAL_NAME = "MAIN"
+NEW_MATERIAL_NAME = "main_tex"
 TARGET_MATERIAL_NAME = "default"
 
-[sub_resource type="Resource" id="Resource_exph1"]
+[sub_resource type="Resource" id="Resource_tv07p"]
 script = ExtResource("4_sqfny")
 NEW_MATERIAL_NAME = "WATER_MATERIAL"
-TARGET_MATERIAL_NAME = "water_auv"
+TARGET_MATERIAL_NAME = "WATER_MATERIAL"
+SHADER_ID = 1
 
-[sub_resource type="Resource" id="Resource_oh6v0"]
+[sub_resource type="Resource" id="Resource_r7ll2"]
 script = ExtResource("4_sqfny")
-NEW_MATERIAL_NAME = "windy2"
+NEW_MATERIAL_NAME = "WINDY_TEX"
 TARGET_MATERIAL_NAME = "windy"
 
-[sub_resource type="Resource" id="Resource_nyf6j"]
+[sub_resource type="Resource" id="Resource_5w8la"]
 script = ExtResource("4_sqfny")
-NEW_MATERIAL_NAME = "GS-002"
-TARGET_MATERIAL_NAME = "green-tile"
+NEW_MATERIAL_NAME = "main_tex"
+TARGET_MATERIAL_NAME = "main_env"
 
-[sub_resource type="Resource" id="Resource_tap0s"]
+[sub_resource type="Resource" id="Resource_r6821"]
 script = ExtResource("4_sqfny")
-NEW_MATERIAL_NAME = "MAIN"
-TARGET_MATERIAL_NAME = "Cube2_extract7_auv"
+NEW_MATERIAL_NAME = "main_tex"
+TARGET_MATERIAL_NAME = "WOOD_10_auv"
 
-[sub_resource type="Resource" id="Resource_dtne8"]
+[sub_resource type="Resource" id="Resource_14js4"]
 script = ExtResource("4_sqfny")
-NEW_MATERIAL_NAME = "MAIN"
-TARGET_MATERIAL_NAME = "Cube2_auv"
+NEW_MATERIAL_NAME = "big_tree_tex"
+TARGET_MATERIAL_NAME = "bark"
 
-[sub_resource type="Resource" id="Resource_wgte3"]
+[sub_resource type="Resource" id="Resource_2trxr"]
 script = ExtResource("4_sqfny")
-NEW_MATERIAL_NAME = "ROPE"
-TARGET_MATERIAL_NAME = "ROPE"
+NEW_MATERIAL_NAME = "big_tree_tex"
+TARGET_MATERIAL_NAME = "Bark"
 
-[sub_resource type="Resource" id="Resource_43tqw"]
+[sub_resource type="Resource" id="Resource_mvvgs"]
 script = ExtResource("4_sqfny")
-NEW_MATERIAL_NAME = "MAIN"
-TARGET_MATERIAL_NAME = "MAIN"
+NEW_MATERIAL_NAME = "GS-000"
+TARGET_MATERIAL_NAME = "greens"
 
-[sub_resource type="Resource" id="Resource_smbl7"]
+[sub_resource type="Resource" id="Resource_1c4v2"]
 script = ExtResource("4_sqfny")
-NEW_MATERIAL_NAME = "MAIN"
-TARGET_MATERIAL_NAME = "Cube1_10_auv"
-
-[sub_resource type="Resource" id="Resource_6jxl7"]
-script = ExtResource("4_sqfny")
-NEW_MATERIAL_NAME = "windy-3"
+NEW_MATERIAL_NAME = "tree-top-tex"
 TARGET_MATERIAL_NAME = "treetop-WINDY2"
 
-[sub_resource type="Resource" id="Resource_v7bwc"]
-script = ExtResource("5_46w3x")
-NEW_MATERIAL_NAME = "MAIN"
+[sub_resource type="Resource" id="Resource_nd2sx"]
+script = ExtResource("4_sqfny")
+NEW_MATERIAL_NAME = "main_tex"
+TARGET_MATERIAL_NAME = "Cube1_10_auv"
 
-[sub_resource type="Resource" id="Resource_pnaqe"]
-script = ExtResource("5_46w3x")
-NEW_MATERIAL_NAME = "WINDY"
-SHADER_ID = 4
+[sub_resource type="Resource" id="Resource_jttl3"]
+script = ExtResource("4_sqfny")
+NEW_MATERIAL_NAME = "main_tex"
+TARGET_MATERIAL_NAME = "MAIN"
 
-[sub_resource type="Resource" id="Resource_jlv65"]
-script = ExtResource("5_46w3x")
-NEW_MATERIAL_NAME = "BIG_TREE"
+[sub_resource type="Resource" id="Resource_difhw"]
+script = ExtResource("4_sqfny")
+NEW_MATERIAL_NAME = "ROPE_TEX"
+TARGET_MATERIAL_NAME = "ROPE"
 
-[sub_resource type="Resource" id="Resource_h2t4o"]
-script = ExtResource("5_46w3x")
-NEW_MATERIAL_NAME = "STONE"
+[sub_resource type="Resource" id="Resource_7yd6j"]
+script = ExtResource("4_sqfny")
+NEW_MATERIAL_NAME = "main_tex"
+TARGET_MATERIAL_NAME = "Cube2_auv"
 
-[sub_resource type="Resource" id="Resource_gg7gt"]
-script = ExtResource("5_46w3x")
-NEW_MATERIAL_NAME = "ROPE"
+[sub_resource type="Resource" id="Resource_12a8d"]
+script = ExtResource("4_sqfny")
+NEW_MATERIAL_NAME = "main_tex"
+TARGET_MATERIAL_NAME = "Cube2_extract7_auv"
 
-[sub_resource type="Resource" id="Resource_0l366"]
-script = ExtResource("5_46w3x")
-NEW_MATERIAL_NAME = "windy2"
-SHADER_ID = 3
+[sub_resource type="Resource" id="Resource_66oce"]
+script = ExtResource("4_sqfny")
+NEW_MATERIAL_NAME = "Water"
+TARGET_MATERIAL_NAME = "water_auv"
+SHADER_ID = 9
 
-[sub_resource type="Resource" id="Resource_3tecq"]
+[sub_resource type="Resource" id="Resource_k6ton"]
 script = ExtResource("5_46w3x")
-NEW_MATERIAL_NAME = "GS-001"
+NEW_MATERIAL_NAME = "main_tex"
+TEXTURE_PATH = "C:/Repos/vertex-baker/lamp-001_0.png"
 
-[sub_resource type="Resource" id="Resource_5blw0"]
+[sub_resource type="Resource" id="Resource_ycw5t"]
+script = ExtResource("5_46w3x")
+NEW_MATERIAL_NAME = "big_tree_tex"
+TEXTURE_PATH = "C:/Repos/broduce-game/broduce-game/textures/big-tree-2.png"
+
+[sub_resource type="Resource" id="Resource_exph1"]
 script = ExtResource("5_46w3x")
 NEW_MATERIAL_NAME = "GS-000"
+TEXTURE_PATH = "C:/Repos/broduce-game/broduce-game/textures/greens.png"
 
-[sub_resource type="Resource" id="Resource_bwtgy"]
+[sub_resource type="Resource" id="Resource_oh6v0"]
 script = ExtResource("5_46w3x")
 NEW_MATERIAL_NAME = "GS-002"
+TEXTURE_PATH = "C:/Repos/broduce-game/broduce-game/textures/greens-tile-002.png"
 
-[sub_resource type="Resource" id="Resource_son1h"]
+[sub_resource type="Resource" id="Resource_nyf6j"]
 script = ExtResource("5_46w3x")
-NEW_MATERIAL_NAME = "tree-top-windy"
-SHADER_ID = 4
-
-[sub_resource type="Resource" id="Resource_1p5gs"]
-script = ExtResource("5_46w3x")
-NEW_MATERIAL_NAME = "windy-3"
+NEW_MATERIAL_NAME = "tree-top-tex"
 SHADER_ID = 3
+TEXTURE_PATH = "C:/Repos/broduce-game/broduce-game/textures/treetop-001.png"
 
-[sub_resource type="Resource" id="Resource_du86l"]
+[sub_resource type="Resource" id="Resource_tap0s"]
+script = ExtResource("5_46w3x")
+NEW_MATERIAL_NAME = "STONE"
+TEXTURE_PATH = "C:/Repos/broduce-game/broduce-game/textures/stone_tile_1.png"
+
+[sub_resource type="Resource" id="Resource_dtne8"]
+script = ExtResource("5_46w3x")
+NEW_MATERIAL_NAME = "WINDY_TEX"
+TEXTURE_PATH = "C:/Repos/broduce-game/broduce-game/textures/main_env_tex.png"
+
+[sub_resource type="Resource" id="Resource_wgte3"]
+script = ExtResource("5_46w3x")
+NEW_MATERIAL_NAME = "GS-001"
+TEXTURE_PATH = "C:/Repos/broduce-game/broduce-game/textures/greens-tile-001.png"
+
+[sub_resource type="Resource" id="Resource_43tqw"]
+script = ExtResource("5_46w3x")
+NEW_MATERIAL_NAME = "ROPE_TEX"
+TEXTURE_PATH = "C:/Repos/broduce-game/broduce-game/textures/vines-002.png"
+
+[sub_resource type="Resource" id="Resource_smbl7"]
+script = ExtResource("5_46w3x")
+NEW_MATERIAL_NAME = "Water"
+SHADER_ID = 1
+TEXTURE_PATH = "C:/Repos/vertex-baker/textures/water.png"
+
+[sub_resource type="Resource" id="Resource_6jxl7"]
 script = ExtResource("6_imi0g")
 PATH = "C:/Repos/broduce-game/broduce-game/location-meshes/forest-001.glb"
 ID = 1763654310
@@ -285,51 +270,51 @@ NAME = "SCENE_PREFAB"
 POSITION = Vector3(0.006374359, -0.21281576, 0.1687625)
 SCALE = Vector3(4, 4, 4)
 
-[sub_resource type="Resource" id="Resource_eivrs"]
+[sub_resource type="Resource" id="Resource_v7bwc"]
 script = ExtResource("6_imi0g")
 PATH = "C:/Repos/broduce-game/broduce-game/meshes/forest-market.glb"
 ID = 1763654408
-NAME = "@Sprite3D@1045"
+NAME = "@Sprite3D@1168"
 POSITION = Vector3(8.75478, -9.36002, -14.37637)
 SCALE = Vector3(0.28, 0.28, 0.28)
 
-[sub_resource type="Resource" id="Resource_aivoo"]
+[sub_resource type="Resource" id="Resource_pnaqe"]
 script = ExtResource("6_imi0g")
 PATH = "C:/Repos/broduce-game/broduce-game/meshes/tree-house-001.glb"
 ID = 1763654711
-NAME = "@Sprite3D@1165"
+NAME = "@Sprite3D@1288"
 POSITION = Vector3(-30.869913, -11.092034, 16.448025)
 SCALE = Vector3(5, 5, 5)
 
-[sub_resource type="Resource" id="Resource_hgfk7"]
+[sub_resource type="Resource" id="Resource_jlv65"]
 script = ExtResource("6_imi0g")
 PATH = "C:/Repos/broduce-game/broduce-game/meshes/theater.glb"
 ID = 1763654794
-NAME = "@Sprite3D@1376"
+NAME = "@Sprite3D@1499"
 POSITION = Vector3(-0.91504526, -0.36811352, 3.6965554)
 SCALE = Vector3(4, 4, 4)
 
-[sub_resource type="Resource" id="Resource_3vro0"]
+[sub_resource type="Resource" id="Resource_h2t4o"]
 script = ExtResource("6_imi0g")
 PATH = "C:/Repos/broduce-game/broduce-game/meshes/tree-005.glb"
 ID = 1763654871
-NAME = "@Sprite3D@1482"
+NAME = "@Sprite3D@1605"
 POSITION = Vector3(10.006231, 0, 122.04794)
 SCALE = Vector3(1, 1, 1)
 
-[sub_resource type="Resource" id="Resource_q2vtc"]
+[sub_resource type="Resource" id="Resource_gg7gt"]
 script = ExtResource("6_imi0g")
 PATH = "C:/Repos/broduce-game/broduce-game/meshes/shop-001.glb"
 ID = 1763655388
-NAME = "@Sprite3D@1658"
+NAME = "@Sprite3D@1781"
 POSITION = Vector3(14.040458, -10.902986, -13.055288)
 SCALE = Vector3(0.1, 0.1, 0.1)
 
-[sub_resource type="Resource" id="Resource_mrhq2"]
+[sub_resource type="Resource" id="Resource_0l366"]
 script = ExtResource("6_imi0g")
 PATH = "C:/Repos/broduce-game/broduce-game/meshes/wooden-structures_2.glb"
 ID = 1763655949
-NAME = "@Sprite3D@1897"
+NAME = "@Sprite3D@2020"
 POSITION = Vector3(6.6285725, -9.622237, -37.677696)
 SCALE = Vector3(1, 1, 1)
 
@@ -337,7 +322,7 @@ SCALE = Vector3(1, 1, 1)
 script = ExtResource("7_cn7yw")
 LAYERS = Array[ExtResource("1_xh4u3")]([SubResource("Resource_grkjr"), SubResource("Resource_bmyku"), SubResource("Resource_wovh3")])
 LIGHTS = Array[ExtResource("3_egcwy")]([SubResource("Resource_s35hs"), SubResource("Resource_pjtij"), SubResource("Resource_n55nh"), SubResource("Resource_athxk"), SubResource("Resource_uqkxh"), SubResource("Resource_obpyo"), SubResource("Resource_gh2h2")])
-SCENES = Array[ExtResource("6_imi0g")]([SubResource("Resource_du86l"), SubResource("Resource_eivrs"), SubResource("Resource_aivoo"), SubResource("Resource_hgfk7"), SubResource("Resource_3vro0"), SubResource("Resource_q2vtc"), SubResource("Resource_mrhq2")])
-MATERIAL_OVERRIDES = Array[ExtResource("4_sqfny")]([SubResource("Resource_jk87h"), SubResource("Resource_7r1r5"), SubResource("Resource_ncc78"), SubResource("Resource_omy81"), SubResource("Resource_0ahkm"), SubResource("Resource_ae1nm"), SubResource("Resource_tv07p"), SubResource("Resource_r7ll2"), SubResource("Resource_5w8la"), SubResource("Resource_r6821"), SubResource("Resource_14js4"), SubResource("Resource_2trxr"), SubResource("Resource_mvvgs"), SubResource("Resource_1c4v2"), SubResource("Resource_nd2sx"), SubResource("Resource_jttl3"), SubResource("Resource_difhw"), SubResource("Resource_7yd6j"), SubResource("Resource_12a8d"), SubResource("Resource_66oce"), SubResource("Resource_k6ton"), SubResource("Resource_ycw5t"), SubResource("Resource_exph1"), SubResource("Resource_oh6v0"), SubResource("Resource_nyf6j"), SubResource("Resource_tap0s"), SubResource("Resource_dtne8"), SubResource("Resource_wgte3"), SubResource("Resource_43tqw"), SubResource("Resource_smbl7"), SubResource("Resource_6jxl7")])
-MATERIAL_REPLACEMENTS = Array[ExtResource("5_46w3x")]([SubResource("Resource_v7bwc"), SubResource("Resource_pnaqe"), SubResource("Resource_jlv65"), SubResource("Resource_h2t4o"), SubResource("Resource_gg7gt"), SubResource("Resource_0l366"), SubResource("Resource_3tecq"), SubResource("Resource_5blw0"), SubResource("Resource_bwtgy"), SubResource("Resource_son1h"), SubResource("Resource_1p5gs")])
+SCENES = Array[ExtResource("6_imi0g")]([SubResource("Resource_6jxl7"), SubResource("Resource_v7bwc"), SubResource("Resource_pnaqe"), SubResource("Resource_jlv65"), SubResource("Resource_h2t4o"), SubResource("Resource_gg7gt"), SubResource("Resource_0l366")])
+MATERIAL_OVERRIDES = Array[ExtResource("4_sqfny")]([SubResource("Resource_jk87h"), SubResource("Resource_7r1r5"), SubResource("Resource_ncc78"), SubResource("Resource_omy81"), SubResource("Resource_0ahkm"), SubResource("Resource_ae1nm"), SubResource("Resource_tv07p"), SubResource("Resource_r7ll2"), SubResource("Resource_5w8la"), SubResource("Resource_r6821"), SubResource("Resource_14js4"), SubResource("Resource_2trxr"), SubResource("Resource_mvvgs"), SubResource("Resource_1c4v2"), SubResource("Resource_nd2sx"), SubResource("Resource_jttl3"), SubResource("Resource_difhw"), SubResource("Resource_7yd6j"), SubResource("Resource_12a8d"), SubResource("Resource_66oce")])
+MATERIAL_REPLACEMENTS = Array[ExtResource("5_46w3x")]([SubResource("Resource_k6ton"), SubResource("Resource_ycw5t"), SubResource("Resource_exph1"), SubResource("Resource_oh6v0"), SubResource("Resource_nyf6j"), SubResource("Resource_tap0s"), SubResource("Resource_dtne8"), SubResource("Resource_wgte3"), SubResource("Resource_43tqw"), SubResource("Resource_smbl7")])
 LAYER_MASKS = Array[ExtResource("2_xx7nx")]([SubResource("Resource_ll1ct"), SubResource("Resource_awvwc"), SubResource("Resource_p6jb3"), SubResource("Resource_r7o3t")])

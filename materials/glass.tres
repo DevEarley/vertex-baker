@@ -1,7 +1,7 @@
 [gd_resource type="ShaderMaterial" load_steps=3 format=3 uid="uid://brkiydmnhih7q"]
 
 [ext_resource type="Shader" uid="uid://bmwqppa82mjjc" path="res://shaders/environment_shader_glass.tres" id="1_2wd1j"]
-[ext_resource type="Texture2D" uid="uid://bru2t1g022cso" path="res://textures/default.png" id="2_bcsi8"]
+[ext_resource type="Texture2D" uid="uid://d36orvetqbgo" path="res://textures/default.png" id="2_bcsi8"]
 
 [resource]
 render_priority = 1
