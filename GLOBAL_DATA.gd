@@ -5,6 +5,42 @@ var MATERIALS:Array[ImportedMaterial]=[]
 var LAYER_MASKS:Array[LightLayerMask]=[]
 var MATERIAL_OVERRIDES:Array[MaterialOverride]=[]
 var MATERIAL_REPLACEMENTS:Array[MaterialReplacement]=[]
+var RECENTS:Array[VBRecentFile]=[]
+
+func load_recents():
+	var recents_file_path = "user://recents.tres"
+	var result:VBRecentFiles
+	if ResourceLoader.exists(recents_file_path):
+		result =  load(recents_file_path)
+		RECENTS = result.RECENTS
+	else:
+		var new_recents_file = VBRecentFiles.new()
+		var new_array:Array[VBRecentFile] = []
+		new_recents_file.RECENTS = new_array
+		ResourceSaver.save(new_recents_file,recents_file_path)
+func save_recents():
+	var recents_file_path = "user://recents.tres"
+	var recents = VBRecentFiles.new()
+	recents.RECENTS = RECENTS;
+	ResourceSaver.save(recents,recents_file_path)
+func update_recent_files(path,type:VBRecentFile.VB_FILE_TYPES):
+	var recents_file_path = "user://recents.tres"
+	var existing_files = RECENTS.filter(func (recent:VBRecentFile): return recent.PATH == path)
+	if(existing_files!=null && existing_files.size()>0):
+		match(type):
+			VBRecentFile.VB_FILE_TYPES.PROJECT_FILE_OPENED,VBRecentFile.VB_FILE_TYPES.TEXTURE,VBRecentFile.VB_FILE_TYPES.IMPORTED:
+				existing_files[0].DATE_OPENED = Time.get_unix_time_from_system()
+			VBRecentFile.VB_FILE_TYPES.PROJECT_FILE_SAVED,VBRecentFile.VB_FILE_TYPES.EXPORTED:
+				existing_files[0].DATE_SAVED = Time.get_unix_time_from_system()
+	else:
+		var recent_file = VBRecentFile.new()
+		recent_file.PATH = path
+		recent_file.TYPE = type
+		recent_file.DATE_OPENED = Time.get_unix_time_from_system()
+		recent_file.DATE_SAVED = Time.get_unix_time_from_system()
+		RECENTS.push_back(recent_file);
+
+
 
 func to_project_data():
 	var project_data:VBData = VBData.new()
@@ -14,13 +50,15 @@ func to_project_data():
 	project_data.LAYER_MASKS = []
 	project_data.MATERIAL_OVERRIDES = []
 	project_data.MATERIAL_REPLACEMENTS = []
-
 	for mat_override in MATERIAL_OVERRIDES:
 		var vb_mat_override:VBMaterialOverride =VBMaterialOverride.new()
 		vb_mat_override.NEW_MATERIAL_NAME = mat_override.NEW_MATERIAL_NAME
 		vb_mat_override.TARGET_MATERIAL_NAME = mat_override.TARGET_MATERIAL_NAME
 		vb_mat_override.SHADER_ID = mat_override.SHADER_ID
-
+		vb_mat_override.MESH_NAME = mat_override.MESH_NAME
+		vb_mat_override.SCENE_ID = mat_override.SCENE_ID
+		vb_mat_override.SURF_INDEX = mat_override.SURF_INDEX
+		vb_mat_override.OVERRIDE_SURFACE = mat_override.OVERRIDE_SURFACE
 		project_data.MATERIAL_OVERRIDES.push_back(vb_mat_override);
 
 	for mat_replacement in MATERIAL_REPLACEMENTS:

@@ -1,0 +1,66 @@
+[gd_scene load_steps=6 format=3 uid="uid://e48x2fj4ccjv"]
+
+[ext_resource type="Texture2D" uid="uid://b3ca5cl24jwkj" path="res://icon_texture.png" id="1_fshhe"]
+[ext_resource type="Texture2D" uid="uid://b3m4ua8c4tqsw" path="res://icon_open.png" id="1_klcuf"]
+[ext_resource type="Texture2D" uid="uid://dke18dy0o8tyb" path="res://icon_export.png" id="2_oo11h"]
+[ext_resource type="Texture2D" uid="uid://bpefmspwcj02h" path="res://icon_import.png" id="3_jtq8w"]
+[ext_resource type="Texture2D" uid="uid://ct0dimmsy7wtm" path="res://icon_save.png" id="5_o3s01"]
+
+[node name="MATERIAL_LIST_ITEM" type="VBoxContainer"]
+custom_minimum_size = Vector2(382, 70)
+offset_right = 382.0
+offset_bottom = 67.0
+
+[node name="Control" type="Control" parent="."]
+layout_mode = 2
+
+[node name="ICON" type="TextureRect" parent="Control"]
+layout_mode = 0
+offset_left = 1.0
+offset_top = 1.0
+offset_right = 41.0
+offset_bottom = 41.0
+texture = ExtResource("1_fshhe")
+
+[node name="EXPORT_BUTTON" type="Button" parent="Control"]
+layout_mode = 0
+offset_left = 1.0
+offset_top = 1.0
+offset_right = 41.0
+offset_bottom = 41.0
+icon = ExtResource("2_oo11h")
+
+[node name="IMPORT_BUTTON" type="Button" parent="Control"]
+layout_mode = 0
+offset_left = 1.0
+offset_top = 1.0
+offset_right = 41.0
+offset_bottom = 41.0
+icon = ExtResource("3_jtq8w")
+
+[node name="OPEN_BUTTON" type="Button" parent="Control"]
+layout_mode = 0
+offset_left = 1.0
+offset_top = 1.0
+offset_right = 41.0
+offset_bottom = 41.0
+icon = ExtResource("1_klcuf")
+
+[node name="SAVE_BUTTON" type="Button" parent="Control"]
+layout_mode = 0
+offset_left = 1.0
+offset_top = 1.0
+offset_right = 41.0
+offset_bottom = 41.0
+icon = ExtResource("5_o3s01")
+
+[node name="PATH" type="Label" parent="Control"]
+custom_minimum_size = Vector2(430, 50)
+layout_mode = 0
+offset_left = 51.0
+offset_top = 1.0
+offset_right = 481.0
+offset_bottom = 51.0
+text = "PATH"
+text_overrun_behavior = 3
+text_direction = 2

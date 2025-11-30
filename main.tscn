@@ -1,4 +1,4 @@
-[gd_scene load_steps=35 format=3 uid="uid://egxf4avoauls"]
+[gd_scene load_steps=36 format=3 uid="uid://egxf4avoauls"]
 
 [ext_resource type="Script" uid="uid://bxhfyvkolmnms" path="res://vertex-painter.gd" id="1_ig7tw"]
 [ext_resource type="Script" uid="uid://hdlai2as1f4i" path="res://free-look.gd" id="2_0xm2m"]
@@ -29,6 +29,7 @@
 [ext_resource type="Texture2D" uid="uid://b5girngf03tjn" path="res://icon_zoom.png" id="21_getpj"]
 [ext_resource type="Texture2D" uid="uid://b7i4lix3xxgnj" path="res://icon_material_replacement.png" id="22_xuqvo"]
 [ext_resource type="Texture2D" uid="uid://bp677qlpye2rd" path="res://vl.png" id="26_a6jrf"]
+[ext_resource type="Texture2D" uid="uid://bpl0morkq4lgx" path="res://icon_open_folder.png" id="26_kq58d"]
 
 [sub_resource type="Gradient" id="Gradient_4c57u"]
 offsets = PackedFloat32Array(0, 0.91198504, 1)
@@ -735,6 +736,180 @@ WINDOW = NodePath("..")
 EXPAND_BUTTON = NodePath("../EXPAND")
 FOLD_BUTTON = NodePath(".")
 
+[node name="DATA_INSPECTOR" type="Window" parent="." node_paths=PackedStringArray("MAIN")]
+oversampling_override = 1.0
+title = "DATA"
+position = Vector2i(31, 1104)
+size = Vector2i(500, 40)
+transient = true
+borderless = true
+sharp_corners = true
+script = ExtResource("4_1bvp3")
+MAIN = NodePath("..")
+
+[node name="ScrollContainer" type="ScrollContainer" parent="DATA_INSPECTOR"]
+custom_minimum_size = Vector2(494, 300)
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 2.0
+offset_top = 40.0
+offset_right = -2.0
+offset_bottom = -40.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="CONTAINER" type="VBoxContainer" parent="DATA_INSPECTOR/ScrollContainer"]
+custom_minimum_size = Vector2(490, 0)
+layout_mode = 2
+
+[node name="DATA" type="VBoxContainer" parent="DATA_INSPECTOR/ScrollContainer/CONTAINER"]
+layout_mode = 2
+
+[node name="TextureRect" type="TextureRect" parent="DATA_INSPECTOR"]
+custom_minimum_size = Vector2(500, 25)
+offset_right = 450.0
+offset_bottom = 25.0
+texture = SubResource("GradientTexture2D_7mycd")
+
+[node name="TextureRect2" type="TextureRect" parent="DATA_INSPECTOR"]
+texture_filter = 1
+custom_minimum_size = Vector2(32, 32)
+offset_left = 7.0
+offset_top = 4.0
+offset_right = 32.0
+offset_bottom = 32.0
+texture = ExtResource("26_kq58d")
+
+[node name="TITLE" type="Label" parent="DATA_INSPECTOR"]
+offset_left = 42.0
+offset_top = 7.0
+offset_right = 206.0
+offset_bottom = 30.0
+text = "DATA"
+
+[node name="EXPAND" type="Button" parent="DATA_INSPECTOR" node_paths=PackedStringArray("WINDOW", "EXPAND_BUTTON", "FOLD_BUTTON")]
+visible = false
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -35.0
+offset_top = 4.0
+offset_right = -3.0
+offset_bottom = 36.0
+grow_horizontal = 0
+theme = ExtResource("6_7mycd")
+icon = ExtResource("9_dg77c")
+flat = true
+script = ExtResource("5_lquwl")
+WINDOW = NodePath("..")
+EXPAND_BUTTON = NodePath(".")
+FOLD_BUTTON = NodePath("../FOLD")
+
+[node name="FOLD" type="Button" parent="DATA_INSPECTOR" node_paths=PackedStringArray("WINDOW", "EXPAND_BUTTON", "FOLD_BUTTON")]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -35.0
+offset_top = 4.0
+offset_right = -3.0
+offset_bottom = 36.0
+grow_horizontal = 0
+theme = ExtResource("6_7mycd")
+icon = ExtResource("9_ycdy4")
+flat = true
+script = ExtResource("5_lquwl")
+WINDOW = NodePath("..")
+EXPAND_BUTTON = NodePath("../EXPAND")
+FOLD_BUTTON = NodePath(".")
+
+[node name="RECENT_FILES" type="Window" parent="." node_paths=PackedStringArray("MAIN")]
+oversampling_override = 1.0
+title = "RECENTS"
+position = Vector2i(586, 179)
+size = Vector2i(500, 500)
+transient = true
+borderless = true
+sharp_corners = true
+script = ExtResource("4_1bvp3")
+MAIN = NodePath("..")
+
+[node name="ScrollContainer" type="ScrollContainer" parent="RECENT_FILES"]
+custom_minimum_size = Vector2(494, 300)
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 2.0
+offset_top = 40.0
+offset_right = -2.0
+offset_bottom = -40.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="CONTAINER" type="VBoxContainer" parent="RECENT_FILES/ScrollContainer"]
+custom_minimum_size = Vector2(490, 0)
+layout_mode = 2
+
+[node name="RECENTS" type="VBoxContainer" parent="RECENT_FILES/ScrollContainer/CONTAINER"]
+layout_mode = 2
+
+[node name="TextureRect" type="TextureRect" parent="RECENT_FILES"]
+custom_minimum_size = Vector2(500, 25)
+offset_right = 450.0
+offset_bottom = 25.0
+texture = SubResource("GradientTexture2D_7mycd")
+
+[node name="TextureRect2" type="TextureRect" parent="RECENT_FILES"]
+texture_filter = 1
+custom_minimum_size = Vector2(32, 32)
+offset_left = 7.0
+offset_top = 4.0
+offset_right = 32.0
+offset_bottom = 32.0
+texture = ExtResource("26_kq58d")
+
+[node name="TITLE" type="Label" parent="RECENT_FILES"]
+offset_left = 42.0
+offset_top = 7.0
+offset_right = 206.0
+offset_bottom = 30.0
+text = "RECENTS"
+
+[node name="EXPAND" type="Button" parent="RECENT_FILES" node_paths=PackedStringArray("WINDOW", "EXPAND_BUTTON", "FOLD_BUTTON")]
+visible = false
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -35.0
+offset_top = 4.0
+offset_right = -3.0
+offset_bottom = 36.0
+grow_horizontal = 0
+theme = ExtResource("6_7mycd")
+icon = ExtResource("9_dg77c")
+flat = true
+script = ExtResource("5_lquwl")
+WINDOW = NodePath("..")
+EXPAND_BUTTON = NodePath(".")
+FOLD_BUTTON = NodePath("../FOLD")
+
+[node name="FOLD" type="Button" parent="RECENT_FILES" node_paths=PackedStringArray("WINDOW", "EXPAND_BUTTON", "FOLD_BUTTON")]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -35.0
+offset_top = 4.0
+offset_right = -3.0
+offset_bottom = 36.0
+grow_horizontal = 0
+theme = ExtResource("6_7mycd")
+icon = ExtResource("9_ycdy4")
+flat = true
+script = ExtResource("5_lquwl")
+WINDOW = NodePath("..")
+EXPAND_BUTTON = NodePath("../EXPAND")
+FOLD_BUTTON = NodePath(".")
+
 [node name="IMPORT" type="FileDialog" parent="."]
 title = "Open a File"
 initial_position = 2
@@ -952,6 +1127,12 @@ texture = ExtResource("21_getpj")
 [connection signal="mouse_entered" from="MESH_INSPECTOR/ScrollContainer" to="MESH_INSPECTOR" method="_on_scroll_container_mouse_entered"]
 [connection signal="pressed" from="MESH_INSPECTOR/EXPAND" to="MESH_INSPECTOR/EXPAND" method="ON_EXPAND"]
 [connection signal="pressed" from="MESH_INSPECTOR/FOLD" to="MESH_INSPECTOR/FOLD" method="ON_FOLD"]
+[connection signal="mouse_entered" from="DATA_INSPECTOR/ScrollContainer" to="DATA_INSPECTOR" method="_on_scroll_container_mouse_entered"]
+[connection signal="pressed" from="DATA_INSPECTOR/EXPAND" to="DATA_INSPECTOR/EXPAND" method="ON_EXPAND"]
+[connection signal="pressed" from="DATA_INSPECTOR/FOLD" to="DATA_INSPECTOR/FOLD" method="ON_FOLD"]
+[connection signal="mouse_entered" from="RECENT_FILES/ScrollContainer" to="RECENT_FILES" method="_on_scroll_container_mouse_entered"]
+[connection signal="pressed" from="RECENT_FILES/EXPAND" to="RECENT_FILES/EXPAND" method="ON_EXPAND"]
+[connection signal="pressed" from="RECENT_FILES/FOLD" to="RECENT_FILES/FOLD" method="ON_FOLD"]
 [connection signal="file_selected" from="IMPORT" to="." method="_on_import_file_selected"]
 [connection signal="file_selected" from="EXPORT" to="." method="_on_export_file_selected"]
 [connection signal="file_selected" from="OPEN_TEXTURE" to="." method="_on_open_texture_file_selected"]

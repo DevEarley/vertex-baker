@@ -3,7 +3,7 @@
 [ext_resource type="Texture2D" uid="uid://c8a5er8tacab3" path="res://icon_material.png" id="1_f6kjq"]
 
 [node name="MATERIAL_LIST_ITEM" type="VBoxContainer"]
-custom_minimum_size = Vector2(382, 0)
+custom_minimum_size = Vector2(382, 70)
 offset_right = 382.0
 offset_bottom = 67.0
 
@@ -12,6 +12,15 @@ custom_minimum_size = Vector2(32, 32)
 layout_mode = 2
 texture = ExtResource("1_f6kjq")
 stretch_mode = 2
+
+[node name="REPLACE_MATERIAL" type="OptionButton" parent="ICON"]
+custom_minimum_size = Vector2(336, 0)
+layout_mode = 0
+offset_left = 37.0
+offset_top = 34.0
+offset_right = 373.0
+offset_bottom = 54.0
+allow_reselect = true
 
 [node name="NAME" type="Label" parent="ICON"]
 custom_minimum_size = Vector2(490, 50)
