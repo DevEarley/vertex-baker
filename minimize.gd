@@ -2,6 +2,8 @@ extends Button
 @export var WINDOW:WindowMover
 @export var EXPAND_BUTTON:Button
 @export var FOLD_BUTTON:Button
+@export var SIZE_EXPANDED:Vector2 = Vector2(500,500)
+@export var SIZE_COLLAPSED:Vector2 = Vector2(500,40)
 
 var OPEN = false
 func ON_EXPAND() -> void:

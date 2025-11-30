@@ -157,10 +157,12 @@ layout_mode = 2
 text = "UNBAKE"
 icon = ExtResource("8_efxa6")
 
-[node name="WINDOWS" type="CheckButton" parent="HBoxContainer/VBoxContainer3"]
+[node name="NORMALIZE_SIZES" type="Button" parent="HBoxContainer/VBoxContainer3"]
+visible = false
+custom_minimum_size = Vector2(153, 0)
 layout_mode = 2
-button_pressed = true
-text = "WINDOWS"
+text = "NORMALIZE SIZES"
+icon = ExtResource("12_qsp4k")
 
 [node name="VBoxContainer" type="VBoxContainer" parent="HBoxContainer"]
 layout_mode = 2
@@ -698,14 +700,12 @@ layout_mode = 2
 layout_mode = 2
 
 [node name="TextureRect" type="TextureRect" parent="MESH_INSPECTOR"]
-z_index = 100
 custom_minimum_size = Vector2(530, 25)
 offset_right = 450.0
 offset_bottom = 25.0
 texture = SubResource("GradientTexture2D_7mycd")
 
 [node name="TextureRect2" type="TextureRect" parent="MESH_INSPECTOR"]
-z_index = 103
 texture_filter = 1
 custom_minimum_size = Vector2(32, 32)
 offset_left = 7.0
@@ -715,7 +715,6 @@ offset_bottom = 32.0
 texture = ExtResource("8_efxa6")
 
 [node name="TITLE" type="Label" parent="MESH_INSPECTOR"]
-z_index = 200
 offset_left = 42.0
 offset_top = 7.0
 offset_right = 206.0
@@ -724,7 +723,6 @@ text = "GEOMETRY"
 
 [node name="EXPAND" type="Button" parent="MESH_INSPECTOR" node_paths=PackedStringArray("WINDOW", "EXPAND_BUTTON", "FOLD_BUTTON")]
 visible = false
-z_index = 101
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
@@ -740,11 +738,8 @@ script = ExtResource("5_lquwl")
 WINDOW = NodePath("..")
 EXPAND_BUTTON = NodePath(".")
 FOLD_BUTTON = NodePath("../FOLD")
-SIZE_EXPANDED = Vector2(530, 500)
-SIZE_COLLAPSED = Vector2(530, 40)
 
 [node name="FOLD" type="Button" parent="MESH_INSPECTOR" node_paths=PackedStringArray("WINDOW", "EXPAND_BUTTON", "FOLD_BUTTON")]
-z_index = 101
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
@@ -760,14 +755,12 @@ script = ExtResource("5_lquwl")
 WINDOW = NodePath("..")
 EXPAND_BUTTON = NodePath("../EXPAND")
 FOLD_BUTTON = NodePath(".")
-SIZE_EXPANDED = Vector2(530, 500)
-SIZE_COLLAPSED = Vector2(530, 40)
 
 [node name="MORE_MENU" type="Button" parent="MESH_INSPECTOR"]
-z_index = 101
-offset_left = 426.0
-offset_right = 466.0
-offset_bottom = 40.0
+offset_left = 448.385
+offset_top = -1.0
+offset_right = 488.385
+offset_bottom = 39.0
 icon = ExtResource("26_seu75")
 script = ExtResource("27_htxhm")
 
@@ -871,19 +864,6 @@ borderless = true
 sharp_corners = true
 script = ExtResource("4_1bvp3")
 MAIN = NodePath("..")
-
-[node name="UPDATE DATA" type="Button" parent="DATA_INSPECTOR"]
-anchors_preset = 7
-anchor_left = 0.5
-anchor_top = 1.0
-anchor_right = 0.5
-anchor_bottom = 1.0
-offset_left = -58.5
-offset_top = -31.0
-offset_right = 58.5
-grow_horizontal = 2
-grow_vertical = 0
-text = "UPDATE DATA"
 
 [node name="ScrollContainer" type="ScrollContainer" parent="DATA_INSPECTOR"]
 custom_minimum_size = Vector2(494, 300)
@@ -1414,7 +1394,7 @@ texture = ExtResource("21_getpj")
 [connection signal="pressed" from="HBoxContainer/VBoxContainer2/SAVE_BUTTON" to="." method="_on_save_button_pressed"]
 [connection signal="pressed" from="HBoxContainer/VBoxContainer3/BAKE" to="." method="_on_bake_pressed"]
 [connection signal="pressed" from="HBoxContainer/VBoxContainer3/RESET" to="." method="_on_reset_pressed"]
-[connection signal="toggled" from="HBoxContainer/VBoxContainer3/WINDOWS" to="." method="_on_windows_button_toggled"]
+[connection signal="pressed" from="HBoxContainer/VBoxContainer3/NORMALIZE_SIZES" to="." method="_on_normalize_sizes_pressed"]
 [connection signal="toggled" from="HBoxContainer/VBoxContainer/NORMALIZE_SCALE_ON_EXPORT" to="." method="_on_normalize_scale_on_export_toggled"]
 [connection signal="toggled" from="HBoxContainer/VBoxContainer/BAKE_ROTATION_EXPORT" to="." method="_on_bake_rotation_export_toggled"]
 [connection signal="pressed" from="HBoxContainer/VBoxContainer/EXPORT_BUTTON" to="." method="_on_export_button_pressed"]
@@ -1446,7 +1426,6 @@ texture = ExtResource("21_getpj")
 [connection signal="pressed" from="MESH_INSPECTOR/MORE_MENU/HBoxContainer/EXPORT_OFF" to="." method="_on_export_toggle_off_pressed"]
 [connection signal="pressed" from="MESH_INSPECTOR/MORE_MENU/HBoxContainer2/COLLAPSE_ALL" to="." method="_on_collapse_all_pressed"]
 [connection signal="pressed" from="MESH_INSPECTOR/MORE_MENU/HBoxContainer2/EXPAND_ALL" to="." method="_on_expand_all_pressed"]
-[connection signal="pressed" from="DATA_INSPECTOR/UPDATE DATA" to="." method="update_data_window"]
 [connection signal="mouse_entered" from="DATA_INSPECTOR/ScrollContainer" to="DATA_INSPECTOR" method="_on_scroll_container_mouse_entered"]
 [connection signal="pressed" from="DATA_INSPECTOR/EXPAND" to="DATA_INSPECTOR/EXPAND" method="ON_EXPAND"]
 [connection signal="pressed" from="DATA_INSPECTOR/FOLD" to="DATA_INSPECTOR/FOLD" method="ON_FOLD"]

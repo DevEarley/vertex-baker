@@ -24,43 +24,45 @@ texture = ExtResource("1_fshhe")
 
 [node name="EXPORT_BUTTON" type="Button" parent="Control"]
 layout_mode = 0
-offset_left = 1.0
+offset_left = 44.0
 offset_top = 1.0
-offset_right = 41.0
+offset_right = 84.0
 offset_bottom = 41.0
+tooltip_text = "EXPORT"
 icon = ExtResource("2_oo11h")
 
 [node name="IMPORT_BUTTON" type="Button" parent="Control"]
 layout_mode = 0
 offset_left = 1.0
-offset_top = 1.0
 offset_right = 41.0
-offset_bottom = 41.0
+offset_bottom = 40.0
+tooltip_text = "IMPORT"
 icon = ExtResource("3_jtq8w")
 
 [node name="OPEN_BUTTON" type="Button" parent="Control"]
 layout_mode = 0
-offset_left = 1.0
-offset_top = 1.0
-offset_right = 41.0
-offset_bottom = 41.0
+offset_top = -1.0
+offset_right = 40.0
+offset_bottom = 39.0
+tooltip_text = "OPEN"
 icon = ExtResource("1_klcuf")
 
 [node name="SAVE_BUTTON" type="Button" parent="Control"]
 layout_mode = 0
-offset_left = 1.0
+offset_left = 44.0
 offset_top = 1.0
-offset_right = 41.0
+offset_right = 84.0
 offset_bottom = 41.0
+tooltip_text = "SAVE"
 icon = ExtResource("5_o3s01")
 
 [node name="PATH" type="Label" parent="Control"]
-custom_minimum_size = Vector2(430, 50)
+custom_minimum_size = Vector2(390, 50)
 layout_mode = 0
-offset_left = 51.0
-offset_top = 1.0
-offset_right = 481.0
-offset_bottom = 51.0
+offset_left = 93.0
+offset_top = 3.0
+offset_right = 483.0
+offset_bottom = 53.0
 text = "PATH"
 text_overrun_behavior = 3
 text_direction = 2

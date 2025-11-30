@@ -1,6 +1,7 @@
-[gd_scene load_steps=3 format=3 uid="uid://dvnxp1x46bn3a"]
+[gd_scene load_steps=4 format=3 uid="uid://dvnxp1x46bn3a"]
 
 [ext_resource type="Texture2D" uid="uid://c8a5er8tacab3" path="res://icon_material.png" id="1_hx58n"]
+[ext_resource type="Texture2D" uid="uid://djjn4qvrc1e2i" path="res://icon_more.png" id="2_0xtts"]
 [ext_resource type="Script" uid="uid://chpfjrv1l0qdq" path="res://toggler.gd" id="2_7axnu"]
 
 [node name="MATERIAL_LIST_ITEM" type="VBoxContainer"]
@@ -29,7 +30,7 @@ layout_mode = 0
 offset_left = 462.0
 offset_right = 485.0
 offset_bottom = 31.0
-text = "..."
+icon = ExtResource("2_0xtts")
 script = ExtResource("2_7axnu")
 TOGGLE_TARGET = NodePath("../../VBoxContainer")
 

@@ -84,6 +84,8 @@ func _input(event:InputEvent):
 			CURRENT_WINDOW.unfocusable = true
 			CURRENT_WINDOW = null
 
+
+
 func _on_add_layer_pressed(
 	layer_name:String="UNTITLED",
 	blending_method:LightLayer.BLENDING_METHODS=LightLayer.BLENDING_METHODS.MULTIPLY,
@@ -440,68 +442,135 @@ func add_title_to_data_window(title):
 	layer_title.custom_minimum_size = (Vector2(490,50))
 	$DATA_INSPECTOR/ScrollContainer/CONTAINER/DATA.add_child(layer_title)
 
+func re_save_file(path):
+	$SAVE.current_path = path
+	$SAVE.show()
+
+func re_export_file(path):
+	$EXPORT.current_path = path
+	$EXPORT.show()
+
 func update_recents_window():
 	for child in $RECENT_FILES/ScrollContainer/CONTAINER/RECENTS.get_children():
+		child.queue_free()
+	for child in $RECENT_MESHES/ScrollContainer/CONTAINER/RECENTS.get_children():
+		child.queue_free()
+	for child in $RECENT_TEXTURES/ScrollContainer/CONTAINER/RECENTS.get_children():
 		child.queue_free()
 	for recent_file in DATA.RECENTS:
 		var recent_prefab = recent_list_item_prefab.instantiate()
 		recent_prefab.get_node("Control/PATH").text = recent_file.PATH
 		match(recent_file.TYPE):
 			VBRecentFile.VB_FILE_TYPES.TEXTURE:
-				recent_prefab.get_node("Control/Button").hide()
+				recent_prefab.get_node("Control/EXPORT_BUTTON").hide()
+				recent_prefab.get_node("Control/IMPORT_BUTTON").hide()
+				recent_prefab.get_node("Control/OPEN_BUTTON").hide()
+				recent_prefab.get_node("Control/SAVE_BUTTON").hide()
 				recent_prefab.get_node("Control/ICON").show()
+				$RECENT_TEXTURES/ScrollContainer/CONTAINER/RECENTS.add_child(recent_prefab)
 			VBRecentFile.VB_FILE_TYPES.PROJECT_FILE_SAVED:
 				recent_prefab.get_node("Control/ICON").hide()
 				recent_prefab.get_node("Control/EXPORT_BUTTON").hide()
 				recent_prefab.get_node("Control/IMPORT_BUTTON").hide()
-				recent_prefab.get_node("Control/OPEN_BUTTON").hide()
+				recent_prefab.get_node("Control/OPEN_BUTTON").show()
 				recent_prefab.get_node("Control/SAVE_BUTTON").show()
-				recent_prefab.get_node("Control/SAVE_BUTTON").connect("pressed",_on_save_file_selected.bind(recent_file.PATH))
+				recent_prefab.get_node("Control/OPEN_BUTTON").connect("pressed",_on_open_file_selected.bind(recent_file.PATH))
+				recent_prefab.get_node("Control/SAVE_BUTTON").connect("pressed",re_save_file.bind(recent_file.PATH))
+				$RECENT_FILES/ScrollContainer/CONTAINER/RECENTS.add_child(recent_prefab)
+
 			VBRecentFile.VB_FILE_TYPES.IMPORTED:
 				recent_prefab.get_node("Control/ICON").hide()
-				recent_prefab.get_node("Control/EXPORT_BUTTON").hide()
 				recent_prefab.get_node("Control/OPEN_BUTTON").hide()
 				recent_prefab.get_node("Control/SAVE_BUTTON").hide()
+				recent_prefab.get_node("Control/EXPORT_BUTTON").hide()
 				recent_prefab.get_node("Control/IMPORT_BUTTON").show()
+				#recent_prefab.get_node("Control/EXPORT_BUTTON").connect("pressed",re_export_file.bind(recent_file.PATH))
 				recent_prefab.get_node("Control/IMPORT_BUTTON").connect("pressed",_on_import_file_selected.bind(recent_file.PATH))
+				$RECENT_MESHES/ScrollContainer/CONTAINER/RECENTS.add_child(recent_prefab)
+
 			VBRecentFile.VB_FILE_TYPES.EXPORTED:
 				recent_prefab.get_node("Control/ICON").hide()
-				recent_prefab.get_node("Control/IMPORT_BUTTON").hide()
 				recent_prefab.get_node("Control/OPEN_BUTTON").hide()
 				recent_prefab.get_node("Control/SAVE_BUTTON").hide()
+				recent_prefab.get_node("Control/IMPORT_BUTTON").hide()
 				recent_prefab.get_node("Control/EXPORT_BUTTON").show()
-				recent_prefab.get_node("Control/EXPORT_BUTTON").connect("pressed",_on_export_file_selected.bind(recent_file.PATH))
+				#recent_prefab.get_node("Control/IMPORT_BUTTON").connect("pressed",_on_import_file_selected.bind(recent_file.PATH))
+				recent_prefab.get_node("Control/EXPORT_BUTTON").connect("pressed",re_export_file.bind(recent_file.PATH))
+				$RECENT_MESHES/ScrollContainer/CONTAINER/RECENTS.add_child(recent_prefab)
+
 			VBRecentFile.VB_FILE_TYPES.PROJECT_FILE_OPENED:
 				recent_prefab.get_node("Control/ICON").hide()
 				recent_prefab.get_node("Control/EXPORT_BUTTON").hide()
 				recent_prefab.get_node("Control/IMPORT_BUTTON").hide()
-				recent_prefab.get_node("Control/SAVE_BUTTON").hide()
+				recent_prefab.get_node("Control/SAVE_BUTTON").show()
 				recent_prefab.get_node("Control/OPEN_BUTTON").show()
+				recent_prefab.get_node("Control/SAVE_BUTTON").connect("pressed",re_save_file.bind(recent_file.PATH))
 				recent_prefab.get_node("Control/OPEN_BUTTON").connect("pressed",_on_open_file_selected.bind(recent_file.PATH))
-		$RECENT_FILES/ScrollContainer/CONTAINER/RECENTS.add_child(recent_prefab)
-
+				$RECENT_FILES/ScrollContainer/CONTAINER/RECENTS.add_child(recent_prefab)
 func update_data_window():
+	#update_data_window_scenes()
+	#update_data_window_layers()
+	update_data_window_layer_masks()
+	#update_data_window_replacements()
+	#update_data_window_overrides()
+
+func update_data_window_scenes():
 	add_title_to_data_window("SCENES (%s)" % DATA.SCENES.size())
+
 	for scene in DATA.SCENES:
 		var new_label = Label.new()
-		new_label.text = "%s \n %s" % [scene.PATH,scene.ID]
-		new_label.custom_minimum_size = (Vector2(490,50))
+		new_label.text = "%s \n %s\n\n" % [scene.PATH,scene.ID]
+		new_label.custom_minimum_size = (Vector2(400,50))
 		$DATA_INSPECTOR/ScrollContainer/CONTAINER/DATA.add_child(new_label)
+
+func update_data_window_layers():
+
 	add_title_to_data_window("LAYERS (%s)" % DATA.LAYERS.size())
+
 	for layer in DATA.LAYERS:
 		var new_label = Label.new()
-		new_label.text = "%s \n %s \n (%s) lights" % [layer.NAME,layer.ID, layer.LIGHTS.size()]
-		new_label.custom_minimum_size = (Vector2(490,50))
+		new_label.text = "%s \n %s \n (%s) lights\n\n" % [layer.NAME,layer.ID, layer.LIGHTS.size()]
+		new_label.custom_minimum_size = (Vector2(400,50))
 		$DATA_INSPECTOR/ScrollContainer/CONTAINER/DATA.add_child(new_label)
+
+func update_data_window_layer_masks():
 	add_title_to_data_window("LAYER_MASKS (%s)" % DATA.LAYER_MASKS.size())
+
 	for layer_mask in DATA.LAYER_MASKS:
 		var new_label = Label.new()
-		new_label.text = "LAYER ID: %s \nSCENE ID: %s \nMESH NAME: %s \nSURFACE ID: %s" % [
+		new_label.text = "LAYER ID: %s \nSCENE ID: %s \nMESH NAME: %s \nSURFACE ID: %s\n\n" % [
 			layer_mask.LAYER_ID,
 			layer_mask.MESH_NAME,
 			layer_mask.SCENE_ID,
 			layer_mask.SURFACE_ID	]
-		new_label.custom_minimum_size = (Vector2(490,150))
+		new_label.custom_minimum_size = (Vector2(400,150))
+		$DATA_INSPECTOR/ScrollContainer/CONTAINER/DATA.add_child(new_label)
+
+func update_data_window_replacements():
+	add_title_to_data_window("MATERIAL_REPLACEMENTS (%s)" % DATA.LAYER_MASKS.size())
+	for replacement in DATA.MATERIAL_REPLACEMENTS:
+		var new_label = Label.new()
+		new_label.text = "NEW_MATERIAL_NAME: %s \n SHADER_ID: %s \nTEXTURE_PATH: %s\n\n" % [
+			replacement.NEW_MATERIAL_NAME,
+			replacement.SHADER_ID,
+			replacement.TEXTURE_PATH]
+		new_label.custom_minimum_size = (Vector2(400,150))
+		$DATA_INSPECTOR/ScrollContainer/CONTAINER/DATA.add_child(new_label)
+
+func update_data_window_overrides():
+	add_title_to_data_window("OVERRIDES (%s)" % DATA.LAYER_MASKS.size())
+	for override:MaterialOverride in DATA.MATERIAL_OVERRIDES:
+		var new_label = Label.new()
+		new_label.text =(
+"OVERRIDE_SURFACE: %s \n SCENE_ID: %s \n MESH_NAME: %s \n SURF_ID: %s \n SHADER_ID: %s \n NEW_MATERIAL_NAME: %s \n TARGET_MATERIAL_NAME: %s\n\n" % [
+			override.OVERRIDE_SURFACE,
+			override.SCENE_ID,
+			override.MESH_NAME,
+			override.SURF_INDEX,
+			override.SHADER_ID,
+			override.NEW_MATERIAL_NAME,
+			override.TARGET_MATERIAL_NAME])
+		new_label.custom_minimum_size = (Vector2(400,150))
 		$DATA_INSPECTOR/ScrollContainer/CONTAINER/DATA.add_child(new_label)
 
 func _on_open_file_selected(path: String) -> void:
@@ -567,7 +636,7 @@ func _on_open_file_selected(path: String) -> void:
 	auto_bake()
 	update_material_replacements_window();
 	update_material_inspector()
-	update_data_window()
+	DATA.save_recents()
 	p2log("")
 
 func recursively_apply_overrides(root_scene,vb_material_override,scene,index_for_replacement, number_of_recursions = 0):
@@ -592,6 +661,8 @@ func _on_save_file_selected(path: String) -> void:
 		p2log("SAVED")
 		DATA.update_recent_files(path,VBRecentFile.VB_FILE_TYPES.PROJECT_FILE_SAVED)
 		update_recents_window()
+		DATA.save_recents()
+
 
 func _on_export_file_selected(path: String) -> void:
 	merge_materials()
@@ -613,10 +684,14 @@ func _on_export_file_selected(path: String) -> void:
 	gltf_document_save.write_to_filesystem(gltf_state_save, path)
 	DATA.update_recent_files(path,VBRecentFile.VB_FILE_TYPES.EXPORTED)
 	update_recents_window()
+	DATA.save_recents()
 
-
+	p2log("EXPORT DONE")
 func _on_import_file_selected(path: String) -> void:
 	load_from_path(path)
+	DATA.save_recents()
+	var last_scene = DATA.SCENES[DATA.SCENES.size()-1]
+	on_move_scene_pressed(last_scene.NODE)
 
 func on_rotate_pressed(node):
 	gizmo.clear_selection()
@@ -635,9 +710,76 @@ func on_move_scene_pressed(node):
 	gizmo.select(node)
 	disable_collision_shapes()
 
+
+func on_rotate_x_changed(node,scene_list_item):
+	gizmo.clear_selection()
+	var value = scene_list_item.get_node("ICON/MORE_MENU/ROTATE_X").text
+	node.rotation_degrees.x=(float(value))
+
+
+func on_rotate_x_value_changed(value,mesh:Node3D):
+	p2log(value)
+	mesh.rotation_degrees.x=(float(value))
+
+
+func on_rotate_y_changed(node,scene_list_item):
+	gizmo.clear_selection()
+	var value = scene_list_item.get_node("ICON/MORE_MENU/ROTATE_Y").text
+	node.rotation_degrees.y=(float(value))
+
+
+func on_rotate_y_value_changed(value,mesh:Node3D):
+	p2log(value)
+	mesh.rotation_degrees.y=(float(value))
+
+
+func on_rotate_z_changed(node,scene_list_item):
+	gizmo.clear_selection()
+	var value = scene_list_item.get_node("ICON/MORE_MENU/ROTATE_Z").text
+	node.rotation_degrees.z=(float(value))
+
+
+func on_rotate_z_value_changed(value,mesh:Node3D):
+	p2log(value)
+	mesh.rotation_degrees.z=(float(value))
+
+
+func on_move_x_changed(node,scene_list_item):
+	gizmo.clear_selection()
+	var value = scene_list_item.get_node("ICON/MORE_MENU/MOVE_X").text
+	node.position.x  = (float(value))
+
+
+func on_move_x_value_changed(value,mesh:Node3D):
+	p2log(value)
+	mesh.position.x= (float(value))
+
+
+func on_move_y_changed(node,scene_list_item):
+	gizmo.clear_selection()
+	var value = scene_list_item.get_node("ICON/MORE_MENU/MOVE_Y").text
+	node.position.y= (float(value))
+
+
+func on_move_y_value_changed(value,mesh:Node3D):
+	p2log(value)
+	mesh.position.y= (float(value))
+
+
+func on_move_z_changed(node,scene_list_item):
+	gizmo.clear_selection()
+	var value = scene_list_item.get_node("ICON/MORE_MENU/MOVE_Z").text
+	node.position.z = (float(value))
+
+
+func on_move_z_value_changed(value,mesh:Node3D):
+	p2log(value)
+	mesh.position.z =(float(value))
+
+
 func on_scale_changed(node,scene_list_item):
 	gizmo.clear_selection()
-	var value = scene_list_item.get_node("HBoxContainer/SCALE_VALUE").text
+	var value = scene_list_item.get_node("ICON/MORE_MENU/SCALE_VALUE").text
 	node.scale = Vector3.ONE * float(value)
 
 func on_scale_value_changed(value,mesh):
@@ -828,9 +970,9 @@ func on_select_replace_mat_for_surface(
 func on_duplicated_pressed(imported_scene:ImportedScene):
 	load_from_path(
 		imported_scene.PATH,
-		imported_scene.IMPORTED_POSITION,
-		imported_scene.IMPORTED_ROTATION,
-		imported_scene.IMPORTED_POSITION)
+		imported_scene.NODE.global_position,
+		imported_scene.NODE.rotation,
+		imported_scene.NODE.scale)
 
 func on_bake_toggle_pressed(imported_scene:ImportedScene):
 	var check_box:CheckBox = imported_scene.LIST_ITEM.get_node("HBoxContainer/BAKE");
@@ -845,7 +987,7 @@ func on_export_toggle_pressed(imported_scene:ImportedScene):
 	imported_scene.EXCLUDE_FROM_EXPORT = !check_box.button_pressed
 
 func on_delete_light(light:VertexLight):
-	_on_reset_pressed()
+	#_on_reset_pressed()
 	gizmo.clear_selection()
 
 	var index = 	light.LAYER.LIGHTS.find(light)
@@ -856,7 +998,7 @@ func on_delete_light(light:VertexLight):
 	auto_bake()
 
 func on_delete_scene_pressed(imported_scene:ImportedScene):
-	_on_reset_pressed()
+	#_on_reset_pressed()
 	gizmo.clear_selection()
 	var index = DATA.SCENES.find(imported_scene)
 	imported_scene.SCENE.queue_free()
@@ -920,10 +1062,42 @@ func load_from_path(
 		scene_list_item.get_node("ICON/MORE_MENU/DELETE").connect("pressed",on_delete_scene_pressed.bind(imported_scene))
 		scene_list_item.get_node("HBoxContainer/BAKE").connect("pressed",on_bake_toggle_pressed.bind(imported_scene))
 		scene_list_item.get_node("HBoxContainer/EXPORT").connect("pressed",on_export_toggle_pressed.bind(imported_scene))
-		scene_list_item.get_node("HBoxContainer/SCALE_VALUE").text = "%s" % imported_scale.x
-		scene_list_item.get_node("HBoxContainer/SCALE_VALUE").connect("mouse_entered",on_focus)
-		scene_list_item.get_node("HBoxContainer/SCALE_VALUE").connect("text_submitted",on_scale_value_changed.bind(mesh))
-		scene_list_item.get_node("HBoxContainer/SCALE_VALUE").connect("focus_exited",on_scale_changed.bind(mesh,scene_list_item))
+
+		scene_list_item.get_node("ICON/MORE_MENU/SCALE_VALUE").text = "%s" % imported_scale.x
+		scene_list_item.get_node("ICON/MORE_MENU/SCALE_VALUE").connect("mouse_entered",on_focus)
+		scene_list_item.get_node("ICON/MORE_MENU/SCALE_VALUE").connect("text_submitted",on_scale_value_changed.bind(mesh))
+		scene_list_item.get_node("ICON/MORE_MENU/SCALE_VALUE").connect("focus_exited",on_scale_changed.bind(mesh,scene_list_item))
+
+		scene_list_item.get_node("ICON/MORE_MENU/ROTATE_X").text = "%s" % imported_rotation.x
+		scene_list_item.get_node("ICON/MORE_MENU/ROTATE_X").connect("mouse_entered",on_focus)
+		scene_list_item.get_node("ICON/MORE_MENU/ROTATE_X").connect("text_submitted",on_rotate_x_value_changed.bind(mesh))
+		scene_list_item.get_node("ICON/MORE_MENU/ROTATE_X").connect("focus_exited",on_rotate_x_changed.bind(mesh,scene_list_item))
+
+		scene_list_item.get_node("ICON/MORE_MENU/ROTATE_Y").text = "%s" % imported_rotation.y
+		scene_list_item.get_node("ICON/MORE_MENU/ROTATE_Y").connect("mouse_entered",on_focus)
+		scene_list_item.get_node("ICON/MORE_MENU/ROTATE_Y").connect("text_submitted",on_rotate_y_value_changed.bind(mesh))
+		scene_list_item.get_node("ICON/MORE_MENU/ROTATE_Y").connect("focus_exited",on_rotate_y_changed.bind(mesh,scene_list_item))
+
+		scene_list_item.get_node("ICON/MORE_MENU/ROTATE_Z").text = "%s" % imported_rotation.z
+		scene_list_item.get_node("ICON/MORE_MENU/ROTATE_Z").connect("mouse_entered",on_focus)
+		scene_list_item.get_node("ICON/MORE_MENU/ROTATE_Z").connect("text_submitted",on_rotate_z_value_changed.bind(mesh))
+		scene_list_item.get_node("ICON/MORE_MENU/ROTATE_Z").connect("focus_exited",on_rotate_z_changed.bind(mesh,scene_list_item))
+
+		scene_list_item.get_node("ICON/MORE_MENU/MOVE_X").text = "%s" % imported_position.x
+		scene_list_item.get_node("ICON/MORE_MENU/MOVE_X").connect("mouse_entered",on_focus)
+		scene_list_item.get_node("ICON/MORE_MENU/MOVE_X").connect("text_submitted",on_move_x_value_changed.bind(mesh))
+		scene_list_item.get_node("ICON/MORE_MENU/MOVE_X").connect("focus_exited",on_move_x_changed.bind(mesh,scene_list_item))
+
+		scene_list_item.get_node("ICON/MORE_MENU/MOVE_Y").text = "%s" % imported_position.y
+		scene_list_item.get_node("ICON/MORE_MENU/MOVE_Y").connect("mouse_entered",on_focus)
+		scene_list_item.get_node("ICON/MORE_MENU/MOVE_Y").connect("text_submitted",on_move_y_value_changed.bind(mesh))
+		scene_list_item.get_node("ICON/MORE_MENU/MOVE_Y").connect("focus_exited",on_move_y_changed.bind(mesh,scene_list_item))
+
+		scene_list_item.get_node("ICON/MORE_MENU/MOVE_Z").text = "%s" % imported_position.z
+		scene_list_item.get_node("ICON/MORE_MENU/MOVE_Z").connect("mouse_entered",on_focus)
+		scene_list_item.get_node("ICON/MORE_MENU/MOVE_Z").connect("text_submitted",on_move_z_value_changed.bind(mesh))
+		scene_list_item.get_node("ICON/MORE_MENU/MOVE_Z").connect("focus_exited",on_move_z_changed.bind(mesh,scene_list_item))
+
 		imported_scene.NAME = mesh.name
 		DATA.SCENES.push_back(imported_scene)
 		scene_list_item.get_node("ICON/NAME").text = path
@@ -999,6 +1173,7 @@ func _on_menu_button_pressed() -> void:
 
 func _on_reset_pressed() -> void:
 	for scene in DATA.SCENES:
+		if(scene.EXCLUDE_FROM_BAKE):continue
 		for mesh:MeshInstance3D in scene.SCENE.get_children():
 			if(mesh is MeshInstance3D):
 				var mesh_array:ArrayMesh=mesh.mesh;
@@ -1218,8 +1393,8 @@ func selected_replacement(index,target_mat_name):
 
 		if(AUTO_BAKE):
 			auto_bake()
-		else:
-			_on_reset_pressed()
+		#else:
+			#_on_reset_pressed()
 
 func select_material(target_mat_name,new_mat_name,material_,shader_id,is_update=false):
 	if(target_mat_name == "" || new_mat_name == "" ||target_mat_name == null|| new_mat_name == null):
@@ -1335,6 +1510,8 @@ func _on_create_material_pressed() -> void:
 	$REPLACEMENT_MATERIALS/OptionButton.selected = 0;
 	create_replacement (PATH,mat_name,shader_id)
 	update_material_replacements_window();
+	DATA.save_recents()
+
 
 func create_replacement (PATH,mat_name,shader_id):
 	var new_mat_override := MaterialReplacement.new()
@@ -1355,6 +1532,8 @@ func create_replacement (PATH,mat_name,shader_id):
 		texture_image = missing_texture_
 	new_mat_override.MATERIAL.set_shader_parameter("MAIN",texture_image)
 	DATA.MATERIAL_REPLACEMENTS.push_back(new_mat_override)
+	DATA.update_recent_files(PATH,VBRecentFile.VB_FILE_TYPES.TEXTURE);
+	update_recents_window()
 
 func load_image(PATH:String):
 	if(PATH.begins_with("res://")):
@@ -1417,8 +1596,77 @@ func _on_open_texture_pressed() -> void:
 	$OPEN_TEXTURE.show()
 
 func _on_update_texture_file_selected(path: String) -> void:
+	DATA.update_recent_files(path,VBRecentFile.VB_FILE_TYPES.TEXTURE);
+	update_recents_window()
 	CURRENT_REPLACEMENT.TEXTURE_PATH = path;
 	CURRENT_REPLACEMENT_LIST_ITEM.get_node("ICON/PATH").text = path;
 	var texture_image = load_image(path)
 	CURRENT_REPLACEMENT.MATERIAL.set_shader_parameter("MAIN",texture_image)
 	update_material_replacements_window()
+
+
+func _on_bake_toggle_on_pressed() -> void:
+	for scene in DATA.SCENES:
+		scene.EXCLUDE_FROM_BAKE = false
+	for child in $MESH_INSPECTOR/ScrollContainer/CONTAINER/MESHES.get_children():
+		var toggle:CheckBox = child.get_node("HBoxContainer/BAKE")
+		toggle.button_pressed = true
+func _on_bake_toggle_off_pressed() -> void:
+
+	for scene in DATA.SCENES:
+		scene.EXCLUDE_FROM_BAKE = true
+	for child in $MESH_INSPECTOR/ScrollContainer/CONTAINER/MESHES.get_children():
+			var toggle:CheckBox = child.get_node("HBoxContainer/BAKE")
+			toggle.button_pressed = false
+func _on_export_toggle_on_pressed() -> void:
+
+	for scene in DATA.SCENES:
+		scene.EXCLUDE_FROM_EXPORT = false
+	for child in $MESH_INSPECTOR/ScrollContainer/CONTAINER/MESHES.get_children():
+			var toggle:CheckBox = child.get_node("HBoxContainer/EXPORT")
+			toggle.button_pressed = true
+func _on_export_toggle_off_pressed() -> void:
+	for scene in DATA.SCENES:
+		scene.EXCLUDE_FROM_EXPORT = true
+	for child in $MESH_INSPECTOR/ScrollContainer/CONTAINER/MESHES.get_children():
+			var toggle:CheckBox = child.get_node("HBoxContainer/EXPORT")
+			toggle.button_pressed = false
+
+
+func _on_expand_all_pressed() -> void:
+	for child in $MESH_INSPECTOR/ScrollContainer/CONTAINER/MESHES.get_children():
+		child.get_node("ICON/EXPAND").open()
+		#child.get_node("VBoxContainer").show()
+	pass # Replace with function body.
+
+
+func _on_collapse_all_pressed() -> void:
+	for child in $MESH_INSPECTOR/ScrollContainer/CONTAINER/MESHES.get_children():
+		#child.get_node("VBoxContainer").hide()
+		child.get_node("ICON/EXPAND").close()
+	pass # Replace with function body.
+
+
+func _on_windows_button_toggled(toggled_on: bool) -> void:
+	if(toggled_on == false):
+		$HBoxContainer.visible = false
+		$MENU_BUTTON.visible = true;
+		$PALETTE_INSPECTOR.hide()
+		$REPLACEMENT_MATERIALS.hide()
+		$LAYER_INSPECTOR.hide()
+		$MATERIAL_INSPECTOR.hide()
+		$MESH_INSPECTOR.hide()
+		$DATA_INSPECTOR.hide()
+		$RECENT_FILES.hide()
+		$RECENT_MESHES.hide()
+		$RECENT_TEXTURES.hide()
+	else:
+		$PALETTE_INSPECTOR.show()
+		$REPLACEMENT_MATERIALS.show()
+		$LAYER_INSPECTOR.show()
+		$MATERIAL_INSPECTOR.show()
+		$MESH_INSPECTOR.show()
+		$DATA_INSPECTOR.show()
+		$RECENT_FILES.show()
+		$RECENT_MESHES.show()
+		$RECENT_TEXTURES.show()

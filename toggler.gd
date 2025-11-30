@@ -21,6 +21,17 @@ var OPEN = true
 
 func _ready():
 	OPEN = TOGGLE_TARGET.visible
+
+func open():
+	OPEN = true
+	TOGGLE_TARGET.visible = true
+	self.icon = FOLD_ICON
+
+func close():
+	OPEN = false
+	TOGGLE_TARGET.visible = false
+	self.icon = EXPAND_ICON
+
 func _on_pressed() -> void:
 	OPEN = !OPEN;
 	TOGGLE_TARGET.visible = OPEN

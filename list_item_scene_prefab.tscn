@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3 uid="uid://bqqrn15xwihnq"]
+[gd_scene load_steps=11 format=3 uid="uid://bqqrn15xwihnq"]
 
 [ext_resource type="Texture2D" uid="uid://blkpo7j61hi23" path="res://icon_scene.png" id="1_wowo8"]
 [ext_resource type="Texture2D" uid="uid://bws3hgrn7bebm" path="res://icon_fold.png" id="2_ki0xg"]
@@ -6,18 +6,22 @@
 [ext_resource type="Script" uid="uid://bkqu4vmypg2ug" path="res://more_menu.gd" id="3_atays"]
 [ext_resource type="Script" uid="uid://chpfjrv1l0qdq" path="res://toggler.gd" id="3_xx51c"]
 [ext_resource type="Texture2D" uid="uid://2f05blbjguuq" path="res://icon_expand.png" id="4_ldkuu"]
+[ext_resource type="Texture2D" uid="uid://djjn4qvrc1e2i" path="res://icon_more.png" id="6_xx51c"]
+
+[sub_resource type="Gradient" id="Gradient_ki0xg"]
+offsets = PackedFloat32Array(0, 0.20408164)
+colors = PackedColorArray(0, 0, 0, 1, 0.4217312, 0.4217313, 0.4217311, 1)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_xx51c"]
+gradient = SubResource("Gradient_ki0xg")
+fill_to = Vector2(0, 1)
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_ldkuu"]
 
 [node name="SCENE_LIST_ITEM" type="VBoxContainer"]
 custom_minimum_size = Vector2(490, 0)
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 1.0
-offset_top = 4.0
-offset_right = -661.0
-offset_bottom = -343.0
-grow_horizontal = 2
-grow_vertical = 2
+offset_right = 490.0
+offset_bottom = 71.0
 
 [node name="ICON" type="TextureRect" parent="."]
 custom_minimum_size = Vector2(32, 32)
@@ -51,53 +55,169 @@ stretch_mode = 2
 
 [node name="NAME" type="Label" parent="ICON"]
 layout_mode = 0
-offset_left = 75.0
-offset_top = 1.0
-offset_right = 362.0
-offset_bottom = 29.0
+offset_left = 117.0
+offset_top = 5.0
+offset_right = 478.0
+offset_bottom = 33.0
 text = "<SCENE NAME>"
 horizontal_alignment = 2
 clip_text = true
 text_overrun_behavior = 3
 text_direction = 2
 
-[node name="MORE_MENU" type="Button" parent="ICON"]
+[node name="MORE_MENU" type="Button" parent="ICON" node_paths=PackedStringArray("HIDE_WHEN_TARGET_IS_ON")]
+show_behind_parent = true
+z_index = 10
 layout_mode = 0
-offset_left = 462.0
-offset_right = 485.0
-offset_bottom = 31.0
-text = "..."
+offset_left = 72.0
+offset_top = -1.0
+offset_right = 112.0
+offset_bottom = 39.0
+icon = ExtResource("6_xx51c")
 script = ExtResource("3_atays")
+HIDE_WHEN_TARGET_IS_ON = NodePath("../../VBoxContainer/MESHES")
 
-[node name="DELETE" type="Button" parent="ICON/MORE_MENU"]
+[node name="TextureRect" type="TextureRect" parent="ICON/MORE_MENU"]
 visible = false
+show_behind_parent = true
+z_index = 10
 layout_mode = 0
-offset_left = -123.0
-offset_top = 2.0
-offset_right = -5.0
-offset_bottom = 33.0
-text = "DELETE SCENE"
+offset_left = -68.0
+offset_top = 72.0
+offset_right = 419.0
+offset_bottom = 180.0
+texture = SubResource("GradientTexture2D_xx51c")
 
-[node name="HBoxContainer" type="HBoxContainer" parent="."]
-layout_mode = 2
-
-[node name="SCALE" type="Button" parent="HBoxContainer"]
-layout_mode = 2
-text = "SCALE"
-
-[node name="SCALE_VALUE" type="LineEdit" parent="HBoxContainer"]
-layout_mode = 2
+[node name="SCALE_VALUE" type="LineEdit" parent="ICON/MORE_MENU"]
+visible = false
+z_index = 10
+layout_mode = 0
+offset_left = 110.0
+offset_top = 71.0
+offset_right = 194.5625
+offset_bottom = 102.0
 text = "1.0"
 clear_button_enabled = true
 select_all_on_focus = true
+
+[node name="ROTATE_X" type="LineEdit" parent="ICON/MORE_MENU"]
+visible = false
+z_index = 101
+z_as_relative = false
+layout_mode = 0
+offset_left = 21.0
+offset_top = 72.0
+offset_right = 105.5625
+offset_bottom = 103.0
+text = "1.0"
+clear_button_enabled = true
+select_all_on_focus = true
+
+[node name="ROTATE_Y" type="LineEdit" parent="ICON/MORE_MENU"]
+visible = false
+z_index = 101
+z_as_relative = false
+layout_mode = 0
+offset_left = 20.0
+offset_top = 106.0
+offset_right = 104.5625
+offset_bottom = 137.0
+text = "1.0"
+clear_button_enabled = true
+select_all_on_focus = true
+
+[node name="ROTATE_Z" type="LineEdit" parent="ICON/MORE_MENU"]
+visible = false
+z_index = 101
+z_as_relative = false
+layout_mode = 0
+offset_left = 21.0
+offset_top = 143.0
+offset_right = 105.5625
+offset_bottom = 174.0
+text = "1.0"
+clear_button_enabled = true
+select_all_on_focus = true
+
+[node name="MOVE_X" type="LineEdit" parent="ICON/MORE_MENU"]
+visible = false
+z_index = 101
+z_as_relative = false
+layout_mode = 0
+offset_left = -67.0
+offset_top = 72.0
+offset_right = 17.5625
+offset_bottom = 103.0
+text = "1.0"
+clear_button_enabled = true
+select_all_on_focus = true
+
+[node name="MOVE_Y" type="LineEdit" parent="ICON/MORE_MENU"]
+visible = false
+z_index = 101
+z_as_relative = false
+layout_mode = 0
+offset_left = -67.0
+offset_top = 105.0
+offset_right = 17.5625
+offset_bottom = 136.0
+text = "1.0"
+clear_button_enabled = true
+select_all_on_focus = true
+
+[node name="MOVE_Z" type="LineEdit" parent="ICON/MORE_MENU"]
+visible = false
+z_index = 101
+z_as_relative = false
+layout_mode = 0
+offset_left = -68.0
+offset_top = 141.0
+offset_right = 16.5625
+offset_bottom = 172.0
+text = "1.0"
+clear_button_enabled = true
+select_all_on_focus = true
+
+[node name="DELETE" type="Button" parent="ICON/MORE_MENU"]
+visible = false
+z_index = 10
+layout_mode = 0
+offset_left = 285.0
+offset_top = 71.0
+offset_right = 403.0
+offset_bottom = 102.0
+text = "DELETE SCENE"
+
+[node name="HBoxContainer" type="HBoxContainer" parent="."]
+custom_minimum_size = Vector2(490, 0)
+layout_mode = 2
+
+[node name="MOVE" type="Button" parent="HBoxContainer"]
+layout_mode = 2
+text = "MOVE"
+
+[node name="VSeparator2" type="VSeparator" parent="HBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 24
+theme_override_styles/separator = SubResource("StyleBoxEmpty_ldkuu")
 
 [node name="ROTATE" type="Button" parent="HBoxContainer"]
 layout_mode = 2
 text = "ROTATE"
 
-[node name="MOVE" type="Button" parent="HBoxContainer"]
+[node name="VSeparator" type="VSeparator" parent="HBoxContainer"]
 layout_mode = 2
-text = "MOVE"
+theme_override_constants/separation = 10
+theme_override_styles/separator = SubResource("StyleBoxEmpty_ldkuu")
+
+[node name="SCALE" type="Button" parent="HBoxContainer"]
+layout_mode = 2
+text = "SCALE"
+
+[node name="VSeparator3" type="VSeparator" parent="HBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+theme_override_styles/separator = SubResource("StyleBoxEmpty_ldkuu")
 
 [node name="DUPLICATE" type="Button" parent="HBoxContainer"]
 layout_mode = 2
@@ -114,9 +234,10 @@ button_pressed = true
 text = "EXPORT"
 
 [node name="VBoxContainer" type="VBoxContainer" parent="."]
-custom_minimum_size = Vector2(454, 0)
+custom_minimum_size = Vector2(454, 120)
 layout_mode = 2
 size_flags_horizontal = 4
+mouse_filter = 2
 
 [node name="MESHES" type="VBoxContainer" parent="VBoxContainer"]
 layout_mode = 2
