@@ -89,6 +89,8 @@ func _input(event:InputEvent):
 func _on_add_layer_pressed(
 	layer_name:String="UNTITLED",
 	blending_method:LightLayer.BLENDING_METHODS=LightLayer.BLENDING_METHODS.MULTIPLY,
+	blending_direction:LightLayer.BLENDING_DIRECTIONS=LightLayer.BLENDING_DIRECTIONS.EVERYTHING,
+	blending_fade:LightLayer.BLENDING_FADES=LightLayer.BLENDING_FADES.FLAT,
 	imported_id:int=-1) -> void:
 	$HBoxContainer.visible = false
 	$MENU_BUTTON.visible = true;
@@ -110,6 +112,8 @@ func _on_add_layer_pressed(
 	var button  = new_layer.get_node("NAME/ADD_LIGHT_TO_LAYER")
 	var delete_button  = new_layer.get_node("MORE_MENU/DELETE")
 	var blending_dropdown:OptionButton  = new_layer.get_node("NAME/BLENDING_METHOD")
+	var blending_direction_dropdown:OptionButton  = new_layer.get_node("NAME/BLENDING_DIRECTION")
+	var blending_fade_dropdown:OptionButton  = new_layer.get_node("NAME/BLENDING_FADE")
 	var name_label  = new_layer.get_node("NAME")
 	name_label.text = layer.NAME
 	button.connect("pressed",on_add_light_to_layer.bind(new_layer,layer))
@@ -117,6 +121,12 @@ func _on_add_layer_pressed(
 	blending_dropdown.select(layer.BLENDING_METHOD)
 	blending_dropdown.connect("pressed",on_blending_method_dropdown_pressed.bind(layer))
 	blending_dropdown.connect("item_selected",on_blending_method_dropdown_selected)
+	blending_direction_dropdown.select(layer.BLENDING_DIRECTION)
+	blending_direction_dropdown.connect("pressed",on_blending_direction_dropdown_pressed.bind(layer))
+	blending_direction_dropdown.connect("item_selected",on_blending_direction_dropdown_selected)
+	blending_fade_dropdown.select(layer.BLENDING_FADE)
+	blending_fade_dropdown.connect("pressed",on_blending_fade_dropdown_pressed.bind(layer))
+	blending_fade_dropdown.connect("item_selected",on_blending_fade_dropdown_selected)
 
 func on_blending_method_dropdown_selected(index:int):
 	if(CURRENT_LAYER != null):
@@ -124,6 +134,22 @@ func on_blending_method_dropdown_selected(index:int):
 	auto_bake()
 
 func on_blending_method_dropdown_pressed(light_layer:LightLayer):
+		CURRENT_LAYER = light_layer
+
+func on_blending_direction_dropdown_selected(index:int):
+	if(CURRENT_LAYER != null):
+		CURRENT_LAYER.BLENDING_DIRECTION = index
+	auto_bake()
+
+func on_blending_direction_dropdown_pressed(light_layer:LightLayer):
+		CURRENT_LAYER = light_layer
+
+func on_blending_fade_dropdown_selected(index:int):
+	if(CURRENT_LAYER != null):
+		CURRENT_LAYER.BLENDING_FADE = index
+	auto_bake()
+
+func on_blending_fade_dropdown_pressed(light_layer:LightLayer):
 		CURRENT_LAYER = light_layer
 
 func on_delete_layer_pressed(layer:Control,light_layer:LightLayer):
@@ -262,112 +288,105 @@ func blend_lights_into_vertex_colors(
 	mesh:MeshInstance3D,
 	imported_scene:ImportedScene,
 	layer,
-	light,
+	light :VertexLight,
 	index,
 	tools):
 		var data:MeshDataTool = tools[index]
 		var mesh_array:ArrayMesh = mesh.mesh
 		data.create_from_surface(mesh_array, index)
 		for i in range(data.get_vertex_count()):
-			var vertex = mesh.to_global(data.get_vertex(i))
+			var vertex:Vector3 = mesh.to_global(data.get_vertex(i))
+			var normal:Vector3 = data.get_vertex_normal(i)
+
+			var distance_vector:Vector3 = (vertex - light.LIGHT_MESH.global_position)
+			var normalized_distance_vector = distance_vector.normalized()
 			var vertex_distance:float = vertex.distance_to(light.LIGHT_MESH.global_position)
 			if vertex_distance < light.RADIUS:
-				var linear_distance = 1 - (vertex_distance / (light.RADIUS))
-				var old_color:Color = data.get_vertex_color(i)
-				var new_color:Color = light.COLOR
-				var mixed_color:Color = light.COLOR
-				var mix = 1.0
-				match(layer.BLENDING_METHOD):
-					LightLayer.BLENDING_METHODS.MIN:
-						var max_r = minf(old_color.r,new_color.r)
-						var max_g = minf(old_color.g,new_color.g)
-						var max_b = minf(old_color.b,new_color.b)
-						mix = light.MIX*linear_distance
-					LightLayer.BLENDING_METHODS.MAX:
-						var max_r = maxf(old_color.r,new_color.r)
-						var max_g = maxf(old_color.g,new_color.g)
-						var max_b = maxf(old_color.b,new_color.b)
-						mix = light.MIX*linear_distance
-					LightLayer.BLENDING_METHODS:
-						var max_r = maxf(old_color.r,new_color.r)
-						var max_g = maxf(old_color.g,new_color.g)
-						var max_b = maxf(old_color.b,new_color.b)
-						mix = light.MIX*linear_distance
-					LightLayer.BLENDING_METHODS.DIVIDE:
-						mixed_color = Color(
-							old_color.r/(new_color.r+0.001),
-							old_color.g/(new_color.g+0.001),
-							old_color.b/(new_color.b+0.001))
-						mix = light.MIX*linear_distance
-					LightLayer.BLENDING_METHODS.MULTIPLY,LightLayer.BLENDING_METHODS.DEFAULT:
-						mixed_color = Color(old_color.r*new_color.r,old_color.g*new_color.g,old_color.b*new_color.b)
-						mix = light.MIX*linear_distance
-					LightLayer.BLENDING_METHODS.ADD:
-						var clamped_r = clamp(old_color.r+new_color.r,0,1)
-						var clamped_g = clamp(old_color.g+new_color.g,0,1)
-						var clamped_b = clamp(old_color.b+new_color.b,0,1)
-						mixed_color = Color(clamped_r,clamped_g,clamped_b)
-						mix = light.MIX*linear_distance
-					LightLayer.BLENDING_METHODS.MIX:
-						var clamped_r = clamp(old_color.r+new_color.r,0,1)
-						var clamped_g = clamp(old_color.g+new_color.g,0,1)
-						var clamped_b = clamp(old_color.b+new_color.b,0,1)
-						mixed_color = Color(clamped_r,clamped_g,clamped_b)
-						mix = light.MIX
-					LightLayer.BLENDING_METHODS.SUBTRACT:
-						var clamped_r = clamp(old_color.r-new_color.r,0,1)
-						var clamped_g = clamp(old_color.g-new_color.g,0,1)
-						var clamped_b = clamp(old_color.b-new_color.b,0,1)
-						mixed_color = Color(clamped_r,clamped_g,clamped_b)
-						mix = light.MIX*linear_distance
-					LightLayer.BLENDING_METHODS.INVERTED_SUBTRACT_FADE:
-						var hue =  new_color.h - 0.5
-						if(hue <0):
-							hue+=1.0
-						var inverted_hue_color = Color.from_hsv(hue,new_color.s,new_color.v,new_color.a)
-						var clamped_r = clamp(old_color.r-inverted_hue_color.r,0,1)
-						var clamped_g = clamp(old_color.g-inverted_hue_color.g,0,1)
-						var clamped_b = clamp(old_color.b-inverted_hue_color.b,0,1)
-						mixed_color = Color(clamped_r,clamped_g,clamped_b)
-						mix = light.MIX*linear_distance
-					LightLayer.BLENDING_METHODS.MIN_FLAT:
-						var max_r = minf(old_color.r,new_color.r)
-						var max_g = minf(old_color.g,new_color.g)
-						var max_b = minf(old_color.b,new_color.b)
-						mix = light.MIX
-					LightLayer.BLENDING_METHODS.MAX_FLAT:
-						var max_r = maxf(old_color.r,new_color.r)
-						var max_g = maxf(old_color.g,new_color.g)
-						var max_b = maxf(old_color.b,new_color.b)
-						mix = light.MIX
-					LightLayer.BLENDING_METHODS.DIVIDE_FLAT:
-						mixed_color = Color(
-							old_color.r/(new_color.r+0.001),
-							old_color.g/(new_color.g+0.001),
-							old_color.b/(new_color.b+0.001))
-						mix = light.MIX
-					LightLayer.BLENDING_METHODS.MULTIPLY_FLAT:
-						mixed_color = Color(old_color.r*new_color.r,old_color.g*new_color.g,old_color.b*new_color.b)
-						mix = light.MIX
-					LightLayer.BLENDING_METHODS.SUBTRACT_FLAT:
-						var clamped_r = clamp(old_color.r-new_color.r,0,1)
-						var clamped_g = clamp(old_color.g-new_color.g,0,1)
-						var clamped_b = clamp(old_color.b-new_color.b,0,1)
-						mixed_color = Color(clamped_r,clamped_g,clamped_b)
-						mix = light.MIX
-					LightLayer.BLENDING_METHODS.INVERTED_SUBTRACT_FLAT:
-						var clamped_r = clamp(old_color.r-new_color.r,0,1)
-						var clamped_g = clamp(old_color.g-new_color.g,0,1)
-						var clamped_b = clamp(old_color.b-new_color.b,0,1)
-						mixed_color = Color(clamped_r,clamped_g,clamped_b)
-						var hue = mixed_color.h - 0.5
-						if(hue <0):
-							hue+=1.0
-						mixed_color = Color.from_hsv(hue,mixed_color.s,mixed_color.v,mixed_color.a)
-						mix = light.MIX
 				var is_masked = is_masked(layer,mesh,index,imported_scene)
+				var old_color:Color = data.get_vertex_color(i)
+				var tangent = data.get_vertex_tangent(i).normal
 				if(is_masked==false):
-					data.set_vertex_color(i,lerp(old_color,mixed_color,mix))
+					var linear_distance = 1 - (vertex_distance / (light.RADIUS))
+					var new_color:Color = light.COLOR
+					var mixed_color:Color = light.COLOR
+					var mix = 1.0
+					match(layer.BLENDING_METHOD):
+						LightLayer.BLENDING_METHODS.MIN:
+							var max_r = minf(old_color.r,new_color.r)
+							var max_g = minf(old_color.g,new_color.g)
+							var max_b = minf(old_color.b,new_color.b)
+							mix = light.MIX
+						LightLayer.BLENDING_METHODS.MAX:
+							var max_r = maxf(old_color.r,new_color.r)
+							var max_g = maxf(old_color.g,new_color.g)
+							var max_b = maxf(old_color.b,new_color.b)
+							mix = light.MIX
+						LightLayer.BLENDING_METHODS:
+							var max_r = maxf(old_color.r,new_color.r)
+							var max_g = maxf(old_color.g,new_color.g)
+							var max_b = maxf(old_color.b,new_color.b)
+							mix = light.MIX
+						LightLayer.BLENDING_METHODS.DIVIDE:
+							mixed_color = Color(
+								old_color.r/(new_color.r+0.001),
+								old_color.g/(new_color.g+0.001),
+								old_color.b/(new_color.b+0.001))
+							mix = light.MIX
+						LightLayer.BLENDING_METHODS.MULTIPLY,LightLayer.BLENDING_METHODS.DEFAULT:
+							mixed_color = Color(old_color.r*new_color.r,old_color.g*new_color.g,old_color.b*new_color.b)
+							mix = light.MIX
+						LightLayer.BLENDING_METHODS.ADD:
+							var clamped_r = clamp(old_color.r+new_color.r,0,1)
+							var clamped_g = clamp(old_color.g+new_color.g,0,1)
+							var clamped_b = clamp(old_color.b+new_color.b,0,1)
+							mixed_color = Color(clamped_r,clamped_g,clamped_b)
+							mix = light.MIX
+						LightLayer.BLENDING_METHODS.SUBTRACT:
+							var clamped_r = clamp(old_color.r-new_color.r,0,1)
+							var clamped_g = clamp(old_color.g-new_color.g,0,1)
+							var clamped_b = clamp(old_color.b-new_color.b,0,1)
+							mixed_color = Color(clamped_r,clamped_g,clamped_b)
+							mix = light.MIX
+						LightLayer.BLENDING_METHODS.INVERTED_SUBTRACT:
+							var hue =  new_color.h - 0.5
+							if(hue <0):
+								hue+=1.0
+							var inverted_hue_color = Color.from_hsv(hue,new_color.s,new_color.v,new_color.a)
+							var clamped_r = clamp(old_color.r-inverted_hue_color.r,0,1)
+							var clamped_g = clamp(old_color.g-inverted_hue_color.g,0,1)
+							var clamped_b = clamp(old_color.b-inverted_hue_color.b,0,1)
+							mixed_color = Color(clamped_r,clamped_g,clamped_b)
+
+					match(layer.BLENDING_FADE):
+						LightLayer.BLENDING_FADES.FLAT:
+							mix = light.MIX
+
+						LightLayer.BLENDING_FADES.LINEAR_FADE:
+							mix =  light.MIX ^ linear_distance
+
+					match(layer.BLENDING_DIRECTION):
+						LightLayer.BLENDING_DIRECTIONS.EVERYTHING:
+							data.set_vertex_color(i,lerp(old_color,mixed_color,mix))
+						LightLayer.BLENDING_DIRECTIONS.POINT_LIGHTS:
+							var facing_light_mix = 1.0- normal.dot(distance_vector)
+							data.set_vertex_color(i,lerp(old_color,mixed_color,mix*facing_light_mix))
+						LightLayer.BLENDING_DIRECTIONS.FACING_UP:
+							data.set_vertex_color(i,lerp(old_color,mixed_color,mix*normal.y))
+						LightLayer.BLENDING_DIRECTIONS.FACING_DOWN:
+							data.set_vertex_color(i,lerp(old_color,mixed_color,mix*(1.0-normal.y)))
+						LightLayer.BLENDING_DIRECTIONS.INVERTED_POINT_LIGHT:
+							var facing_light_mix = normal.dot(distance_vector)
+							data.set_vertex_color(i,lerp(old_color,mixed_color,mix*facing_light_mix))
+						LightLayer.BLENDING_DIRECTIONS.DIRECTIONAL:
+							var light_direction = (mesh.global_position - light.LIGHT_MESH.global_position).normalized()
+							var facing_light_mix =  1.0 - normal.dot(light_direction)
+							data.set_vertex_color(i,lerp(old_color,mixed_color,mix*facing_light_mix))
+							pass
+						LightLayer.BLENDING_DIRECTIONS.INVERSE_DIRECTIONAL:
+							var light_direction = (mesh.global_position - light.LIGHT_MESH.global_position).normalized()
+							var facing_light_mix = normal.dot(light_direction)
+							data.set_vertex_color(i,lerp(old_color,mixed_color,mix*facing_light_mix))
+
 				else:
 					data.set_vertex_color(i,old_color)
 
@@ -451,6 +470,8 @@ func re_export_file(path):
 	$EXPORT.show()
 
 func update_recents_window():
+	for child in $RECENT_SAVES/ScrollContainer/CONTAINER/RECENTS.get_children():
+		child.queue_free()
 	for child in $RECENT_FILES/ScrollContainer/CONTAINER/RECENTS.get_children():
 		child.queue_free()
 	for child in $RECENT_MESHES/ScrollContainer/CONTAINER/RECENTS.get_children():
@@ -472,11 +493,11 @@ func update_recents_window():
 				recent_prefab.get_node("Control/ICON").hide()
 				recent_prefab.get_node("Control/EXPORT_BUTTON").hide()
 				recent_prefab.get_node("Control/IMPORT_BUTTON").hide()
-				recent_prefab.get_node("Control/OPEN_BUTTON").show()
+				recent_prefab.get_node("Control/OPEN_BUTTON").hide()
 				recent_prefab.get_node("Control/SAVE_BUTTON").show()
 				recent_prefab.get_node("Control/OPEN_BUTTON").connect("pressed",_on_open_file_selected.bind(recent_file.PATH))
 				recent_prefab.get_node("Control/SAVE_BUTTON").connect("pressed",re_save_file.bind(recent_file.PATH))
-				$RECENT_FILES/ScrollContainer/CONTAINER/RECENTS.add_child(recent_prefab)
+				$RECENT_SAVES/ScrollContainer/CONTAINER/RECENTS.add_child(recent_prefab)
 
 			VBRecentFile.VB_FILE_TYPES.IMPORTED:
 				recent_prefab.get_node("Control/ICON").hide()
@@ -502,7 +523,7 @@ func update_recents_window():
 				recent_prefab.get_node("Control/ICON").hide()
 				recent_prefab.get_node("Control/EXPORT_BUTTON").hide()
 				recent_prefab.get_node("Control/IMPORT_BUTTON").hide()
-				recent_prefab.get_node("Control/SAVE_BUTTON").show()
+				recent_prefab.get_node("Control/SAVE_BUTTON").hide()
 				recent_prefab.get_node("Control/OPEN_BUTTON").show()
 				recent_prefab.get_node("Control/SAVE_BUTTON").connect("pressed",re_save_file.bind(recent_file.PATH))
 				recent_prefab.get_node("Control/OPEN_BUTTON").connect("pressed",_on_open_file_selected.bind(recent_file.PATH))
@@ -591,7 +612,12 @@ func _on_open_file_selected(path: String) -> void:
 		DATA.LAYER_MASKS.push_back(layer_mask)
 
 	for layer_data:VBLayerData in result.LAYERS:
-		_on_add_layer_pressed(layer_data.NAME,layer_data.BLENDING_METHOD,layer_data.ID)
+		_on_add_layer_pressed(
+			layer_data.NAME,
+			layer_data.BLENDING_METHOD,
+			layer_data.BLENDING_DIRECTION,
+			layer_data.BLENDING_FADE,
+			layer_data.ID)
 		for light_data:VBLightData in result.LIGHTS:
 			if(light_data.PARENT_LAYER_ID == layer_data.ID):
 				var last_layer_array =  DATA.LAYERS.filter(func(layer):return layer.ID == light_data.PARENT_LAYER_ID)

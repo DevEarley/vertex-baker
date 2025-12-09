@@ -25,7 +25,7 @@ func save_recents():
 	ResourceSaver.save(recents,recents_file_path)
 func update_recent_files(path,type:VBRecentFile.VB_FILE_TYPES):
 	var recents_file_path = "user://recents.tres"
-	var existing_files = RECENTS.filter(func (recent:VBRecentFile): return recent.PATH == path)
+	var existing_files = RECENTS.filter(func (recent:VBRecentFile): return recent.PATH == path && type == recent.TYPE)
 	if(existing_files!=null && existing_files.size()>0):
 		match(type):
 			VBRecentFile.VB_FILE_TYPES.PROJECT_FILE_OPENED,VBRecentFile.VB_FILE_TYPES.TEXTURE,VBRecentFile.VB_FILE_TYPES.IMPORTED:
@@ -91,6 +91,8 @@ func to_project_data():
 		layer_data.ID = layer.ID;
 		layer_data.NAME = layer.NAME;
 		layer_data.BLENDING_METHOD = layer.BLENDING_METHOD;
+		layer_data.BLENDING_FADE = layer.BLENDING_FADE;
+		layer_data.BLENDING_DIRECTION = layer.BLENDING_DIRECTION;
 		project_data.LAYERS.push_back(layer_data)
 		for light in layer.LIGHTS:
 			var light_data:VBLightData = VBLightData.new()

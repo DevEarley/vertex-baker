@@ -1048,6 +1048,93 @@ WINDOW = NodePath("..")
 EXPAND_BUTTON = NodePath("../EXPAND")
 FOLD_BUTTON = NodePath(".")
 
+[node name="RECENT_SAVES" type="Window" parent="." node_paths=PackedStringArray("MAIN")]
+oversampling_override = 1.0
+title = "RECENTS"
+position = Vector2i(586, 109)
+size = Vector2i(500, 40)
+transient = true
+borderless = true
+sharp_corners = true
+script = ExtResource("4_1bvp3")
+MAIN = NodePath("..")
+
+[node name="ScrollContainer" type="ScrollContainer" parent="RECENT_SAVES"]
+custom_minimum_size = Vector2(494, 300)
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 2.0
+offset_top = 40.0
+offset_right = -2.0
+offset_bottom = -40.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="CONTAINER" type="VBoxContainer" parent="RECENT_SAVES/ScrollContainer"]
+custom_minimum_size = Vector2(490, 0)
+layout_mode = 2
+
+[node name="RECENTS" type="VBoxContainer" parent="RECENT_SAVES/ScrollContainer/CONTAINER"]
+layout_mode = 2
+
+[node name="TextureRect" type="TextureRect" parent="RECENT_SAVES"]
+custom_minimum_size = Vector2(500, 25)
+offset_right = 450.0
+offset_bottom = 25.0
+texture = SubResource("GradientTexture2D_7mycd")
+
+[node name="TextureRect2" type="TextureRect" parent="RECENT_SAVES"]
+texture_filter = 1
+custom_minimum_size = Vector2(32, 32)
+offset_left = 7.0
+offset_top = 4.0
+offset_right = 32.0
+offset_bottom = 32.0
+texture = ExtResource("26_kq58d")
+
+[node name="TITLE" type="Label" parent="RECENT_SAVES"]
+offset_left = 42.0
+offset_top = 7.0
+offset_right = 206.0
+offset_bottom = 30.0
+text = "RECENT SAVES"
+
+[node name="EXPAND" type="Button" parent="RECENT_SAVES" node_paths=PackedStringArray("WINDOW", "EXPAND_BUTTON", "FOLD_BUTTON")]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -35.0
+offset_top = 4.0
+offset_right = -3.0
+offset_bottom = 36.0
+grow_horizontal = 0
+theme = ExtResource("6_7mycd")
+icon = ExtResource("9_dg77c")
+flat = true
+script = ExtResource("5_lquwl")
+WINDOW = NodePath("..")
+EXPAND_BUTTON = NodePath(".")
+FOLD_BUTTON = NodePath("../FOLD")
+
+[node name="FOLD" type="Button" parent="RECENT_SAVES" node_paths=PackedStringArray("WINDOW", "EXPAND_BUTTON", "FOLD_BUTTON")]
+visible = false
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -35.0
+offset_top = 4.0
+offset_right = -3.0
+offset_bottom = 36.0
+grow_horizontal = 0
+theme = ExtResource("6_7mycd")
+icon = ExtResource("9_ycdy4")
+flat = true
+script = ExtResource("5_lquwl")
+WINDOW = NodePath("..")
+EXPAND_BUTTON = NodePath("../EXPAND")
+FOLD_BUTTON = NodePath(".")
+
 [node name="RECENT_MESHES" type="Window" parent="." node_paths=PackedStringArray("MAIN")]
 oversampling_override = 1.0
 title = "RECENTS"
@@ -1453,6 +1540,9 @@ texture = ExtResource("21_getpj")
 [connection signal="mouse_entered" from="RECENT_FILES/ScrollContainer" to="RECENT_FILES" method="_on_scroll_container_mouse_entered"]
 [connection signal="pressed" from="RECENT_FILES/EXPAND" to="RECENT_FILES/EXPAND" method="ON_EXPAND"]
 [connection signal="pressed" from="RECENT_FILES/FOLD" to="RECENT_FILES/FOLD" method="ON_FOLD"]
+[connection signal="mouse_entered" from="RECENT_SAVES/ScrollContainer" to="RECENT_SAVES" method="_on_scroll_container_mouse_entered"]
+[connection signal="pressed" from="RECENT_SAVES/EXPAND" to="RECENT_SAVES/EXPAND" method="ON_EXPAND"]
+[connection signal="pressed" from="RECENT_SAVES/FOLD" to="RECENT_SAVES/FOLD" method="ON_FOLD"]
 [connection signal="mouse_entered" from="RECENT_MESHES/ScrollContainer" to="RECENT_MESHES" method="_on_scroll_container_mouse_entered"]
 [connection signal="pressed" from="RECENT_MESHES/EXPAND" to="RECENT_MESHES/EXPAND" method="ON_EXPAND"]
 [connection signal="pressed" from="RECENT_MESHES/FOLD" to="RECENT_MESHES/FOLD" method="ON_FOLD"]
