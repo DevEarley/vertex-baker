@@ -1,0 +1,50 @@
+[gd_resource type="Resource" script_class="VBData" load_steps=13 format=3]
+
+[ext_resource type="Script" path="res://VBLayerData.gd" id="1_o0sbn"]
+[ext_resource type="Script" path="res://VBLayerMaskData.gd" id="2_vxdvu"]
+[ext_resource type="Script" path="res://VBLightData.gd" id="3_lcbuy"]
+[ext_resource type="Script" path="res://VBMaterialOverride.gd" id="4_djyxk"]
+[ext_resource type="Script" path="res://VBMaterialReplacement.gd" id="5_s87el"]
+[ext_resource type="Script" path="res://VBSceneData.gd" id="6_l3jp7"]
+[ext_resource type="Script" path="res://VBData.gd" id="7_58srr"]
+
+[sub_resource type="Resource" id="Resource_0uo5q"]
+script = ExtResource("1_o0sbn")
+ID = 176537882548
+NAME = "UNTITLED #176537882548"
+BLENDING_METHOD = 8
+BLENDING_DIRECTION = 8
+
+[sub_resource type="Resource" id="Resource_b7m5t"]
+script = ExtResource("2_vxdvu")
+LAYER_ID = 176537882548
+SCENE_ID = 176537882231
+MESH_NAME = "example"
+
+[sub_resource type="Resource" id="Resource_tc35j"]
+script = ExtResource("2_vxdvu")
+LAYER_ID = 176537882548
+SCENE_ID = 176537882231
+MESH_NAME = "example"
+SURFACE_ID = 1
+
+[sub_resource type="Resource" id="Resource_hwrge"]
+script = ExtResource("3_lcbuy")
+COLOR = Vector3(0.38323975, 0.6187725, 0.7109375)
+MIX = 1.0
+RADIUS = 100.0
+PARENT_LAYER_ID = 176537882548
+
+[sub_resource type="Resource" id="Resource_8muvy"]
+script = ExtResource("6_l3jp7")
+PATH = "C:/Repos/vertex-baker/test-scenes/test.glb"
+ID = 176537882231
+NAME = "SCENE_PREFAB"
+SCALE = Vector3(1, 1, 1)
+
+[resource]
+script = ExtResource("7_58srr")
+LAYERS = Array[ExtResource("1_o0sbn")]([SubResource("Resource_0uo5q")])
+LIGHTS = Array[ExtResource("3_lcbuy")]([SubResource("Resource_hwrge")])
+SCENES = Array[ExtResource("6_l3jp7")]([SubResource("Resource_8muvy")])
+LAYER_MASKS = Array[ExtResource("2_vxdvu")]([SubResource("Resource_b7m5t"), SubResource("Resource_tc35j")])

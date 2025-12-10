@@ -71,7 +71,7 @@ offset_right = 253.0
 offset_bottom = 105.0
 selected = 0
 allow_reselect = true
-item_count = 7
+item_count = 11
 popup/item_0/text = "EVERYTHING"
 popup/item_0/id = 0
 popup/item_1/text = "POINT_LIGHTS"
@@ -86,6 +86,14 @@ popup/item_5/text = "DIRECTIONAL"
 popup/item_5/id = 5
 popup/item_6/text = "INVERSE_DIRECTIONAL"
 popup/item_6/id = 6
+popup/item_7/text = "AO"
+popup/item_7/id = 7
+popup/item_8/text = "FLAT_AO"
+popup/item_8/id = 8
+popup/item_9/text = "CONVEX_EDGES"
+popup/item_9/id = 9
+popup/item_10/text = "CONCAVE_EDGES"
+popup/item_10/id = 10
 
 [node name="BLENDING_FADE" type="OptionButton" parent="NAME"]
 layout_mode = 0

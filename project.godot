@@ -22,6 +22,7 @@ config/icon="uid://uh5cxm4hwe45"
 [autoload]
 
 DATA="*res://GLOBAL_DATA.gd"
+WAIT="*res://GLOBAL_WAIT.gd"
 
 [display]
 

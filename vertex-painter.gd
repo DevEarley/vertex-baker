@@ -1,24 +1,5 @@
 extends Control
 class_name VertexBakerMainWindow
-var MOVING_WINDOW = false
-var default_texture = ("res://textures/default.png")
-var missing_texture = ("res://textures/missing_texture.png")
-var missing_texture_ = preload("res://textures/missing_texture.png")
-var layer_prefab = preload("res://layer_prefab.tscn")
-var light_prefab = preload("res://light_prefab.tscn")
-var recent_list_item_prefab = preload("res://list_item_recent_prefab.tscn")
-var mesh_list_item_prefab = preload("res://list_item_mesh_prefab.tscn")
-var scene_list_item_prefab = preload("res://list_item_scene_prefab.tscn")
-var surface_list_item_prefab = preload("res://list_item_surface_prefab.tscn")
-var material_list_item_prefab = preload("res://list_item_material_prefab.tscn")
-var material_override_list_item_prefab = preload("res://list_item_material_override_prefab.tscn")
-var material_replacement_list_item_prefab = preload("res://list_item_material_replacement_prefab.tscn")
-var light_mesh = preload("res://light_mesh_prefab.tscn")
-var imported_mesh_prefab = preload("res://imported_mesh_prefab.tscn")
-var scene_prefab = preload("res://scene_prefab.tscn")
-var surface_prefab = preload("res://surface_prefab.tscn")
-var AUTO_BAKE = false
-@export var gizmo : Gizmo3D
 
 enum BUILT_IN_MATERIALS {
 	DEFAULT = 0,
@@ -36,12 +17,32 @@ enum SHADERS {
 	GLASS = 4
 	}
 
+@export var gizmo : Gizmo3D
 @export var DEFAULT_SHADER:VisualShader
 @export var WATER_SHADER:VisualShader
 @export var WATER_FLOW_SHADER:VisualShader
 @export var WINDY_SHADER:VisualShader
 @export var GLASS_SHADER:VisualShader
 
+var default_texture = ("res://textures/default.png")
+var missing_texture = ("res://textures/missing_texture.png")
+var missing_texture_ = preload("res://textures/missing_texture.png")
+var layer_prefab = preload("res://layer_prefab.tscn")
+var light_prefab = preload("res://light_prefab.tscn")
+var recent_list_item_prefab = preload("res://list_item_recent_prefab.tscn")
+var mesh_list_item_prefab = preload("res://list_item_mesh_prefab.tscn")
+var scene_list_item_prefab = preload("res://list_item_scene_prefab.tscn")
+var surface_list_item_prefab = preload("res://list_item_surface_prefab.tscn")
+var material_list_item_prefab = preload("res://list_item_material_prefab.tscn")
+var material_override_list_item_prefab = preload("res://list_item_material_override_prefab.tscn")
+var material_replacement_list_item_prefab = preload("res://list_item_material_replacement_prefab.tscn")
+var light_mesh = preload("res://light_mesh_prefab.tscn")
+var imported_mesh_prefab = preload("res://imported_mesh_prefab.tscn")
+var scene_prefab = preload("res://scene_prefab.tscn")
+var surface_prefab = preload("res://surface_prefab.tscn")
+
+var MOVING_WINDOW = false
+var AUTO_BAKE = false
 var BAKE_ROTATION_ON_EXPORT = true
 var BAKE_SCALE_ON_EXPORT = true
 var OG_MESH
@@ -49,20 +50,20 @@ var brush_hardness = 1.0
 var calculated_size:float = 5.0
 var PREVIOUS_COLOR:Color = Color.WHITE
 var LIGHT_SPHERES_ON = true
-
 var icon_off = preload("res://icon_icons.png")
 var icon_on = preload("res://icon_light.png")
 var icon_sphere = preload("res://icon_light_sphere.png")
 var CURRENT_LIGHT: VertexLight= null
 var CURRENT_LAYER:LightLayer = null
 var max_recursion = 100
-
 var CURRENT_WINDOW:WindowMover
-
 var baking_timer:Timer
-
 var CURRENT_REPLACEMENT:MaterialReplacement
 var CURRENT_REPLACEMENT_LIST_ITEM:Node
+var MIN_DISTANCE = 1.0;
+var CLOSE_VERTS:Array = []
+var FLAT_LIST:Array[FlatVertex]
+var CHUNKS=[]
 
 func _ready():
 	baking_timer = Timer.new()
@@ -84,8 +85,6 @@ func _input(event:InputEvent):
 			CURRENT_WINDOW.unfocusable = true
 			CURRENT_WINDOW = null
 
-
-
 func _on_add_layer_pressed(
 	layer_name:String="UNTITLED",
 	blending_method:LightLayer.BLENDING_METHODS=LightLayer.BLENDING_METHODS.MULTIPLY,
@@ -96,6 +95,8 @@ func _on_add_layer_pressed(
 	$MENU_BUTTON.visible = true;
 	var layer:LightLayer = LightLayer.new()
 	layer.LIGHTS = []
+	layer.BLENDING_DIRECTION  = blending_direction
+	layer.BLENDING_FADE  = blending_fade
 	layer.BLENDING_METHOD = blending_method
 	if(imported_id == -1):
 		layer.ID =generate_id()
@@ -284,111 +285,335 @@ func on_toggle_layer(layer:Control):
 func show_palette(for_light:VBoxContainer):
 	pass
 
-func blend_lights_into_vertex_colors(
+func get_average_of_vectors(array_of_vectors:Array[Vector3]):
+	if(array_of_vectors.size()==0):
+		return Vector3.ZERO
+	var total_vector :Vector3 = Vector3.ZERO;
+	for vector in array_of_vectors:
+		total_vector+= vector
+	return total_vector / array_of_vectors.size()
+
+func get_neighborhood_average(data:MeshDataTool,vertex_index,normal, mesh):
+	var neighborhood_edges_indexes =  data.get_vertex_edges(vertex_index)
+	var neighborhood_verticies:Array[Vector3] = []
+	for edge_index in neighborhood_edges_indexes:
+		if(edge_index == -1):
+			print("skipped")
+		else:
+			var edge_vertex_index = data.get_edge_vertex(edge_index,0)
+			if(edge_vertex_index == -1):
+				print("skipped")
+			else:
+				var edge_vertex = mesh.to_global(data.get_vertex(edge_vertex_index))
+				neighborhood_verticies.push_back(edge_vertex)
+	return get_average_of_vectors(neighborhood_verticies)
+
+func get_concave_mix(data:MeshDataTool,vertex_index,normal,mesh):
+	pass
+	var neighborhood_average =  get_neighborhood_average(data,vertex_index,normal,mesh)
+	return normal - neighborhood_average
+
+func get_convex_mix(data,vertex_index,normal,mesh):
+
+	var neighborhood_average =  get_neighborhood_average(data,vertex_index,normal,mesh)
+	return neighborhood_average - normal
+
+func recursivley_update_flat_list_array_for_scene_node(imported_scene_id,node, number_of_recursions:int = 0):
+	number_of_recursions+=1
+	if(number_of_recursions>100):	return
+	if(node is MeshInstance3D):
+		var mesh_array:ArrayMesh =  node.mesh
+		var surface_count =mesh_array.get_surface_count()
+		var tools = []
+		var surface_names = []
+		for surf_index in surface_count:
+			var masked = is_masked_by_anything(node,surf_index,imported_scene_id)
+			if(masked == false):
+				var surf_name = mesh_array.surface_get_name(surf_index)
+				surface_names.push_back(surf_name)
+				tools.push_back(MeshDataTool.new())
+
+				var data:MeshDataTool = tools[surf_index]
+				data.create_from_surface(mesh_array, surf_index)
+				for vertex_index in range(data.get_vertex_count()):
+					vert_count+=1
+
+					var normal = data.get_vertex_normal(vertex_index)
+					var vertex:Vector3 = node.to_global(data.get_vertex(vertex_index))
+					var flat_vert: FlatVertex = FlatVertex.new()
+					flat_vert.POSITION = vertex
+					flat_vert.SURFACE_INDEX = surf_index
+					flat_vert.VERTEX_INDEX = vertex_index
+					flat_vert.SCENE_ID = imported_scene_id
+					flat_vert.NORMAL = normal
+					FLAT_LIST.push_back(flat_vert)
+	else:
+		recursivley_update_flat_list_array_for_scene_node(imported_scene_id, node,number_of_recursions)
+
+#func recursivley_update_close_verts_array_for_scene_node(imported_scene_id,node, number_of_recursions:int = 0):
+	#number_of_recursions+=1
+	#if(number_of_recursions>100):	return
+	#if(node is MeshInstance3D):
+		#var mesh_array:ArrayMesh =  node.mesh
+		#var surface_count =mesh_array.get_surface_count()
+		#var tools = []
+		#for surf_index in surface_count:
+			#if(is_masked_by_anything(node,surf_index,imported_scene_id) == false):
+				#tools.push_back(MeshDataTool.new())
+				#var data:MeshDataTool = tools[surf_index]
+				#data.create_from_surface(mesh_array, surf_index)
+				#for vertex_index in range(data.get_vertex_count()):
+					#var vertex:Vector3 = node.to_global(data.get_vertex(vertex_index))
+					#var chunk :Chunk= get_chunk_for_vertex(vertex)
+					#if(chunk == null):
+						#print("no chunk")
+					#else:
+						#var vertex_in_close_list_already = is_vertex_in_close_list_already(vertex,vertex_index,surf_index,imported_scene_id)
+						#if(vertex_in_close_list_already == false):
+							#var closest_vert_in_chunk:FlatVertex = null
+							#var distance = INF
+							#var normal = data.get_vertex_normal(vertex_index)
+							#for other_vert:FlatVertex in chunk.FLAT_VERTS:
+								#if(vertex_index != other_vert.VERTEX_INDEX ):
+									#var dist_to_vert = other_vert.POSITION.distance_to(vertex)
+									#var distance_vector =  other_vert.POSITION - vertex
+									#var facing_each_other =  normal.dot(distance_vector)
+									##if((facing_each_other < -0.5) && dist_to_vert < distance):
+									#if(abs(distance)>0.001 && dist_to_vert < distance):
+									##if((dist_to_vert > 0.1 || dist_to_vert<-0.1) && dist_to_vert < distance):
+										#closest_vert_in_chunk = other_vert
+										#distance = dist_to_vert
+							#if(closest_vert_in_chunk!=null ):
+								#var close_vert = CloseVertex.new()
+								#close_vert.DISTANCE = distance;
+								#close_vert.OTHER_POSITION = closest_vert_in_chunk.POSITION
+								#close_vert.OTHER_VERTEX_INDEX = closest_vert_in_chunk.VERTEX_INDEX
+								#close_vert.OTHER_SURFACE_INDEX = closest_vert_in_chunk.SURFACE_INDEX
+								#close_vert.OTHER_SCENE_ID = closest_vert_in_chunk.SCENE_ID
+								#close_vert.POSITION = vertex
+								#close_vert.VERTEX_INDEX =vertex_index
+								#close_vert.SURFACE_INDEX = surf_index
+								#close_vert.SCENE_ID = imported_scene_id
+								#CLOSE_VERTS.push_back(close_vert)
+#
+	#else:
+		#recursivley_update_close_verts_array_for_scene_node(imported_scene_id,node,number_of_recursions)
+
+func is_vertex_in_close_list_already(vertex,vertex_index,surf_index,imported_scene_id):
+	return CLOSE_VERTS.any(func(close_vert:CloseVertex):
+		return (vertex_index == close_vert.VERTEX_INDEX &&
+			surf_index == close_vert.SURFACE_INDEX &&
+			close_vert.SCENE_ID == imported_scene_id) || (
+			vertex_index == close_vert.OTHER_VERTEX_INDEX &&
+			surf_index == close_vert.OTHER_SURFACE_INDEX &&
+			close_vert.OTHER_SCENE_ID == imported_scene_id))
+
+var CLEANED_FLAT_LIST: Array[FlatVertex]
+
+func update_close_verts_array():
+	CLOSE_VERTS = []
+	CLEANED_FLAT_LIST = FLAT_LIST.duplicate(true)
+	for flat_vert_a in FLAT_LIST:
+		var closest_distance = INF
+		var closest_flat_vert = null
+
+		for flat_vert_b in CLEANED_FLAT_LIST:
+				if(flat_vert_a.VERTEX_INDEX != flat_vert_b.VERTEX_INDEX ):
+						var dist_to_vert = flat_vert_b.POSITION.distance_to(flat_vert_a.POSITION)
+						var distance_vector =  flat_vert_b.POSITION - (flat_vert_a.POSITION)
+						var facing_each_other =  flat_vert_a.NORMAL.dot(distance_vector)
+						var distance = flat_vert_b.POSITION.distance_to(flat_vert_a.POSITION)
+						if( distance < closest_distance):
+							closest_flat_vert = flat_vert_b
+							closest_distance = distance
+		if(closest_flat_vert !=null):
+			var close_vert = CloseVertex.new()
+			close_vert.DISTANCE = closest_distance
+			close_vert.OTHER_POSITION = closest_flat_vert.POSITION
+			close_vert.OTHER_VERTEX_INDEX = closest_flat_vert.VERTEX_INDEX
+			close_vert.OTHER_SURFACE_INDEX = closest_flat_vert.SURFACE_INDEX
+			close_vert.OTHER_SCENE_ID = closest_flat_vert.SCENE_ID
+			close_vert.POSITION = flat_vert_a.POSITION
+			close_vert.VERTEX_INDEX = flat_vert_a.VERTEX_INDEX
+			close_vert.SURFACE_INDEX = flat_vert_a.SURFACE_INDEX
+			close_vert.SCENE_ID= flat_vert_a.SCENE_ID
+			CLOSE_VERTS.push_back(close_vert)
+			update_CLEANED_FLAT_LIST(flat_vert_a,closest_flat_vert)
+
+func update_CLEANED_FLAT_LIST(flat_vert_a,flat_vert_b):
+
+	if(CLEANED_FLAT_LIST.size()>0):
+		var index_of_a = CLEANED_FLAT_LIST.find(flat_vert_a)
+		CLEANED_FLAT_LIST.remove_at(index_of_a)
+		#if(CLEANED_FLAT_LIST.size()>0):
+#
+			#var index_of_b = CLEANED_FLAT_LIST.find(flat_vert_b)
+			#CLEANED_FLAT_LIST.remove_at(index_of_b)
+
+func get_smallest_distance_to_other_verts(surf_index,vertex_index,scene_id):
+	var matching_vertex:CloseVertex;
+	for close_vertex:CloseVertex in CLOSE_VERTS:
+		if(close_vertex.VERTEX_INDEX == vertex_index &&
+			close_vertex.SCENE_ID == scene_id &&
+			close_vertex.SURFACE_INDEX == surf_index):
+				matching_vertex = close_vertex;
+		elif(close_vertex.OTHER_VERTEX_INDEX == vertex_index &&
+			close_vertex.OTHER_SCENE_ID == scene_id &&
+			close_vertex.OTHER_SURFACE_INDEX == surf_index):
+				matching_vertex = close_vertex;
+	return matching_vertex
+var previous_mix =0
+func blend_light_into_vertex_colors(
 	mesh:MeshInstance3D,
 	imported_scene:ImportedScene,
 	layer,
 	light :VertexLight,
 	index,
-	tools):
-		var data:MeshDataTool = tools[index]
-		var mesh_array:ArrayMesh = mesh.mesh
-		data.create_from_surface(mesh_array, index)
-		for i in range(data.get_vertex_count()):
-			var vertex:Vector3 = mesh.to_global(data.get_vertex(i))
-			var normal:Vector3 = data.get_vertex_normal(i)
+	data,
+	vertex,
+	vertex_distance,
+	vertex_index:int,
+	old_color,
+	surf_index):
+		var normal:Vector3 = data.get_vertex_normal(vertex_index)
+		var distance_vector:Vector3 = (vertex - light.LIGHT_MESH.global_position)
+		var normalized_distance_vector = distance_vector.normalized()
+		var tangent = data.get_vertex_tangent(vertex_index).normal
+		var linear_distance = 1 - (vertex_distance / (light.RADIUS))
+		var new_color:Color = light.COLOR
+		var mixed_color:Color = light.COLOR
+		var mix = 1.0
+		match(layer.BLENDING_METHOD):
+			LightLayer.BLENDING_METHODS.MIN:
+				var max_r = minf(old_color.r,new_color.r)
+				var max_g = minf(old_color.g,new_color.g)
+				var max_b = minf(old_color.b,new_color.b)
+				mix = light.MIX
+			LightLayer.BLENDING_METHODS.MAX:
+				var max_r = maxf(old_color.r,new_color.r)
+				var max_g = maxf(old_color.g,new_color.g)
+				var max_b = maxf(old_color.b,new_color.b)
+				mix = light.MIX
+			LightLayer.BLENDING_METHODS:
+				var max_r = maxf(old_color.r,new_color.r)
+				var max_g = maxf(old_color.g,new_color.g)
+				var max_b = maxf(old_color.b,new_color.b)
+				mix = light.MIX
+			LightLayer.BLENDING_METHODS.DIVIDE:
+				mixed_color = Color(
+					old_color.r/(new_color.r+0.001),
+					old_color.g/(new_color.g+0.001),
+					old_color.b/(new_color.b+0.001))
+				mix = light.MIX
+			LightLayer.BLENDING_METHODS.MULTIPLY,LightLayer.BLENDING_METHODS.DEFAULT:
+				mixed_color = Color(old_color.r*new_color.r,old_color.g*new_color.g,old_color.b*new_color.b)
+				mix = light.MIX
+			LightLayer.BLENDING_METHODS.ADD:
+				var clamped_r = clamp(old_color.r+new_color.r,0,1)
+				var clamped_g = clamp(old_color.g+new_color.g,0,1)
+				var clamped_b = clamp(old_color.b+new_color.b,0,1)
+				mixed_color = Color(clamped_r,clamped_g,clamped_b)
+				mix = light.MIX
+			LightLayer.BLENDING_METHODS.SUBTRACT:
+				var clamped_r = clamp(old_color.r-new_color.r,0,1)
+				var clamped_g = clamp(old_color.g-new_color.g,0,1)
+				var clamped_b = clamp(old_color.b-new_color.b,0,1)
+				mixed_color = Color(clamped_r,clamped_g,clamped_b)
+				mix = light.MIX
+			LightLayer.BLENDING_METHODS.INVERTED_SUBTRACT:
+				var hue =  new_color.h - 0.5
+				if(hue <0):
+					hue+=1.0
+				var inverted_hue_color = Color.from_hsv(hue,new_color.s,new_color.v,new_color.a)
+				var clamped_r = clamp(old_color.r-inverted_hue_color.r,0,1)
+				var clamped_g = clamp(old_color.g-inverted_hue_color.g,0,1)
+				var clamped_b = clamp(old_color.b-inverted_hue_color.b,0,1)
+				mixed_color = Color(clamped_r,clamped_g,clamped_b)
 
-			var distance_vector:Vector3 = (vertex - light.LIGHT_MESH.global_position)
-			var normalized_distance_vector = distance_vector.normalized()
+		match(layer.BLENDING_FADE):
+			LightLayer.BLENDING_FADES.FLAT:
+				mix = light.MIX
+			LightLayer.BLENDING_FADES.LINEAR_FADE:
+				mix =  light.MIX * linear_distance
+		match(layer.BLENDING_DIRECTION):
+			LightLayer.BLENDING_DIRECTIONS.EVERYTHING:
+				mix =  mix
+			LightLayer.BLENDING_DIRECTIONS.AO:
+				var concave_mix = get_concave_mix(data,vertex_index,normal,mesh)
+				var convex_mix = get_convex_mix(data,vertex_index,normal,mesh)
+				var smallest_vert = get_smallest_distance_to_other_verts(surf_index,vertex_index,imported_scene.ID)
+				if(smallest_vert == null):
+					mix =  0
+				else:
+					var smallest_distance_to_other_verts = clamp(1.0/smallest_vert.DISTANCE,0.0,1.0)
+					var AO_MIX = clamp(concave_mix - convex_mix + smallest_distance_to_other_verts,0.0,1.0)
+					mix *= AO_MIX
+			LightLayer.BLENDING_DIRECTIONS.FLAT_AO:
+				var smallest_vert:CloseVertex = get_smallest_distance_to_other_verts(surf_index,vertex_index,imported_scene.ID)
+				if(smallest_vert == null):
+					mix = 0
+				else:
+					var smallest_distance_to_other_verts = (1.0/smallest_vert.DISTANCE)/10.0
+					mix *= smallest_distance_to_other_verts
+					previous_mix = mix
+
+			LightLayer.BLENDING_DIRECTIONS.CONVEX_EDGES:
+				var convex_mix = get_convex_mix(data,vertex_index,normal,mesh)
+				mix *= convex_mix
+			LightLayer.BLENDING_DIRECTIONS.CONCAVE_EDGES:
+				var concave_mix = get_concave_mix(data,vertex_index,normal,mesh)
+				mix *= concave_mix
+			LightLayer.BLENDING_DIRECTIONS.POINT_LIGHTS:
+				var facing_light_mix = 1.0- normal.dot(distance_vector)
+				mix *=facing_light_mix
+			LightLayer.BLENDING_DIRECTIONS.FACING_UP:
+				mix *=normal.y
+			LightLayer.BLENDING_DIRECTIONS.FACING_DOWN:
+				mix *=(1.0-normal.y)
+			LightLayer.BLENDING_DIRECTIONS.INVERTED_POINT_LIGHT:
+				var facing_light_mix = normal.dot(distance_vector)
+				mix *=facing_light_mix
+			LightLayer.BLENDING_DIRECTIONS.DIRECTIONAL:
+				var light_direction = (mesh.global_position - light.LIGHT_MESH.global_position).normalized()
+				var facing_light_mix =  1.0 - normal.dot(light_direction)
+				mix *=facing_light_mix
+			LightLayer.BLENDING_DIRECTIONS.INVERSE_DIRECTIONAL:
+				var light_direction = (mesh.global_position - light.LIGHT_MESH.global_position).normalized()
+				var facing_light_mix = normal.dot(light_direction)
+				mix *=facing_light_mix
+
+		data.set_vertex_color(vertex_index,lerp(old_color,mixed_color,mix))
+
+func blend_lights_into_vertex_colors(
+	mesh:MeshInstance3D,
+	imported_scene:ImportedScene,
+	layer,
+	light :VertexLight,
+	surf_index,
+	tools):
+		var data:MeshDataTool = tools[surf_index]
+		var mesh_array:ArrayMesh = mesh.mesh
+		data.create_from_surface(mesh_array, surf_index)
+		for vertex_index in range(data.get_vertex_count()):
+			var vertex:Vector3 = mesh.to_global(data.get_vertex(vertex_index))
 			var vertex_distance:float = vertex.distance_to(light.LIGHT_MESH.global_position)
 			if vertex_distance < light.RADIUS:
-				var is_masked = is_masked(layer,mesh,index,imported_scene)
-				var old_color:Color = data.get_vertex_color(i)
-				var tangent = data.get_vertex_tangent(i).normal
+				var is_masked = is_masked(layer,mesh,surf_index,imported_scene)
+				var old_color:Color = data.get_vertex_color(vertex_index)
 				if(is_masked==false):
-					var linear_distance = 1 - (vertex_distance / (light.RADIUS))
-					var new_color:Color = light.COLOR
-					var mixed_color:Color = light.COLOR
-					var mix = 1.0
-					match(layer.BLENDING_METHOD):
-						LightLayer.BLENDING_METHODS.MIN:
-							var max_r = minf(old_color.r,new_color.r)
-							var max_g = minf(old_color.g,new_color.g)
-							var max_b = minf(old_color.b,new_color.b)
-							mix = light.MIX
-						LightLayer.BLENDING_METHODS.MAX:
-							var max_r = maxf(old_color.r,new_color.r)
-							var max_g = maxf(old_color.g,new_color.g)
-							var max_b = maxf(old_color.b,new_color.b)
-							mix = light.MIX
-						LightLayer.BLENDING_METHODS:
-							var max_r = maxf(old_color.r,new_color.r)
-							var max_g = maxf(old_color.g,new_color.g)
-							var max_b = maxf(old_color.b,new_color.b)
-							mix = light.MIX
-						LightLayer.BLENDING_METHODS.DIVIDE:
-							mixed_color = Color(
-								old_color.r/(new_color.r+0.001),
-								old_color.g/(new_color.g+0.001),
-								old_color.b/(new_color.b+0.001))
-							mix = light.MIX
-						LightLayer.BLENDING_METHODS.MULTIPLY,LightLayer.BLENDING_METHODS.DEFAULT:
-							mixed_color = Color(old_color.r*new_color.r,old_color.g*new_color.g,old_color.b*new_color.b)
-							mix = light.MIX
-						LightLayer.BLENDING_METHODS.ADD:
-							var clamped_r = clamp(old_color.r+new_color.r,0,1)
-							var clamped_g = clamp(old_color.g+new_color.g,0,1)
-							var clamped_b = clamp(old_color.b+new_color.b,0,1)
-							mixed_color = Color(clamped_r,clamped_g,clamped_b)
-							mix = light.MIX
-						LightLayer.BLENDING_METHODS.SUBTRACT:
-							var clamped_r = clamp(old_color.r-new_color.r,0,1)
-							var clamped_g = clamp(old_color.g-new_color.g,0,1)
-							var clamped_b = clamp(old_color.b-new_color.b,0,1)
-							mixed_color = Color(clamped_r,clamped_g,clamped_b)
-							mix = light.MIX
-						LightLayer.BLENDING_METHODS.INVERTED_SUBTRACT:
-							var hue =  new_color.h - 0.5
-							if(hue <0):
-								hue+=1.0
-							var inverted_hue_color = Color.from_hsv(hue,new_color.s,new_color.v,new_color.a)
-							var clamped_r = clamp(old_color.r-inverted_hue_color.r,0,1)
-							var clamped_g = clamp(old_color.g-inverted_hue_color.g,0,1)
-							var clamped_b = clamp(old_color.b-inverted_hue_color.b,0,1)
-							mixed_color = Color(clamped_r,clamped_g,clamped_b)
-
-					match(layer.BLENDING_FADE):
-						LightLayer.BLENDING_FADES.FLAT:
-							mix = light.MIX
-
-						LightLayer.BLENDING_FADES.LINEAR_FADE:
-							mix =  light.MIX ^ linear_distance
-
-					match(layer.BLENDING_DIRECTION):
-						LightLayer.BLENDING_DIRECTIONS.EVERYTHING:
-							data.set_vertex_color(i,lerp(old_color,mixed_color,mix))
-						LightLayer.BLENDING_DIRECTIONS.POINT_LIGHTS:
-							var facing_light_mix = 1.0- normal.dot(distance_vector)
-							data.set_vertex_color(i,lerp(old_color,mixed_color,mix*facing_light_mix))
-						LightLayer.BLENDING_DIRECTIONS.FACING_UP:
-							data.set_vertex_color(i,lerp(old_color,mixed_color,mix*normal.y))
-						LightLayer.BLENDING_DIRECTIONS.FACING_DOWN:
-							data.set_vertex_color(i,lerp(old_color,mixed_color,mix*(1.0-normal.y)))
-						LightLayer.BLENDING_DIRECTIONS.INVERTED_POINT_LIGHT:
-							var facing_light_mix = normal.dot(distance_vector)
-							data.set_vertex_color(i,lerp(old_color,mixed_color,mix*facing_light_mix))
-						LightLayer.BLENDING_DIRECTIONS.DIRECTIONAL:
-							var light_direction = (mesh.global_position - light.LIGHT_MESH.global_position).normalized()
-							var facing_light_mix =  1.0 - normal.dot(light_direction)
-							data.set_vertex_color(i,lerp(old_color,mixed_color,mix*facing_light_mix))
-							pass
-						LightLayer.BLENDING_DIRECTIONS.INVERSE_DIRECTIONAL:
-							var light_direction = (mesh.global_position - light.LIGHT_MESH.global_position).normalized()
-							var facing_light_mix = normal.dot(light_direction)
-							data.set_vertex_color(i,lerp(old_color,mixed_color,mix*facing_light_mix))
-
+					blend_light_into_vertex_colors(
+						mesh,
+						imported_scene,
+						layer,
+						light ,
+						surf_index,
+						data,
+						vertex,
+						vertex_distance,
+						vertex_index,
+						old_color,surf_index)
 				else:
-					data.set_vertex_color(i,old_color)
+					data.set_vertex_color(vertex_index,old_color)
 
 func scale_mesh(mesh:MeshInstance3D, target_scale):
 		var mesh_array:ArrayMesh = mesh.mesh;
@@ -418,6 +643,13 @@ func is_masked(layer,mesh,surf,imported_scene):
 						layer_mask.SURFACE_ID == surf &&
 						layer_mask.SCENE_ID == imported_scene.ID))
 
+func is_masked_by_anything(mesh,surf,imported_scene_id):
+	return DATA.LAYER_MASKS.any(func(layer_mask:LightLayerMask):
+						return (
+						layer_mask.MESH_NAME == mesh.name &&
+						layer_mask.SURFACE_ID == surf &&
+						layer_mask.SCENE_ID == imported_scene_id))
+
 func update_mesh(mesh:MeshInstance3D, imported_scene:ImportedScene) -> void:
 		var mesh_array:ArrayMesh =  mesh.mesh
 		var surface_count =mesh_array.get_surface_count()
@@ -430,13 +662,13 @@ func update_mesh(mesh:MeshInstance3D, imported_scene:ImportedScene) -> void:
 		for layer in DATA.LAYERS:
 			for light in layer.LIGHTS:
 				for surf in surface_count:
-						blend_lights_into_vertex_colors(
-							mesh,
-							imported_scene,
-							layer,
-							light,
-							surf,
-							tools)
+					blend_lights_into_vertex_colors(
+						mesh,
+						imported_scene,
+						layer,
+						light,
+						surf,
+						tools)
 				mesh_array.clear_surfaces()
 				for index in surface_count:
 						var surf_name = surface_names[index]
@@ -498,27 +730,22 @@ func update_recents_window():
 				recent_prefab.get_node("Control/OPEN_BUTTON").connect("pressed",_on_open_file_selected.bind(recent_file.PATH))
 				recent_prefab.get_node("Control/SAVE_BUTTON").connect("pressed",re_save_file.bind(recent_file.PATH))
 				$RECENT_SAVES/ScrollContainer/CONTAINER/RECENTS.add_child(recent_prefab)
-
 			VBRecentFile.VB_FILE_TYPES.IMPORTED:
 				recent_prefab.get_node("Control/ICON").hide()
 				recent_prefab.get_node("Control/OPEN_BUTTON").hide()
 				recent_prefab.get_node("Control/SAVE_BUTTON").hide()
 				recent_prefab.get_node("Control/EXPORT_BUTTON").hide()
 				recent_prefab.get_node("Control/IMPORT_BUTTON").show()
-				#recent_prefab.get_node("Control/EXPORT_BUTTON").connect("pressed",re_export_file.bind(recent_file.PATH))
 				recent_prefab.get_node("Control/IMPORT_BUTTON").connect("pressed",_on_import_file_selected.bind(recent_file.PATH))
 				$RECENT_MESHES/ScrollContainer/CONTAINER/RECENTS.add_child(recent_prefab)
-
 			VBRecentFile.VB_FILE_TYPES.EXPORTED:
 				recent_prefab.get_node("Control/ICON").hide()
 				recent_prefab.get_node("Control/OPEN_BUTTON").hide()
 				recent_prefab.get_node("Control/SAVE_BUTTON").hide()
 				recent_prefab.get_node("Control/IMPORT_BUTTON").hide()
 				recent_prefab.get_node("Control/EXPORT_BUTTON").show()
-				#recent_prefab.get_node("Control/IMPORT_BUTTON").connect("pressed",_on_import_file_selected.bind(recent_file.PATH))
 				recent_prefab.get_node("Control/EXPORT_BUTTON").connect("pressed",re_export_file.bind(recent_file.PATH))
 				$RECENT_MESHES/ScrollContainer/CONTAINER/RECENTS.add_child(recent_prefab)
-
 			VBRecentFile.VB_FILE_TYPES.PROJECT_FILE_OPENED:
 				recent_prefab.get_node("Control/ICON").hide()
 				recent_prefab.get_node("Control/EXPORT_BUTTON").hide()
@@ -528,6 +755,7 @@ func update_recents_window():
 				recent_prefab.get_node("Control/SAVE_BUTTON").connect("pressed",re_save_file.bind(recent_file.PATH))
 				recent_prefab.get_node("Control/OPEN_BUTTON").connect("pressed",_on_open_file_selected.bind(recent_file.PATH))
 				$RECENT_FILES/ScrollContainer/CONTAINER/RECENTS.add_child(recent_prefab)
+
 func update_data_window():
 	#update_data_window_scenes()
 	#update_data_window_layers()
@@ -545,9 +773,7 @@ func update_data_window_scenes():
 		$DATA_INSPECTOR/ScrollContainer/CONTAINER/DATA.add_child(new_label)
 
 func update_data_window_layers():
-
 	add_title_to_data_window("LAYERS (%s)" % DATA.LAYERS.size())
-
 	for layer in DATA.LAYERS:
 		var new_label = Label.new()
 		new_label.text = "%s \n %s \n (%s) lights\n\n" % [layer.NAME,layer.ID, layer.LIGHTS.size()]
@@ -556,7 +782,6 @@ func update_data_window_layers():
 
 func update_data_window_layer_masks():
 	add_title_to_data_window("LAYER_MASKS (%s)" % DATA.LAYER_MASKS.size())
-
 	for layer_mask in DATA.LAYER_MASKS:
 		var new_label = Label.new()
 		new_label.text = "LAYER ID: %s \nSCENE ID: %s \nMESH NAME: %s \nSURFACE ID: %s\n\n" % [
@@ -610,7 +835,6 @@ func _on_open_file_selected(path: String) -> void:
 		layer_mask.SCENE_ID = layer_mask_data.SCENE_ID
 		layer_mask.SURFACE_ID = layer_mask_data.SURFACE_ID
 		DATA.LAYER_MASKS.push_back(layer_mask)
-
 	for layer_data:VBLayerData in result.LAYERS:
 		_on_add_layer_pressed(
 			layer_data.NAME,
@@ -634,14 +858,12 @@ func _on_open_file_selected(path: String) -> void:
 	for scene:VBSceneData in result.SCENES:
 		p2log(scene.PATH)
 		load_from_path(scene.PATH, scene.POSITION,scene.ROTATION,scene.SCALE,scene.ID)
-
 	for vb_replacement:VBMaterialReplacement in result.MATERIAL_REPLACEMENTS:
 		var mat_replacement:MaterialReplacement = MaterialReplacement.new()
 		mat_replacement.NEW_MATERIAL_NAME = vb_replacement.NEW_MATERIAL_NAME
 		mat_replacement.TEXTURE_PATH = vb_replacement.TEXTURE_PATH
 		mat_replacement.SHADER_ID = vb_replacement.SHADER_ID
 		create_replacement (vb_replacement.TEXTURE_PATH,vb_replacement.NEW_MATERIAL_NAME,mat_replacement.SHADER_ID)
-
 	for vb_material_override:VBMaterialOverride in result.MATERIAL_OVERRIDES:
 		var replacements_ = DATA.MATERIAL_REPLACEMENTS.filter(func (rep:MaterialReplacement): return rep.NEW_MATERIAL_NAME == vb_material_override.NEW_MATERIAL_NAME)
 		if(replacements_!=null && replacements_.size()>0):
@@ -689,7 +911,6 @@ func _on_save_file_selected(path: String) -> void:
 		update_recents_window()
 		DATA.save_recents()
 
-
 func _on_export_file_selected(path: String) -> void:
 	merge_materials()
 	bake_scale_and_rotation()
@@ -713,7 +934,9 @@ func _on_export_file_selected(path: String) -> void:
 	DATA.save_recents()
 
 	p2log("EXPORT DONE")
+
 func _on_import_file_selected(path: String) -> void:
+	FLAT_LIST = []
 	load_from_path(path)
 	DATA.save_recents()
 	var last_scene = DATA.SCENES[DATA.SCENES.size()-1]
@@ -736,72 +959,59 @@ func on_move_scene_pressed(node):
 	gizmo.select(node)
 	disable_collision_shapes()
 
-
 func on_rotate_x_changed(node,scene_list_item):
 	gizmo.clear_selection()
 	var value = scene_list_item.get_node("ICON/MORE_MENU/ROTATE_X").text
 	node.rotation_degrees.x=(float(value))
 
-
 func on_rotate_x_value_changed(value,mesh:Node3D):
 	p2log(value)
 	mesh.rotation_degrees.x=(float(value))
-
 
 func on_rotate_y_changed(node,scene_list_item):
 	gizmo.clear_selection()
 	var value = scene_list_item.get_node("ICON/MORE_MENU/ROTATE_Y").text
 	node.rotation_degrees.y=(float(value))
 
-
 func on_rotate_y_value_changed(value,mesh:Node3D):
 	p2log(value)
 	mesh.rotation_degrees.y=(float(value))
-
 
 func on_rotate_z_changed(node,scene_list_item):
 	gizmo.clear_selection()
 	var value = scene_list_item.get_node("ICON/MORE_MENU/ROTATE_Z").text
 	node.rotation_degrees.z=(float(value))
 
-
 func on_rotate_z_value_changed(value,mesh:Node3D):
 	p2log(value)
 	mesh.rotation_degrees.z=(float(value))
-
 
 func on_move_x_changed(node,scene_list_item):
 	gizmo.clear_selection()
 	var value = scene_list_item.get_node("ICON/MORE_MENU/MOVE_X").text
 	node.position.x  = (float(value))
 
-
 func on_move_x_value_changed(value,mesh:Node3D):
 	p2log(value)
 	mesh.position.x= (float(value))
-
 
 func on_move_y_changed(node,scene_list_item):
 	gizmo.clear_selection()
 	var value = scene_list_item.get_node("ICON/MORE_MENU/MOVE_Y").text
 	node.position.y= (float(value))
 
-
 func on_move_y_value_changed(value,mesh:Node3D):
 	p2log(value)
 	mesh.position.y= (float(value))
-
 
 func on_move_z_changed(node,scene_list_item):
 	gizmo.clear_selection()
 	var value = scene_list_item.get_node("ICON/MORE_MENU/MOVE_Z").text
 	node.position.z = (float(value))
 
-
 func on_move_z_value_changed(value,mesh:Node3D):
 	p2log(value)
 	mesh.position.z =(float(value))
-
 
 func on_scale_changed(node,scene_list_item):
 	gizmo.clear_selection()
@@ -994,6 +1204,7 @@ func on_select_replace_mat_for_surface(
 	child_mesh.set_surface_override_material(surface,selected_replacement.MATERIAL)
 
 func on_duplicated_pressed(imported_scene:ImportedScene):
+	FLAT_LIST = []
 	load_from_path(
 		imported_scene.PATH,
 		imported_scene.NODE.global_position,
@@ -1025,6 +1236,7 @@ func on_delete_light(light:VertexLight):
 
 func on_delete_scene_pressed(imported_scene:ImportedScene):
 	#_on_reset_pressed()
+	FLAT_LIST = []
 	gizmo.clear_selection()
 	var index = DATA.SCENES.find(imported_scene)
 	imported_scene.SCENE.queue_free()
@@ -1133,19 +1345,88 @@ func load_from_path(
 		update_material_inspector()
 	else:
 		p2log("Couldn't load glTF scene (error code: %s)." % error_string(error))
+var vert_count = 0
+func update_flat_list():
+	FLAT_LIST = []
+	vert_count =  0
+	for imported_scene:ImportedScene in DATA.SCENES:
+		if(imported_scene.EXCLUDE_FROM_BAKE == false):
+			for child in imported_scene.SCENE.get_children():
+				recursivley_update_flat_list_array_for_scene_node(imported_scene.ID, child)
+
+var CHUNK_SIZE=100
+
+func chunk_flat_list():
+	CHUNK_SIZE=100
+	CHUNKS =[]
+	for flat_vert:FlatVertex in FLAT_LIST:
+		var x:int = roundi(flat_vert.POSITION.x/CHUNK_SIZE)
+		var z:int = roundi(flat_vert.POSITION.z/CHUNK_SIZE)
+		var existing_chunk_index = CHUNKS.find_custom(func (chunk:Chunk):return (chunk.x == x) && (chunk.z==z),0)
+		if(existing_chunk_index==-1):
+			var new_chunk:Chunk = Chunk.new()
+			new_chunk.x = x
+			new_chunk.z =z
+			new_chunk.FLAT_VERTS.push_back(flat_vert)
+			CHUNKS.push_back(new_chunk)
+		else:
+			var old_chunk = CHUNKS[existing_chunk_index]
+			old_chunk.FLAT_VERTS.push_back(flat_vert)
+
+func get_chunk_for_vertex(vertex):
+	var x_:int = roundi(vertex.x/CHUNK_SIZE)
+	var z_:int = roundi(vertex.z/CHUNK_SIZE)
+	var chunk_index = CHUNKS.find_custom(func(chunk:Chunk):return (chunk.x == x_ && chunk.z == z_),0)
+	if(chunk_index == -1):return null
+	else:
+		return CHUNKS[chunk_index]
+
 
 func actually_bake():
+	var start_time = Time.get_unix_time_from_system()
+	var end_time
 	p2log("BAKING")
 	$BAKE.text = ("BAKING")
 	$HBoxContainer.visible = false
 	$MENU_BUTTON.visible = true;
 	_on_reset_pressed()
+	#if(FLAT_LIST.size() == 0):
+
+	print("updating flat list")
+	update_flat_list()
+	end_time = Time.get_unix_time_from_system() - start_time
+	print("vert count| %s"%vert_count)
+	print("updated flat list | end %s" % end_time)
+	print("flat list size | %s"%FLAT_LIST.size())
+
+	await WAIT.for_seconds(0.1);
+
+	start_time = Time.get_unix_time_from_system()
+	print("chunking flat list")
+	chunk_flat_list()
+	end_time = Time.get_unix_time_from_system() - start_time
+	print("chunked flat list | end %s" % end_time)
+	print("chunked list size | %s"%CHUNKS.size())
+	await WAIT.for_seconds(0.1);
+
+	start_time = Time.get_unix_time_from_system()
+	print("updating close verts")
+	update_close_verts_array()
+	end_time = Time.get_unix_time_from_system()- start_time
+	print("updated close verts| end %s" % end_time)
+	print("close verts size | %s"%CLOSE_VERTS.size())
+	await WAIT.for_seconds(0.1);
+	print("BAKING")
+	await WAIT.for_seconds(0.1);
+	start_time = Time.get_unix_time_from_system()
 	for scene in DATA.SCENES:
 		for child:MeshInstance3D in scene.SCENE.get_children():
 			if(scene.EXCLUDE_FROM_BAKE == false):
 				update_mesh(child,scene)
+	end_time = Time.get_unix_time_from_system() - start_time
+	print("BAKED | end %s" % end_time)
 	$BAKE.text = ("BAKE")
-	p2log("BAKE COMPLETE")
+	p2log("BAKE COMPLETE | end %s" % end_time)
 
 func auto_bake():
 	if(AUTO_BAKE == true):
@@ -1538,7 +1819,6 @@ func _on_create_material_pressed() -> void:
 	update_material_replacements_window();
 	DATA.save_recents()
 
-
 func create_replacement (PATH,mat_name,shader_id):
 	var new_mat_override := MaterialReplacement.new()
 	if(mat_name == ""):mat_name="UNTITLED %s" % generate_id()
@@ -1593,19 +1873,6 @@ func get_shader(shader_id:int):
 			return WATER_FLOW_SHADER
 	return DEFAULT_SHADER
 
-#func get_material_for_override_id(override_material_index:int):
-	#match(override_material_index):
-		#BUILT_IN_MATERIALS.DEFAULT:
-			#return DEFAULT_MATERIAL
-		#BUILT_IN_MATERIALS.WATER:
-			#return WATER_MATERIAL
-		#BUILT_IN_MATERIALS.WINDY:
-			#return WINDY_MATERIAL
-		#BUILT_IN_MATERIALS.GLASS:
-			#return GLASS_MATERIAL
-		#BUILT_IN_MATERIALS.WATER_FLOW:
-			#return WATER_FLOW_MATERIAL
-
 func _on_bake_rotation_export_toggled(toggled_on: bool) -> void:
 	BAKE_ROTATION_ON_EXPORT = toggled_on
 
@@ -1630,27 +1897,27 @@ func _on_update_texture_file_selected(path: String) -> void:
 	CURRENT_REPLACEMENT.MATERIAL.set_shader_parameter("MAIN",texture_image)
 	update_material_replacements_window()
 
-
 func _on_bake_toggle_on_pressed() -> void:
 	for scene in DATA.SCENES:
 		scene.EXCLUDE_FROM_BAKE = false
 	for child in $MESH_INSPECTOR/ScrollContainer/CONTAINER/MESHES.get_children():
 		var toggle:CheckBox = child.get_node("HBoxContainer/BAKE")
 		toggle.button_pressed = true
-func _on_bake_toggle_off_pressed() -> void:
 
+func _on_bake_toggle_off_pressed() -> void:
 	for scene in DATA.SCENES:
 		scene.EXCLUDE_FROM_BAKE = true
 	for child in $MESH_INSPECTOR/ScrollContainer/CONTAINER/MESHES.get_children():
 			var toggle:CheckBox = child.get_node("HBoxContainer/BAKE")
 			toggle.button_pressed = false
-func _on_export_toggle_on_pressed() -> void:
 
+func _on_export_toggle_on_pressed() -> void:
 	for scene in DATA.SCENES:
 		scene.EXCLUDE_FROM_EXPORT = false
 	for child in $MESH_INSPECTOR/ScrollContainer/CONTAINER/MESHES.get_children():
 			var toggle:CheckBox = child.get_node("HBoxContainer/EXPORT")
 			toggle.button_pressed = true
+
 func _on_export_toggle_off_pressed() -> void:
 	for scene in DATA.SCENES:
 		scene.EXCLUDE_FROM_EXPORT = true
@@ -1658,20 +1925,13 @@ func _on_export_toggle_off_pressed() -> void:
 			var toggle:CheckBox = child.get_node("HBoxContainer/EXPORT")
 			toggle.button_pressed = false
 
-
 func _on_expand_all_pressed() -> void:
 	for child in $MESH_INSPECTOR/ScrollContainer/CONTAINER/MESHES.get_children():
 		child.get_node("ICON/EXPAND").open()
-		#child.get_node("VBoxContainer").show()
-	pass # Replace with function body.
-
 
 func _on_collapse_all_pressed() -> void:
 	for child in $MESH_INSPECTOR/ScrollContainer/CONTAINER/MESHES.get_children():
-		#child.get_node("VBoxContainer").hide()
 		child.get_node("ICON/EXPAND").close()
-	pass # Replace with function body.
-
 
 func _on_windows_button_toggled(toggled_on: bool) -> void:
 	if(toggled_on == false):
@@ -1686,6 +1946,7 @@ func _on_windows_button_toggled(toggled_on: bool) -> void:
 		$RECENT_FILES.hide()
 		$RECENT_MESHES.hide()
 		$RECENT_TEXTURES.hide()
+		$RECENT_SAVES.hide()
 	else:
 		$PALETTE_INSPECTOR.show()
 		$REPLACEMENT_MATERIALS.show()
@@ -1695,4 +1956,5 @@ func _on_windows_button_toggled(toggled_on: bool) -> void:
 		$DATA_INSPECTOR.show()
 		$RECENT_FILES.show()
 		$RECENT_MESHES.show()
+		$RECENT_SAVES.show()
 		$RECENT_TEXTURES.show()

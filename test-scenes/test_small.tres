@@ -1,0 +1,53 @@
+[gd_resource type="Resource" script_class="VBData" load_steps=14 format=3]
+
+[ext_resource type="Script" path="res://VBLayerData.gd" id="1_5wxeo"]
+[ext_resource type="Script" path="res://VBLayerMaskData.gd" id="2_lwyxl"]
+[ext_resource type="Script" path="res://VBLightData.gd" id="3_tup6o"]
+[ext_resource type="Script" path="res://VBMaterialOverride.gd" id="4_p53s1"]
+[ext_resource type="Script" path="res://VBMaterialReplacement.gd" id="5_klk7d"]
+[ext_resource type="Script" path="res://VBSceneData.gd" id="6_nm1o3"]
+[ext_resource type="Script" path="res://VBData.gd" id="7_t872j"]
+
+[sub_resource type="Resource" id="Resource_5wxeo"]
+script = ExtResource("1_5wxeo")
+ID = 176539327061
+NAME = "UNTITLED #176539327061"
+BLENDING_METHOD = 8
+BLENDING_DIRECTION = 8
+
+[sub_resource type="Resource" id="Resource_lwyxl"]
+script = ExtResource("3_tup6o")
+COLOR = Vector3(0.38978577, 0.6658298, 0.76171875)
+MIX = 1.0
+RADIUS = 100.0
+PARENT_LAYER_ID = 176539327061
+
+[sub_resource type="Resource" id="Resource_tup6o"]
+script = ExtResource("4_p53s1")
+NEW_MATERIAL_NAME = "ww"
+TARGET_MATERIAL_NAME = "sphere3_auv"
+
+[sub_resource type="Resource" id="Resource_p53s1"]
+script = ExtResource("4_p53s1")
+NEW_MATERIAL_NAME = "ww"
+TARGET_MATERIAL_NAME = "blank_sep13_auv"
+
+[sub_resource type="Resource" id="Resource_klk7d"]
+script = ExtResource("5_klk7d")
+NEW_MATERIAL_NAME = "ww"
+TEXTURE_PATH = "C:/Repos/vertex-baker/textures/white.png"
+
+[sub_resource type="Resource" id="Resource_nm1o3"]
+script = ExtResource("6_nm1o3")
+PATH = "C:/Repos/vertex-baker/test-scenes/test_small.glb"
+ID = 176539326912
+NAME = "SCENE_PREFAB"
+SCALE = Vector3(1, 1, 1)
+
+[resource]
+script = ExtResource("7_t872j")
+LAYERS = Array[ExtResource("1_5wxeo")]([SubResource("Resource_5wxeo")])
+LIGHTS = Array[ExtResource("3_tup6o")]([SubResource("Resource_lwyxl")])
+SCENES = Array[ExtResource("6_nm1o3")]([SubResource("Resource_nm1o3")])
+MATERIAL_OVERRIDES = Array[ExtResource("4_p53s1")]([SubResource("Resource_tup6o"), SubResource("Resource_p53s1")])
+MATERIAL_REPLACEMENTS = Array[ExtResource("5_klk7d")]([SubResource("Resource_klk7d")])

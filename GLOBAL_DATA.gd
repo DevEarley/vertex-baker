@@ -18,11 +18,13 @@ func load_recents():
 		var new_array:Array[VBRecentFile] = []
 		new_recents_file.RECENTS = new_array
 		ResourceSaver.save(new_recents_file,recents_file_path)
+
 func save_recents():
 	var recents_file_path = "user://recents.tres"
 	var recents = VBRecentFiles.new()
 	recents.RECENTS = RECENTS;
 	ResourceSaver.save(recents,recents_file_path)
+
 func update_recent_files(path,type:VBRecentFile.VB_FILE_TYPES):
 	var recents_file_path = "user://recents.tres"
 	var existing_files = RECENTS.filter(func (recent:VBRecentFile): return recent.PATH == path && type == recent.TYPE)
@@ -39,8 +41,6 @@ func update_recent_files(path,type:VBRecentFile.VB_FILE_TYPES):
 		recent_file.DATE_OPENED = Time.get_unix_time_from_system()
 		recent_file.DATE_SAVED = Time.get_unix_time_from_system()
 		RECENTS.push_back(recent_file);
-
-
 
 func to_project_data():
 	var project_data:VBData = VBData.new()
