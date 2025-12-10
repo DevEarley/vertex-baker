@@ -423,7 +423,7 @@ func update_close_verts_array():
 						var distance_vector =  flat_vert_b.POSITION - (flat_vert_a.POSITION)
 						var facing_each_other =  flat_vert_a.NORMAL.dot(distance_vector)
 						var distance = flat_vert_b.POSITION.distance_to(flat_vert_a.POSITION)
-						if( distance < closest_distance):
+						if((facing_each_other>1.8)&& distance < closest_distance):
 							closest_flat_vert = flat_vert_b
 							closest_distance = distance
 		if(closest_flat_vert !=null):
@@ -553,7 +553,7 @@ func blend_light_into_vertex_colors(
 				if(smallest_vert == null):
 					mix = 0
 				else:
-					var smallest_distance_to_other_verts = (1.0/smallest_vert.DISTANCE)/10.0
+					var smallest_distance_to_other_verts = (1.0/smallest_vert.DISTANCE)
 					mix *= smallest_distance_to_other_verts
 					previous_mix = mix
 
