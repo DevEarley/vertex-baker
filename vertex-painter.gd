@@ -566,12 +566,7 @@ func blend_light_into_vertex_colors(
 				if(smallest_vert == null):
 					mix = 0
 				else:
-					#var dist = smallest_vert.DOT
-					#if(smallest_vert.DOT== 0):
-						#dist =1
-					#else:
-						#dist = (1.0/smallest_vert.DOT)
-					mix *= (1.0/smallest_vert.DISTANCE)
+					mix *= clamp(1.0/smallest_vert.DISTANCE,0.0,1.0)
 					previous_mix = mix
 
 			LightLayer.BLENDING_DIRECTIONS.CONVEX_EDGES:
@@ -1407,32 +1402,32 @@ func actually_bake():
 	$HBoxContainer.visible = false
 	$MENU_BUTTON.visible = true;
 	_on_reset_pressed()
-	#if(FLAT_LIST.size() == 0):
+	if(FLAT_LIST.size() == 0):
 
-	print("updating flat list")
-	update_flat_list()
-	end_time = Time.get_unix_time_from_system() - start_time
-	print("vert count| %s"%vert_count)
-	print("updated flat list | end %s" % end_time)
-	print("flat list size | %s"%FLAT_LIST.size())
+		print("updating flat list")
+		update_flat_list()
+		end_time = Time.get_unix_time_from_system() - start_time
+		print("vert count| %s"%vert_count)
+		print("updated flat list | end %s" % end_time)
+		print("flat list size | %s"%FLAT_LIST.size())
 
-	await WAIT.for_seconds(0.1);
+		await WAIT.for_seconds(0.1);
 
-	start_time = Time.get_unix_time_from_system()
-	print("chunking flat list")
-	chunk_flat_list()
-	end_time = Time.get_unix_time_from_system() - start_time
-	print("chunked flat list | end %s" % end_time)
-	print("chunked list size | %s"%CHUNKS.size())
-	await WAIT.for_seconds(0.1);
+		start_time = Time.get_unix_time_from_system()
+		print("chunking flat list")
+		chunk_flat_list()
+		end_time = Time.get_unix_time_from_system() - start_time
+		print("chunked flat list | end %s" % end_time)
+		print("chunked list size | %s"%CHUNKS.size())
+		await WAIT.for_seconds(0.1);
 
-	start_time = Time.get_unix_time_from_system()
-	print("updating close verts")
-	update_close_verts_array()
-	end_time = Time.get_unix_time_from_system()- start_time
-	print("updated close verts| end %s" % end_time)
-	print("close verts size | %s"%CLOSE_VERTS.size())
-	await WAIT.for_seconds(0.1);
+		start_time = Time.get_unix_time_from_system()
+		print("updating close verts")
+		update_close_verts_array()
+		end_time = Time.get_unix_time_from_system()- start_time
+		print("updated close verts| end %s" % end_time)
+		print("close verts size | %s"%CLOSE_VERTS.size())
+		await WAIT.for_seconds(0.1);
 	print("BAKING")
 	await WAIT.for_seconds(0.1);
 	start_time = Time.get_unix_time_from_system()
