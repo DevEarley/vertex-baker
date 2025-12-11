@@ -8,3 +8,4 @@ class_name CloseVertex extends Resource
 @export var OTHER_SURFACE_INDEX:int
 @export var OTHER_SCENE_ID:int
 @export var DISTANCE:float
+@export var DOT:float

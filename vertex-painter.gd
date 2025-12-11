@@ -337,11 +337,15 @@ func recursivley_update_flat_list_array_for_scene_node(imported_scene_id,node, n
 				data.create_from_surface(mesh_array, surf_index)
 				for vertex_index in range(data.get_vertex_count()):
 					vert_count+=1
-
+					var edges_touching = data.get_vertex_edges(vertex_index)
+					var verts_touching :Array[int]= []
+					for edge in edges_touching:
+						verts_touching.push_back(edge)
 					var normal = data.get_vertex_normal(vertex_index)
 					var vertex:Vector3 = node.to_global(data.get_vertex(vertex_index))
 					var flat_vert: FlatVertex = FlatVertex.new()
 					flat_vert.POSITION = vertex
+					flat_vert.TOUCHING = verts_touching
 					flat_vert.SURFACE_INDEX = surf_index
 					flat_vert.VERTEX_INDEX = vertex_index
 					flat_vert.SCENE_ID = imported_scene_id
@@ -416,18 +420,27 @@ func update_close_verts_array():
 	for flat_vert_a in FLAT_LIST:
 		var closest_distance = INF
 		var closest_flat_vert = null
-
+		var closest_dot = 0.0
+		#var sum = flat_vert_a.TOUCHING.reduce(func(accum, number): return accum+number,0)
+		#var average = flat_vert_a.TOUCHING.
 		for flat_vert_b in CLEANED_FLAT_LIST:
-				if(flat_vert_a.VERTEX_INDEX != flat_vert_b.VERTEX_INDEX ):
+			var continue_with_op =  (
+				flat_vert_a.VERTEX_INDEX != flat_vert_b.VERTEX_INDEX
+
+			)
+			if(continue_with_op ):
 						var dist_to_vert = flat_vert_b.POSITION.distance_to(flat_vert_a.POSITION)
 						var distance_vector =  flat_vert_b.POSITION - (flat_vert_a.POSITION)
-						var facing_each_other =  flat_vert_a.NORMAL.dot(distance_vector)
+						var facing_each_other =  flat_vert_a.NORMAL.dot(distance_vector.normalized())
 						var distance = flat_vert_b.POSITION.distance_to(flat_vert_a.POSITION)
-						if((facing_each_other>1.8)&& distance < closest_distance):
+						if( facing_each_other > 0.5 && distance < closest_distance):
+							#print(facing_each_other)
 							closest_flat_vert = flat_vert_b
 							closest_distance = distance
+							closest_dot = facing_each_other
 		if(closest_flat_vert !=null):
 			var close_vert = CloseVertex.new()
+			close_vert.DOT = closest_dot
 			close_vert.DISTANCE = closest_distance
 			close_vert.OTHER_POSITION = closest_flat_vert.POSITION
 			close_vert.OTHER_VERTEX_INDEX = closest_flat_vert.VERTEX_INDEX
@@ -450,14 +463,14 @@ func update_CLEANED_FLAT_LIST(flat_vert_a,flat_vert_b):
 			#var index_of_b = CLEANED_FLAT_LIST.find(flat_vert_b)
 			#CLEANED_FLAT_LIST.remove_at(index_of_b)
 
-func get_smallest_distance_to_other_verts(surf_index,vertex_index,scene_id):
+func get_smallest_distance_to_other_verts(surf_index,vertex,scene_id):
 	var matching_vertex:CloseVertex;
 	for close_vertex:CloseVertex in CLOSE_VERTS:
-		if(close_vertex.VERTEX_INDEX == vertex_index &&
+		if(close_vertex.POSITION == vertex &&
 			close_vertex.SCENE_ID == scene_id &&
 			close_vertex.SURFACE_INDEX == surf_index):
 				matching_vertex = close_vertex;
-		elif(close_vertex.OTHER_VERTEX_INDEX == vertex_index &&
+		elif(close_vertex.POSITION == vertex &&
 			close_vertex.OTHER_SCENE_ID == scene_id &&
 			close_vertex.OTHER_SURFACE_INDEX == surf_index):
 				matching_vertex = close_vertex;
@@ -541,7 +554,7 @@ func blend_light_into_vertex_colors(
 			LightLayer.BLENDING_DIRECTIONS.AO:
 				var concave_mix = get_concave_mix(data,vertex_index,normal,mesh)
 				var convex_mix = get_convex_mix(data,vertex_index,normal,mesh)
-				var smallest_vert = get_smallest_distance_to_other_verts(surf_index,vertex_index,imported_scene.ID)
+				var smallest_vert = get_smallest_distance_to_other_verts(surf_index,vertex,imported_scene.ID)
 				if(smallest_vert == null):
 					mix =  0
 				else:
@@ -549,12 +562,16 @@ func blend_light_into_vertex_colors(
 					var AO_MIX = clamp(concave_mix - convex_mix + smallest_distance_to_other_verts,0.0,1.0)
 					mix *= AO_MIX
 			LightLayer.BLENDING_DIRECTIONS.FLAT_AO:
-				var smallest_vert:CloseVertex = get_smallest_distance_to_other_verts(surf_index,vertex_index,imported_scene.ID)
+				var smallest_vert:CloseVertex = get_smallest_distance_to_other_verts(surf_index,vertex,imported_scene.ID)
 				if(smallest_vert == null):
 					mix = 0
 				else:
-					var smallest_distance_to_other_verts = (1.0/smallest_vert.DISTANCE)
-					mix *= smallest_distance_to_other_verts
+					#var dist = smallest_vert.DOT
+					#if(smallest_vert.DOT== 0):
+						#dist =1
+					#else:
+						#dist = (1.0/smallest_vert.DOT)
+					mix *= (1.0/smallest_vert.DISTANCE)
 					previous_mix = mix
 
 			LightLayer.BLENDING_DIRECTIONS.CONVEX_EDGES:
@@ -1354,10 +1371,10 @@ func update_flat_list():
 			for child in imported_scene.SCENE.get_children():
 				recursivley_update_flat_list_array_for_scene_node(imported_scene.ID, child)
 
-var CHUNK_SIZE=100
+var CHUNK_SIZE=1000
 
 func chunk_flat_list():
-	CHUNK_SIZE=100
+	CHUNK_SIZE=1000
 	CHUNKS =[]
 	for flat_vert:FlatVertex in FLAT_LIST:
 		var x:int = roundi(flat_vert.POSITION.x/CHUNK_SIZE)
