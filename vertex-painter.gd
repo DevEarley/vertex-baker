@@ -1393,16 +1393,11 @@ func get_chunk_for_vertex(vertex):
 	else:
 		return CHUNKS[chunk_index]
 
-
-func actually_bake():
+func update_close_verts():
+	var has_AO_Layer = DATA.LAYERS.any(func (layer:LightLayer):layer.BLENDING_DIRECTION == LightLayer.BLENDING_DIRECTIONS.FLAT_AO)
 	var start_time = Time.get_unix_time_from_system()
 	var end_time
-	p2log("BAKING")
-	$BAKE.text = ("BAKING")
-	$HBoxContainer.visible = false
-	$MENU_BUTTON.visible = true;
-	_on_reset_pressed()
-	if(FLAT_LIST.size() == 0):
+	if(has_AO_Layer ==true && FLAT_LIST.size() == 0):
 
 		print("updating flat list")
 		update_flat_list()
@@ -1412,14 +1407,14 @@ func actually_bake():
 		print("flat list size | %s"%FLAT_LIST.size())
 
 		await WAIT.for_seconds(0.1);
-
-		start_time = Time.get_unix_time_from_system()
-		print("chunking flat list")
-		chunk_flat_list()
-		end_time = Time.get_unix_time_from_system() - start_time
-		print("chunked flat list | end %s" % end_time)
-		print("chunked list size | %s"%CHUNKS.size())
-		await WAIT.for_seconds(0.1);
+#
+		#start_time = Time.get_unix_time_from_system()
+		#print("chunking flat list")
+		#chunk_flat_list()
+		#end_time = Time.get_unix_time_from_system() - start_time
+		#print("chunked flat list | end %s" % end_time)
+		#print("chunked list size | %s"%CHUNKS.size())
+		#await WAIT.for_seconds(0.1);
 
 		start_time = Time.get_unix_time_from_system()
 		print("updating close verts")
@@ -1428,6 +1423,16 @@ func actually_bake():
 		print("updated close verts| end %s" % end_time)
 		print("close verts size | %s"%CLOSE_VERTS.size())
 		await WAIT.for_seconds(0.1);
+
+func actually_bake():
+	var start_time = Time.get_unix_time_from_system()
+	var end_time
+	p2log("BAKING")
+	$BAKE.text = ("BAKING")
+	$HBoxContainer.visible = false
+	$MENU_BUTTON.visible = true;
+	_on_reset_pressed()
+	update_close_verts()
 	print("BAKING")
 	await WAIT.for_seconds(0.1);
 	start_time = Time.get_unix_time_from_system()
