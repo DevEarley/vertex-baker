@@ -1428,6 +1428,22 @@ grow_vertical = 0
 text = "AUTOBAKE"
 icon = ExtResource("19_cegan")
 
+[node name="FULL_BAKE_CHECKBOX" type="CheckButton" parent="."]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -412.0
+offset_top = -49.0
+offset_right = -210.0
+offset_bottom = -9.0
+grow_horizontal = 0
+grow_vertical = 0
+button_pressed = true
+text = "FULL BAKE"
+
 [node name="ICON_CHECKBOX" type="CheckButton" parent="."]
 layout_mode = 1
 anchors_preset = 3
@@ -1559,4 +1575,5 @@ texture = ExtResource("21_getpj")
 [connection signal="pressed" from="BAKE" to="." method="_on_bake_pressed"]
 [connection signal="toggled" from="LIGHT_SPHERE_CHECKBOX" to="." method="_on_light_sphere_checkbox_toggled"]
 [connection signal="toggled" from="AUTOBAKE_CHECKBOX" to="." method="_on_autobake_checkbox_toggled"]
+[connection signal="toggled" from="FULL_BAKE_CHECKBOX" to="." method="_on_full_bake_checkbox_toggled"]
 [connection signal="toggled" from="ICON_CHECKBOX" to="." method="_on_icon_checkbox_toggled"]

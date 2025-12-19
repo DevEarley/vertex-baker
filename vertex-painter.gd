@@ -508,6 +508,7 @@ func blend_light_into_vertex_colors(
 				mix = light.MIX
 			LightLayer.BLENDING_FADES.LINEAR_FADE:
 				mix =  light.MIX * linear_distance
+
 		match(layer.BLENDING_DIRECTION):
 			LightLayer.BLENDING_DIRECTIONS.EVERYTHING:
 				mix =  mix
@@ -640,13 +641,10 @@ func build_FLAT_MESHES():
 
 		for verts_by_light_group:VertByLightGroup in VERTS_BY_LIGHT_GROUPS:
 			if(verts_by_light_group.SCENE_ID == flat_mesh.SCENE_ID && verts_by_light_group.MESH_NAME == flat_mesh.MESH_NAME):
-				LIGHT_WITH_MESHES.push_back([flat_mesh.SCENE,flat_mesh.MESH,tools,surface_count,surface_names,verts_by_light_group,is_masked])
+				LIGHT_WITH_MESHES.push_back([flat_mesh.SCENE,flat_mesh.MESH,tools,surface_count,surface_names,verts_by_light_group])
 	return LIGHT_WITH_MESHES
 
-func update_mesh() -> void:
-	var FLAT_MESHES = build_FLAT_MESHES()
-	bake_FLAT_MESHES(FLAT_MESHES)
-	replace_surface_with_new_vertex_colors(FLAT_MESHES)
+
 
 func bake_FLAT_MESHES(FLAT_MESHES):
 	var total = VERTS_BY_LIGHT.size()
@@ -678,7 +676,7 @@ func bake_FLAT_MESHES(FLAT_MESHES):
 					light ,
 					data,
 					flat_vert.POSITION,
-					flat_vert.POSITION.distance_to(light.IMPORTED_POSITION),
+					flat_vert.POSITION.distance_to(light.LIGHT_MESH.global_position),
 					flat_vert.VERTEX_INDEX,
 					old_color,
 					flat_vert.SURFACE_INDEX)
@@ -1254,7 +1252,6 @@ func on_export_toggle_pressed(imported_scene:ImportedScene):
 func on_delete_light(light:VertexLight):
 	#_on_reset_pressed()
 	gizmo.clear_selection()
-
 	var index = 	light.LAYER.LIGHTS.find(light)
 	light.LIGHT_MESH.queue_free()
 	light.LIST_ITEM.queue_free()
@@ -1467,7 +1464,7 @@ func update_verts_by_light_array():
 					else:
 						existing_group = VERTS_BY_LIGHT_GROUPS[existing_group_index]
 					existing_group.FLAT_VERTS.push_back(flat_vert);
-
+var FULL_BAKE=true
 func actually_bake():
 	COMPLEXITY = 0
 	var start_time = Time.get_unix_time_from_system()
@@ -1477,7 +1474,8 @@ func actually_bake():
 	$HBoxContainer.visible = false
 	$MENU_BUTTON.visible = true;
 	_on_reset_pressed()
-	update_close_verts()
+	if(FULL_BAKE):
+		update_close_verts()
 	print("BAKING")
 	await WAIT.for_seconds(0.1);
 	start_time = Time.get_unix_time_from_system()
@@ -1487,6 +1485,12 @@ func actually_bake():
 	print("COMPLEXITY | %s"%COMPLEXITY)
 	$BAKE.text = ("BAKE")
 	p2log("BAKE COMPLETE | end %s" % end_time)
+
+func update_mesh() -> void:
+	# SCENE, MESH, tools, surface_count, surface_names, verts_by_light_group
+	var FLAT_MESHES = build_FLAT_MESHES()
+	bake_FLAT_MESHES(FLAT_MESHES)
+	replace_surface_with_new_vertex_colors(FLAT_MESHES)
 
 func auto_bake():
 	if(AUTO_BAKE == true):
@@ -2026,3 +2030,7 @@ func _on_windows_button_toggled(toggled_on: bool) -> void:
 		$RECENT_MESHES.show()
 		$RECENT_SAVES.show()
 		$RECENT_TEXTURES.show()
+
+
+func _on_full_bake_checkbox_toggled(toggled_on: bool) -> void:
+	FULL_BAKE = toggled_on
