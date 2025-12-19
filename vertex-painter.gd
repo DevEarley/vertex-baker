@@ -37,7 +37,7 @@ var material_list_item_prefab = preload("res://list_item_material_prefab.tscn")
 var material_override_list_item_prefab = preload("res://list_item_material_override_prefab.tscn")
 var material_replacement_list_item_prefab = preload("res://list_item_material_replacement_prefab.tscn")
 var light_mesh = preload("res://light_mesh_prefab.tscn")
-var imported_mesh_prefab = preload("res://imported_mesh_prefab.tscn")
+
 var scene_prefab = preload("res://scene_prefab.tscn")
 var surface_prefab = preload("res://surface_prefab.tscn")
 var COMPLEXITY = 0
@@ -68,6 +68,9 @@ var VERTS_BY_LIGHT_GROUPS:Array[VertByLightGroup]
 var FLAT_LIST:Array[FlatVertex]
 var CHUNKS=[]
 var FLAT_MESHES_:Array[FlatMesh]
+
+var last_light_texture
+var last_mesh_texture
 
 var CLEANED_FLAT_LIST: Array[FlatVertex]
 func _ready():
@@ -175,14 +178,17 @@ func on_add_light_to_layer(
 	imported_radius:float=1.0,
 	imported_mix:float=1.0,id:int=-1):
 	light_layer.LIST_ITEM.get_node("VBoxContainer/EXPAND").show()
+	var new_light = light_prefab.instantiate()
 	var light = VertexLight.new()
-	if(id == -1||id == null|| id == 0):
-		light.ID = generate_id()
-	else:
-		light.ID=id;
+	#if(id == -1||id == null|| id == 0):
+	light.ID = generate_id()
+	#else:
+		#light.ID=id;
 	light.COLOR = imported_color
 	light.LIGHT_MESH = light_mesh.instantiate()
 	light.LIGHT_MESH.position = imported_position
+	light.LIGHT_MESH.LIST_ITEM = new_light
+	light.LIGHT_MESH.LIGHT = light
 	var mesh:MeshInstance3D = light.LIGHT_MESH.get_node("MeshInstance3D")
 	mesh.visible = LIGHT_SPHERES_ON;
 	mesh.scale = Vector3.ONE *imported_radius;
@@ -193,7 +199,6 @@ func on_add_light_to_layer(
 	light.MIX = imported_mix
 	light_layer.LIGHTS.push_back(light)
 	$SubViewportContainer/SubViewport.add_child(light.LIGHT_MESH)
-	var new_light = light_prefab.instantiate()
 	light.LIST_ITEM = new_light;
 	var name_label:Label = new_light.get_node("VBoxContainer/LIGHT_NAME")
 	name_label.text ="%s"% light.ID
@@ -881,6 +886,7 @@ func _on_open_file_selected(path: String) -> void:
 
 	for scene:VBSceneData in result.SCENES:
 		p2log(scene.PATH)
+		#await WAIT.for_seconds(0)
 		load_from_path(scene.PATH, scene.POSITION,scene.ROTATION,scene.SCALE,scene.ID)
 	for vb_replacement:VBMaterialReplacement in result.MATERIAL_REPLACEMENTS:
 		var mat_replacement:MaterialReplacement = MaterialReplacement.new()
@@ -1294,12 +1300,13 @@ func load_from_path(
 		DATA.update_recent_files(path,VBRecentFile.VB_FILE_TYPES.IMPORTED)
 		update_recents_window()
 
+		var scene_list_item = scene_list_item_prefab.instantiate()
 		var scene = gltf_document_load.generate_scene(gltf_state_load)
 		var scene_2 = gltf_document_load_2.generate_scene(gltf_state_load_2)
 		scene.name = "MESH"
 		var imported_scene = ImportedScene.new()
 		var node= $SubViewportContainer/SubViewport
-		var mesh = scene_prefab.instantiate()
+		var mesh:SelectableMesh = scene_prefab.instantiate()
 		imported_scene.NODE = mesh;
 		imported_scene.SCENE = scene;
 		imported_scene.IMPORTED_SCALE = imported_scale
@@ -1311,12 +1318,14 @@ func load_from_path(
 			imported_scene.ID = generate_id()
 		else:
 			imported_scene.ID = imported_ID
+		mesh.MESH =scene
+		mesh.SCENE =imported_scene
+		mesh.LIST_ITEM = scene_list_item
 		mesh.add_child(scene)
 		node.add_child(mesh)
 		mesh.scale = imported_scale
 		mesh.position = imported_position
 		mesh.rotation = imported_rotation
-		var scene_list_item = scene_list_item_prefab.instantiate()
 		imported_scene.LIST_ITEM = scene_list_item
 		scene_list_item.get_node("HBoxContainer/ROTATE").connect("pressed",on_rotate_pressed.bind(mesh))
 		scene_list_item.get_node("HBoxContainer/SCALE").connect("pressed",on_scale_pressed.bind(mesh))
@@ -1426,8 +1435,8 @@ func update_close_verts():
 	end_time = Time.get_unix_time_from_system()- start_time
 	print("updated verts by light| end %s" % end_time)
 	print("verts by light size | %s"%VERTS_BY_LIGHT_GROUPS.size())
-	for vert:VertByLightGroup in VERTS_BY_LIGHT_GROUPS:
-		print("verts size | %s"%vert.FLAT_VERTS.size())
+	#for vert:VertByLightGroup in VERTS_BY_LIGHT_GROUPS:
+		#print("verts size | %s"%vert.FLAT_VERTS.size())
 
 	await WAIT.for_seconds(0.1);
 
@@ -1446,6 +1455,8 @@ func update_verts_by_light_array():
 	VERTS_BY_LIGHT = []
 	for layer:LightLayer in DATA.LAYERS:
 		for light :VertexLight in layer.LIGHTS:
+			p2log("Calculating verts for light...")
+			#await WAIT.for_seconds(0)
 			for flat_vert in FLAT_LIST:
 				var distance = light.LIGHT_MESH.global_position.distance_to(flat_vert.POSITION )
 				if(distance < light.RADIUS):
@@ -1512,6 +1523,7 @@ func _on_gizmo_3d_transform_begin(mode: Gizmo3D.TransformMode) -> void:
 	disable_collision_shapes()
 
 func _on_gizmo_3d_transform_changed(mode: Gizmo3D.TransformMode, value: Vector3) -> void:
+
 	if(CURRENT_LIGHT != null && mode == Gizmo3D.TransformMode.SCALE):
 		CURRENT_LIGHT.LIGHT_MESH.scale =Vector3.ONE
 		var mesh:MeshInstance3D = CURRENT_LIGHT.LIGHT_MESH.get_node("MeshInstance3D")
@@ -1942,17 +1954,13 @@ func _on_bake_rotation_export_toggled(toggled_on: bool) -> void:
 func _on_normalize_scale_on_export_toggled(toggled_on: bool) -> void:
 	BAKE_SCALE_ON_EXPORT= toggled_on
 
-var last_id=0
+var last_id_offset=0
 
 func generate_id():
-	var id_to_return
+
 	var new_id = ceili(Time.get_unix_time_from_system()*100)
-	if(last_id == new_id):
-		id_to_return =  last_id +1
-	else:
-		id_to_return =  new_id
-	last_id=id_to_return
-	return id_to_return
+	last_id_offset+=1
+	return new_id+last_id_offset
 
 func _on_open_texture_file_selected(path: String) -> void:
 	$REPLACEMENT_MATERIALS/PATH.text = path
@@ -2034,3 +2042,21 @@ func _on_windows_button_toggled(toggled_on: bool) -> void:
 
 func _on_full_bake_checkbox_toggled(toggled_on: bool) -> void:
 	FULL_BAKE = toggled_on
+
+func select_light(node):
+	node.LIST_ITEM.grab_focus()
+	var texture:TextureRect =node.LIST_ITEM.get_node("VBoxContainer/LIGHT_NAME/TextureRect")
+	texture.self_modulate = Color(1,1,1,1)
+	if(last_light_texture !=null):
+		last_light_texture.self_modulate = Color(1,1,1,0.2)
+	last_light_texture = texture;
+
+func select_mesh(node):
+
+	node.LIST_ITEM.get_node("ICON/EXPAND").open()
+	node.LIST_ITEM.grab_focus()
+	var texture:TextureRect =node.LIST_ITEM.get_node("ICON/TextureRect")
+	texture.self_modulate = Color(1,1,1,1)
+	if(last_mesh_texture !=null):
+		last_mesh_texture.self_modulate = Color(1,1,1,0.2)
+	last_mesh_texture = texture;

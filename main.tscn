@@ -604,6 +604,7 @@ offset_right = -2.0
 offset_bottom = -40.0
 grow_horizontal = 2
 grow_vertical = 2
+follow_focus = true
 
 [node name="CONTAINER" type="VBoxContainer" parent="LAYER_INSPECTOR/ScrollContainer"]
 custom_minimum_size = Vector2(490, 0)
@@ -689,6 +690,7 @@ offset_right = -2.0
 offset_bottom = -40.0
 grow_horizontal = 2
 grow_vertical = 2
+follow_focus = true
 
 [node name="CONTAINER" type="VBoxContainer" parent="MESH_INSPECTOR/ScrollContainer"]
 custom_minimum_size = Vector2(490, 0)

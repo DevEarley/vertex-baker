@@ -27,7 +27,6 @@ var _alt = false
 
 var HAS_TARGET = false;
 var TARGET
-
 func _input(event):
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 		var dir := self.project_ray_normal(event.position)
@@ -49,6 +48,12 @@ func _input(event):
 			gizmo.clear_selection();
 			TARGET = node;
 			gizmo.select(node)
+			if(node is SelectableLight):
+				MAIN.select_light(node)
+
+			elif(node is SelectableMesh):
+				MAIN._on_collapse_all_pressed()
+				MAIN.select_mesh(node)
 
 	if event is InputEventMouseMotion:
 		_mouse_position = event.relative

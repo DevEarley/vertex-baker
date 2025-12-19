@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3 uid="uid://bqqrn15xwihnq"]
+[gd_scene load_steps=13 format=3 uid="uid://bqqrn15xwihnq"]
 
 [ext_resource type="Texture2D" uid="uid://blkpo7j61hi23" path="res://icon_scene.png" id="1_wowo8"]
 [ext_resource type="Texture2D" uid="uid://bws3hgrn7bebm" path="res://icon_fold.png" id="2_ki0xg"]
@@ -7,6 +7,14 @@
 [ext_resource type="Script" uid="uid://chpfjrv1l0qdq" path="res://toggler.gd" id="3_xx51c"]
 [ext_resource type="Texture2D" uid="uid://2f05blbjguuq" path="res://icon_expand.png" id="4_ldkuu"]
 [ext_resource type="Texture2D" uid="uid://djjn4qvrc1e2i" path="res://icon_more.png" id="6_xx51c"]
+
+[sub_resource type="Gradient" id="Gradient_0daxq"]
+offsets = PackedFloat32Array(0, 0.14042553, 0.2638298, 1)
+colors = PackedColorArray(0.5338078, 0.5338078, 0.5338078, 1, 0.2308174, 0.2308174, 0.2308174, 1, 0.24160884, 0.24160884, 0.24160884, 1, 0.5338078, 0.5338078, 0.5338078, 1)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_ldkuu"]
+gradient = SubResource("Gradient_0daxq")
+fill_to = Vector2(0, 1)
 
 [sub_resource type="Gradient" id="Gradient_ki0xg"]
 offsets = PackedFloat32Array(0, 0.20408164)
@@ -22,12 +30,22 @@ fill_to = Vector2(0, 1)
 custom_minimum_size = Vector2(490, 0)
 offset_right = 490.0
 offset_bottom = 71.0
+focus_mode = 2
+focus_behavior_recursive = 2
 
 [node name="ICON" type="TextureRect" parent="."]
 custom_minimum_size = Vector2(32, 32)
 layout_mode = 2
 texture = ExtResource("1_wowo8")
 stretch_mode = 2
+
+[node name="TextureRect" type="TextureRect" parent="ICON"]
+self_modulate = Color(1, 1, 1, 0.2)
+show_behind_parent = true
+layout_mode = 0
+offset_right = 485.0
+offset_bottom = 68.0
+texture = SubResource("GradientTexture2D_ldkuu")
 
 [node name="EXPAND" type="Button" parent="ICON" node_paths=PackedStringArray("TOGGLE_TARGET")]
 layout_mode = 0

@@ -1,6 +1,7 @@
-[gd_scene load_steps=5 format=3 uid="uid://fijceyg6p4bu"]
+[gd_scene load_steps=6 format=3 uid="uid://fijceyg6p4bu"]
 
 [ext_resource type="Texture2D" uid="uid://bp677qlpye2rd" path="res://vl.png" id="1_ggcam"]
+[ext_resource type="Script" uid="uid://g463j6yqavcb" path="res://selectable_light.gd" id="2_jhmdi"]
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_wuusl"]
 
@@ -23,6 +24,7 @@ fixed_size = true
 texture_filter = 0
 render_priority = 101
 texture = ExtResource("1_ggcam")
+script = ExtResource("2_jhmdi")
 
 [node name="StaticBody3D" type="StaticBody3D" parent="."]
 
