@@ -100,6 +100,7 @@ func to_project_data():
 			light_data.POSITION = light.LIGHT_MESH.global_position
 			light_data.PARENT_LAYER_ID = layer.ID
 			light_data.MIX = light.MIX
+			light_data.ID = light.ID
 			light_data.RADIUS = light.RADIUS
 			project_data.LIGHTS.push_back(light_data)
 	return project_data

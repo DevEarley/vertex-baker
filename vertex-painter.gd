@@ -40,7 +40,8 @@ var light_mesh = preload("res://light_mesh_prefab.tscn")
 var imported_mesh_prefab = preload("res://imported_mesh_prefab.tscn")
 var scene_prefab = preload("res://scene_prefab.tscn")
 var surface_prefab = preload("res://surface_prefab.tscn")
-
+var COMPLEXITY = 0
+var previous_mix =0
 var MOVING_WINDOW = false
 var AUTO_BAKE = false
 var BAKE_ROTATION_ON_EXPORT = true
@@ -62,9 +63,13 @@ var CURRENT_REPLACEMENT:MaterialReplacement
 var CURRENT_REPLACEMENT_LIST_ITEM:Node
 var MIN_DISTANCE = 1.0;
 var CLOSE_VERTS:Array = []
+var VERTS_BY_LIGHT:Array[VertByLight]
+var VERTS_BY_LIGHT_GROUPS:Array[VertByLightGroup]
 var FLAT_LIST:Array[FlatVertex]
 var CHUNKS=[]
+var FLAT_MESHES_:Array[FlatMesh]
 
+var CLEANED_FLAT_LIST: Array[FlatVertex]
 func _ready():
 	baking_timer = Timer.new()
 	baking_timer.one_shot = true;
@@ -98,7 +103,7 @@ func _on_add_layer_pressed(
 	layer.BLENDING_DIRECTION  = blending_direction
 	layer.BLENDING_FADE  = blending_fade
 	layer.BLENDING_METHOD = blending_method
-	if(imported_id == -1):
+	if(imported_id == -1 || imported_id == null || imported_id == 0):
 		layer.ID =generate_id()
 	else:
 		layer.ID = imported_id
@@ -168,9 +173,13 @@ func on_add_light_to_layer(
 	imported_position:Vector3=Vector3.ZERO,
 	imported_color:Color= Color.WHITE,
 	imported_radius:float=1.0,
-	imported_mix:float=1.0):
+	imported_mix:float=1.0,id:int=-1):
 	light_layer.LIST_ITEM.get_node("VBoxContainer/EXPAND").show()
 	var light = VertexLight.new()
+	if(id == -1||id == null|| id == 0):
+		light.ID = generate_id()
+	else:
+		light.ID=id;
 	light.COLOR = imported_color
 	light.LIGHT_MESH = light_mesh.instantiate()
 	light.LIGHT_MESH.position = imported_position
@@ -187,7 +196,7 @@ func on_add_light_to_layer(
 	var new_light = light_prefab.instantiate()
 	light.LIST_ITEM = new_light;
 	var name_label:Label = new_light.get_node("VBoxContainer/LIGHT_NAME")
-	name_label.text ="%s"% light.PARENT_LAYER_ID
+	name_label.text ="%s"% light.ID
 	var radius_control:SpinBox = new_light.get_node("VBoxContainer/RADIUS_CONTAINER/SpinBox")
 	radius_control.value =imported_radius
 	radius_control.connect("value_changed",on_radius_value_changed.bind(light,radius_control))
@@ -318,21 +327,25 @@ func get_convex_mix(data,vertex_index,normal,mesh):
 	var neighborhood_average =  get_neighborhood_average(data,vertex_index,normal,mesh)
 	return neighborhood_average - normal
 
-func recursivley_update_flat_list_array_for_scene_node(imported_scene_id,node, number_of_recursions:int = 0):
+func recursivley_update_flat_list_array_for_scene_node(imported_scene,node, number_of_recursions:int = 0):
 	number_of_recursions+=1
 	if(number_of_recursions>100):	return
 	if(node is MeshInstance3D):
+		var new_flat_mesh = FlatMesh.new()
+		new_flat_mesh.MESH_NAME = node.name;
+		new_flat_mesh.SCENE_ID = imported_scene.ID
+		new_flat_mesh.MESH = node;
+		new_flat_mesh.SCENE = imported_scene
 		var mesh_array:ArrayMesh =  node.mesh
 		var surface_count =mesh_array.get_surface_count()
 		var tools = []
 		var surface_names = []
 		for surf_index in surface_count:
-			var masked = is_masked_by_anything(node,surf_index,imported_scene_id)
+			var masked = is_masked_by_anything(node,surf_index,imported_scene.ID)
 			if(masked == false):
 				var surf_name = mesh_array.surface_get_name(surf_index)
 				surface_names.push_back(surf_name)
 				tools.push_back(MeshDataTool.new())
-
 				var data:MeshDataTool = tools[surf_index]
 				data.create_from_surface(mesh_array, surf_index)
 				for vertex_index in range(data.get_vertex_count()):
@@ -348,60 +361,14 @@ func recursivley_update_flat_list_array_for_scene_node(imported_scene_id,node, n
 					flat_vert.TOUCHING = verts_touching
 					flat_vert.SURFACE_INDEX = surf_index
 					flat_vert.VERTEX_INDEX = vertex_index
-					flat_vert.SCENE_ID = imported_scene_id
+					flat_vert.SCENE_ID = imported_scene.ID
+					flat_vert.MESH_NAME = node.name
 					flat_vert.NORMAL = normal
 					FLAT_LIST.push_back(flat_vert)
+					new_flat_mesh.FLAT_VERTS.push_back(flat_vert)
+		FLAT_MESHES_.push_back(new_flat_mesh)
 	else:
-		recursivley_update_flat_list_array_for_scene_node(imported_scene_id, node,number_of_recursions)
-
-#func recursivley_update_close_verts_array_for_scene_node(imported_scene_id,node, number_of_recursions:int = 0):
-	#number_of_recursions+=1
-	#if(number_of_recursions>100):	return
-	#if(node is MeshInstance3D):
-		#var mesh_array:ArrayMesh =  node.mesh
-		#var surface_count =mesh_array.get_surface_count()
-		#var tools = []
-		#for surf_index in surface_count:
-			#if(is_masked_by_anything(node,surf_index,imported_scene_id) == false):
-				#tools.push_back(MeshDataTool.new())
-				#var data:MeshDataTool = tools[surf_index]
-				#data.create_from_surface(mesh_array, surf_index)
-				#for vertex_index in range(data.get_vertex_count()):
-					#var vertex:Vector3 = node.to_global(data.get_vertex(vertex_index))
-					#var chunk :Chunk= get_chunk_for_vertex(vertex)
-					#if(chunk == null):
-						#print("no chunk")
-					#else:
-						#var vertex_in_close_list_already = is_vertex_in_close_list_already(vertex,vertex_index,surf_index,imported_scene_id)
-						#if(vertex_in_close_list_already == false):
-							#var closest_vert_in_chunk:FlatVertex = null
-							#var distance = INF
-							#var normal = data.get_vertex_normal(vertex_index)
-							#for other_vert:FlatVertex in chunk.FLAT_VERTS:
-								#if(vertex_index != other_vert.VERTEX_INDEX ):
-									#var dist_to_vert = other_vert.POSITION.distance_to(vertex)
-									#var distance_vector =  other_vert.POSITION - vertex
-									#var facing_each_other =  normal.dot(distance_vector)
-									##if((facing_each_other < -0.5) && dist_to_vert < distance):
-									#if(abs(distance)>0.001 && dist_to_vert < distance):
-									##if((dist_to_vert > 0.1 || dist_to_vert<-0.1) && dist_to_vert < distance):
-										#closest_vert_in_chunk = other_vert
-										#distance = dist_to_vert
-							#if(closest_vert_in_chunk!=null ):
-								#var close_vert = CloseVertex.new()
-								#close_vert.DISTANCE = distance;
-								#close_vert.OTHER_POSITION = closest_vert_in_chunk.POSITION
-								#close_vert.OTHER_VERTEX_INDEX = closest_vert_in_chunk.VERTEX_INDEX
-								#close_vert.OTHER_SURFACE_INDEX = closest_vert_in_chunk.SURFACE_INDEX
-								#close_vert.OTHER_SCENE_ID = closest_vert_in_chunk.SCENE_ID
-								#close_vert.POSITION = vertex
-								#close_vert.VERTEX_INDEX =vertex_index
-								#close_vert.SURFACE_INDEX = surf_index
-								#close_vert.SCENE_ID = imported_scene_id
-								#CLOSE_VERTS.push_back(close_vert)
-#
-	#else:
-		#recursivley_update_close_verts_array_for_scene_node(imported_scene_id,node,number_of_recursions)
+		recursivley_update_flat_list_array_for_scene_node(imported_scene, node,number_of_recursions)
 
 func is_vertex_in_close_list_already(vertex,vertex_index,surf_index,imported_scene_id):
 	return CLOSE_VERTS.any(func(close_vert:CloseVertex):
@@ -412,60 +379,54 @@ func is_vertex_in_close_list_already(vertex,vertex_index,surf_index,imported_sce
 			surf_index == close_vert.OTHER_SURFACE_INDEX &&
 			close_vert.OTHER_SCENE_ID == imported_scene_id))
 
-var CLEANED_FLAT_LIST: Array[FlatVertex]
-
 func update_close_verts_array():
 	CLOSE_VERTS = []
-	CLEANED_FLAT_LIST = FLAT_LIST.duplicate(true)
-	for flat_vert_a in FLAT_LIST:
-		var closest_distance = INF
-		var closest_flat_vert = null
-		var closest_dot = 0.0
-		#var sum = flat_vert_a.TOUCHING.reduce(func(accum, number): return accum+number,0)
-		#var average = flat_vert_a.TOUCHING.
-		for flat_vert_b in CLEANED_FLAT_LIST:
-			var continue_with_op =  (
-				flat_vert_a.VERTEX_INDEX != flat_vert_b.VERTEX_INDEX
-
-			)
-			if(continue_with_op ):
-						var dist_to_vert = flat_vert_b.POSITION.distance_to(flat_vert_a.POSITION)
-						var distance_vector =  flat_vert_b.POSITION - (flat_vert_a.POSITION)
-						var facing_each_other =  flat_vert_a.NORMAL.dot(distance_vector.normalized())
-						var distance = flat_vert_b.POSITION.distance_to(flat_vert_a.POSITION)
-						if( facing_each_other > 0.5 && distance < closest_distance):
-							#print(facing_each_other)
-							closest_flat_vert = flat_vert_b
-							closest_distance = distance
-							closest_dot = facing_each_other
-		if(closest_flat_vert !=null):
-			var close_vert = CloseVertex.new()
-			close_vert.DOT = closest_dot
-			close_vert.DISTANCE = closest_distance
-			close_vert.OTHER_POSITION = closest_flat_vert.POSITION
-			close_vert.OTHER_VERTEX_INDEX = closest_flat_vert.VERTEX_INDEX
-			close_vert.OTHER_SURFACE_INDEX = closest_flat_vert.SURFACE_INDEX
-			close_vert.OTHER_SCENE_ID = closest_flat_vert.SCENE_ID
-			close_vert.POSITION = flat_vert_a.POSITION
-			close_vert.VERTEX_INDEX = flat_vert_a.VERTEX_INDEX
-			close_vert.SURFACE_INDEX = flat_vert_a.SURFACE_INDEX
-			close_vert.SCENE_ID= flat_vert_a.SCENE_ID
-			CLOSE_VERTS.push_back(close_vert)
-			update_CLEANED_FLAT_LIST(flat_vert_a,closest_flat_vert)
+	for verts_by_light:VertByLight in VERTS_BY_LIGHT:
+		if(verts_by_light.LIGHT.LAYER.BLENDING_DIRECTION == LightLayer.BLENDING_DIRECTIONS.FLAT_AO
+		|| verts_by_light.LIGHT.LAYER.BLENDING_DIRECTION == LightLayer.BLENDING_DIRECTIONS.AO):
+			CLEANED_FLAT_LIST = verts_by_light.FLAT_VERTS.duplicate(true)
+			for flat_vert_a in FLAT_LIST:
+				var closest_distance = INF
+				var closest_flat_vert = null
+				var closest_dot = 0.0
+				for flat_vert_b in CLEANED_FLAT_LIST:
+					var continue_with_op =  (
+						flat_vert_a.VERTEX_INDEX != flat_vert_b.VERTEX_INDEX
+					)
+					if(continue_with_op):
+								var dist_to_vert = flat_vert_b.POSITION.distance_to(flat_vert_a.POSITION)
+								var distance_vector =  flat_vert_b.POSITION - (flat_vert_a.POSITION)
+								var facing_each_other =  flat_vert_a.NORMAL.dot(distance_vector.normalized())
+								var distance = flat_vert_b.POSITION.distance_to(flat_vert_a.POSITION)
+								if( facing_each_other > 0.5 && distance < closest_distance):
+									closest_flat_vert = flat_vert_b
+									closest_distance = distance
+									closest_dot = facing_each_other
+				if(closest_flat_vert !=null):
+					var close_vert = CloseVertex.new()
+					close_vert.DOT = closest_dot
+					close_vert.DISTANCE = closest_distance
+					close_vert.OTHER_POSITION = closest_flat_vert.POSITION
+					close_vert.OTHER_VERTEX_INDEX = closest_flat_vert.VERTEX_INDEX
+					close_vert.OTHER_SURFACE_INDEX = closest_flat_vert.SURFACE_INDEX
+					close_vert.OTHER_SCENE_ID = closest_flat_vert.SCENE_ID
+					close_vert.POSITION = flat_vert_a.POSITION
+					close_vert.VERTEX_INDEX = flat_vert_a.VERTEX_INDEX
+					close_vert.SURFACE_INDEX = flat_vert_a.SURFACE_INDEX
+					close_vert.SCENE_ID= flat_vert_a.SCENE_ID
+					CLOSE_VERTS.push_back(close_vert)
+					update_CLEANED_FLAT_LIST(flat_vert_a,closest_flat_vert)
 
 func update_CLEANED_FLAT_LIST(flat_vert_a,flat_vert_b):
-
 	if(CLEANED_FLAT_LIST.size()>0):
 		var index_of_a = CLEANED_FLAT_LIST.find(flat_vert_a)
 		CLEANED_FLAT_LIST.remove_at(index_of_a)
-		#if(CLEANED_FLAT_LIST.size()>0):
-#
-			#var index_of_b = CLEANED_FLAT_LIST.find(flat_vert_b)
-			#CLEANED_FLAT_LIST.remove_at(index_of_b)
 
 func get_smallest_distance_to_other_verts(surf_index,vertex,scene_id):
 	var matching_vertex:CloseVertex;
+	COMPLEXITY-=1
 	for close_vertex:CloseVertex in CLOSE_VERTS:
+		COMPLEXITY+=1
 		if(close_vertex.POSITION == vertex &&
 			close_vertex.SCENE_ID == scene_id &&
 			close_vertex.SURFACE_INDEX == surf_index):
@@ -475,13 +436,12 @@ func get_smallest_distance_to_other_verts(surf_index,vertex,scene_id):
 			close_vertex.OTHER_SURFACE_INDEX == surf_index):
 				matching_vertex = close_vertex;
 	return matching_vertex
-var previous_mix =0
+
 func blend_light_into_vertex_colors(
 	mesh:MeshInstance3D,
 	imported_scene:ImportedScene,
 	layer,
 	light :VertexLight,
-	index,
 	data,
 	vertex,
 	vertex_distance,
@@ -618,12 +578,12 @@ func blend_lights_into_vertex_colors(
 						imported_scene,
 						layer,
 						light ,
-						surf_index,
 						data,
 						vertex,
 						vertex_distance,
 						vertex_index,
-						old_color,surf_index)
+						old_color,
+						surf_index)
 				else:
 					data.set_vertex_color(vertex_index,old_color)
 
@@ -662,25 +622,77 @@ func is_masked_by_anything(mesh,surf,imported_scene_id):
 						layer_mask.SURFACE_ID == surf &&
 						layer_mask.SCENE_ID == imported_scene_id))
 
-func update_mesh(mesh:MeshInstance3D, imported_scene:ImportedScene) -> void:
-		var mesh_array:ArrayMesh =  mesh.mesh
-		var surface_count =mesh_array.get_surface_count()
+
+
+func build_FLAT_MESHES():
+	var LIGHT_WITH_MESHES = []
+	for flat_mesh in FLAT_MESHES_:
 		var tools = []
 		var surface_names = []
-		for index in surface_count:
-			var surf_name = mesh_array.surface_get_name(index)
+		var mesh_array = flat_mesh.MESH.mesh;
+		var surface_count =mesh_array.get_surface_count()
+		for surf  in surface_count:
+			var surf_name = mesh_array.surface_get_name(surf)
 			surface_names.push_back(surf_name)
-			tools.push_back(MeshDataTool.new())
-		for layer in DATA.LAYERS:
-			for light in layer.LIGHTS:
-				for surf in surface_count:
-					blend_lights_into_vertex_colors(
-						mesh,
-						imported_scene,
-						layer,
-						light,
-						surf,
-						tools)
+			var data = MeshDataTool.new()
+			tools.insert(surf,data)
+			data.create_from_surface(mesh_array,surf)
+
+		for verts_by_light_group:VertByLightGroup in VERTS_BY_LIGHT_GROUPS:
+			if(verts_by_light_group.SCENE_ID == flat_mesh.SCENE_ID && verts_by_light_group.MESH_NAME == flat_mesh.MESH_NAME):
+				LIGHT_WITH_MESHES.push_back([flat_mesh.SCENE,flat_mesh.MESH,tools,surface_count,surface_names,verts_by_light_group,is_masked])
+	return LIGHT_WITH_MESHES
+
+func update_mesh() -> void:
+	var FLAT_MESHES = build_FLAT_MESHES()
+	bake_FLAT_MESHES(FLAT_MESHES)
+	replace_surface_with_new_vertex_colors(FLAT_MESHES)
+
+func bake_FLAT_MESHES(FLAT_MESHES):
+	var total = VERTS_BY_LIGHT.size()
+	var index_= 0
+	var _flat_mesh
+	for flat_mesh in FLAT_MESHES:
+		var imported_scene = flat_mesh[0]
+		var mesh = flat_mesh[1]
+		var mesh_array:ArrayMesh =  flat_mesh[1].mesh
+		var tools:Array = flat_mesh[2]
+		var surface_count =flat_mesh[3]
+		var surface_names = flat_mesh[4]
+		var verts_by_light_group:VertByLightGroup = flat_mesh[5]
+		var flat_verts = verts_by_light_group.FLAT_VERTS
+		var light = verts_by_light_group.LIGHT
+		for flat_vert:FlatVertex in flat_verts: #subset of flat-verts for a light
+
+			COMPLEXITY+=1;
+
+			var layer = light.LAYER;
+			var is_masked_ = is_masked(layer,mesh,flat_vert.SURFACE_INDEX,imported_scene)
+			var data = tools.get(flat_vert.SURFACE_INDEX)
+			var old_color:Color = data.get_vertex_color(flat_vert.VERTEX_INDEX)
+			if(is_masked_==false):
+				blend_light_into_vertex_colors(
+					mesh,
+					imported_scene,
+					layer,
+					light ,
+					data,
+					flat_vert.POSITION,
+					flat_vert.POSITION.distance_to(light.IMPORTED_POSITION),
+					flat_vert.VERTEX_INDEX,
+					old_color,
+					flat_vert.SURFACE_INDEX)
+			else:
+				data.set_vertex_color(flat_vert.SURFACE_INDEX,old_color)
+
+func replace_surface_with_new_vertex_colors(FLAT_MESHES):
+		for flat_mesh in FLAT_MESHES:
+				var mesh_array:ArrayMesh =  flat_mesh[1].mesh
+				var surface_count =flat_mesh[3]
+				var tools = flat_mesh[2]
+				var mesh = flat_mesh[1]
+				var imported_scene = flat_mesh[0]
+				var surface_names = flat_mesh[4]
 				mesh_array.clear_surfaces()
 				for index in surface_count:
 						var surf_name = surface_names[index]
@@ -865,7 +877,9 @@ func _on_open_file_selected(path: String) -> void:
 						light_data.POSITION,
 						Color(light_data.COLOR.x,light_data.COLOR.y,light_data.COLOR.z),
 						light_data.RADIUS,
-						light_data.MIX)
+						light_data.MIX,
+						light_data.ID
+						)
 
 	for scene:VBSceneData in result.SCENES:
 		p2log(scene.PATH)
@@ -898,6 +912,7 @@ func _on_open_file_selected(path: String) -> void:
 	update_material_inspector()
 	DATA.save_recents()
 	p2log("")
+	$RECENT_FILES.size = Vector2(500,40)
 
 func recursively_apply_overrides(root_scene,vb_material_override,scene,index_for_replacement, number_of_recursions = 0):
 	number_of_recursions+=1
@@ -922,6 +937,7 @@ func _on_save_file_selected(path: String) -> void:
 		DATA.update_recent_files(path,VBRecentFile.VB_FILE_TYPES.PROJECT_FILE_SAVED)
 		update_recents_window()
 		DATA.save_recents()
+		$RECENT_SAVES.size = Vector2(500,40)
 
 func _on_export_file_selected(path: String) -> void:
 	merge_materials()
@@ -1364,7 +1380,7 @@ func update_flat_list():
 	for imported_scene:ImportedScene in DATA.SCENES:
 		if(imported_scene.EXCLUDE_FROM_BAKE == false):
 			for child in imported_scene.SCENE.get_children():
-				recursivley_update_flat_list_array_for_scene_node(imported_scene.ID, child)
+				recursivley_update_flat_list_array_for_scene_node(imported_scene, child)
 
 var CHUNK_SIZE=1000
 
@@ -1397,24 +1413,28 @@ func update_close_verts():
 	var has_AO_Layer = DATA.LAYERS.any(func (layer:LightLayer):layer.BLENDING_DIRECTION == LightLayer.BLENDING_DIRECTIONS.FLAT_AO)
 	var start_time = Time.get_unix_time_from_system()
 	var end_time
+
+	print("updating flat list")
+	update_flat_list()
+	end_time = Time.get_unix_time_from_system() - start_time
+	print("vert count| %s"%vert_count)
+	print("updated flat list | end %s" % end_time)
+	print("flat list size | %s"%FLAT_LIST.size())
+
+	await WAIT.for_seconds(0.1);
+
+	start_time = Time.get_unix_time_from_system()
+	print("updating verts by light")
+	update_verts_by_light_array()
+	end_time = Time.get_unix_time_from_system()- start_time
+	print("updated verts by light| end %s" % end_time)
+	print("verts by light size | %s"%VERTS_BY_LIGHT_GROUPS.size())
+	for vert:VertByLightGroup in VERTS_BY_LIGHT_GROUPS:
+		print("verts size | %s"%vert.FLAT_VERTS.size())
+
+	await WAIT.for_seconds(0.1);
+
 	if(has_AO_Layer ==true && FLAT_LIST.size() == 0):
-
-		print("updating flat list")
-		update_flat_list()
-		end_time = Time.get_unix_time_from_system() - start_time
-		print("vert count| %s"%vert_count)
-		print("updated flat list | end %s" % end_time)
-		print("flat list size | %s"%FLAT_LIST.size())
-
-		await WAIT.for_seconds(0.1);
-#
-		#start_time = Time.get_unix_time_from_system()
-		#print("chunking flat list")
-		#chunk_flat_list()
-		#end_time = Time.get_unix_time_from_system() - start_time
-		#print("chunked flat list | end %s" % end_time)
-		#print("chunked list size | %s"%CHUNKS.size())
-		#await WAIT.for_seconds(0.1);
 
 		start_time = Time.get_unix_time_from_system()
 		print("updating close verts")
@@ -1424,7 +1444,32 @@ func update_close_verts():
 		print("close verts size | %s"%CLOSE_VERTS.size())
 		await WAIT.for_seconds(0.1);
 
+func update_verts_by_light_array():
+	VERTS_BY_LIGHT_GROUPS = []
+	VERTS_BY_LIGHT = []
+	for layer:LightLayer in DATA.LAYERS:
+		for light :VertexLight in layer.LIGHTS:
+			for flat_vert in FLAT_LIST:
+				var distance = light.LIGHT_MESH.global_position.distance_to(flat_vert.POSITION )
+				if(distance < light.RADIUS):
+					var existing_group_index = VERTS_BY_LIGHT_GROUPS.find_custom(
+						func (group:VertByLightGroup): return (
+							 group.SCENE_ID == flat_vert.SCENE_ID &&
+							 group.MESH_NAME == flat_vert.MESH_NAME &&
+							 group.LIGHT.ID == light.ID))
+					var existing_group:VertByLightGroup;
+					if(existing_group_index == -1):
+						existing_group = VertByLightGroup.new()
+						existing_group.SCENE_ID = flat_vert.SCENE_ID
+						existing_group.MESH_NAME = flat_vert.MESH_NAME
+						existing_group.LIGHT = light
+						VERTS_BY_LIGHT_GROUPS.push_back(existing_group)
+					else:
+						existing_group = VERTS_BY_LIGHT_GROUPS[existing_group_index]
+					existing_group.FLAT_VERTS.push_back(flat_vert);
+
 func actually_bake():
+	COMPLEXITY = 0
 	var start_time = Time.get_unix_time_from_system()
 	var end_time
 	p2log("BAKING")
@@ -1436,12 +1481,10 @@ func actually_bake():
 	print("BAKING")
 	await WAIT.for_seconds(0.1);
 	start_time = Time.get_unix_time_from_system()
-	for scene in DATA.SCENES:
-		for child:MeshInstance3D in scene.SCENE.get_children():
-			if(scene.EXCLUDE_FROM_BAKE == false):
-				update_mesh(child,scene)
+	update_mesh()
 	end_time = Time.get_unix_time_from_system() - start_time
 	print("BAKED | end %s" % end_time)
+	print("COMPLEXITY | %s"%COMPLEXITY)
 	$BAKE.text = ("BAKE")
 	p2log("BAKE COMPLETE | end %s" % end_time)
 
@@ -1521,7 +1564,6 @@ func _on_reset_pressed() -> void:
 								var og_mat:StandardMaterial3D = mesh_array.surface_get_material(index)
 								var shader_material:=ShaderMaterial.new()
 								shader_material.shader = DEFAULT_SHADER
-
 								shader_material.resource_name = og_mat.resource_name
 								shader_material.set_shader_parameter("MAIN",og_mat.albedo_texture)
 								mesh_array.surface_set_material(index,shader_material)
@@ -1896,8 +1938,17 @@ func _on_bake_rotation_export_toggled(toggled_on: bool) -> void:
 func _on_normalize_scale_on_export_toggled(toggled_on: bool) -> void:
 	BAKE_SCALE_ON_EXPORT= toggled_on
 
+var last_id=0
+
 func generate_id():
-	return ceili(Time.get_unix_time_from_system()*100)
+	var id_to_return
+	var new_id = ceili(Time.get_unix_time_from_system()*100)
+	if(last_id == new_id):
+		id_to_return =  last_id +1
+	else:
+		id_to_return =  new_id
+	last_id=id_to_return
+	return id_to_return
 
 func _on_open_texture_file_selected(path: String) -> void:
 	$REPLACEMENT_MATERIALS/PATH.text = path
