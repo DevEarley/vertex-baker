@@ -26,7 +26,7 @@ func save_recents():
 	ResourceSaver.save(recents,recents_file_path)
 
 func update_recent_files(path,type:VBRecentFile.VB_FILE_TYPES):
-	var recents_file_path = "user://recents.tres"
+	#var recents_file_path = "user://recents.tres"
 	var existing_files = RECENTS.filter(func (recent:VBRecentFile): return recent.PATH == path && type == recent.TYPE)
 	if(existing_files!=null && existing_files.size()>0):
 		match(type):

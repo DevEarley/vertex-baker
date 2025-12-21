@@ -67,12 +67,14 @@ var VERTS_BY_LIGHT:Array[VertByLight]
 var VERTS_BY_LIGHT_GROUPS:Array[VertByLightGroup]
 var FLAT_LIST:Array[FlatVertex]
 var CHUNKS=[]
-var FLAT_MESHES_:Array[FlatMesh]
-
+var FLAT_MESHES:Array[FlatMesh]
+var DIRTY_MESHES:Array[FlatMesh]
+var CURRENT_MESH:SelectableMesh
 var last_light_texture
 var last_mesh_texture
-
+var BAKED = false
 var CLEANED_FLAT_LIST: Array[FlatVertex]
+
 func _ready():
 	baking_timer = Timer.new()
 	baking_timer.one_shot = true;
@@ -139,7 +141,7 @@ func _on_add_layer_pressed(
 
 func on_blending_method_dropdown_selected(index:int):
 	if(CURRENT_LAYER != null):
-		CURRENT_LAYER.BLENDING_METHOD = index
+		CURRENT_LAYER.BLENDING_METHOD = index as LightLayer.BLENDING_METHODS
 	auto_bake()
 
 func on_blending_method_dropdown_pressed(light_layer:LightLayer):
@@ -147,7 +149,7 @@ func on_blending_method_dropdown_pressed(light_layer:LightLayer):
 
 func on_blending_direction_dropdown_selected(index:int):
 	if(CURRENT_LAYER != null):
-		CURRENT_LAYER.BLENDING_DIRECTION = index
+		CURRENT_LAYER.BLENDING_DIRECTION = index as LightLayer.BLENDING_DIRECTIONS
 	auto_bake()
 
 func on_blending_direction_dropdown_pressed(light_layer:LightLayer):
@@ -233,6 +235,17 @@ func on_radius_value_changed(value:float,light:VertexLight,radius:SpinBox):
 	light.RADIUS = value
 	var mesh:MeshInstance3D = light.LIGHT_MESH.get_node("MeshInstance3D")
 	mesh.scale = Vector3.ONE *value;
+	if(BAKED == true):
+		var groups_affected_by_move = VERTS_BY_LIGHT_GROUPS.filter(func(group:VertByLightGroup):return(
+			light.ID == group.LIGHT.ID
+		));
+
+		light.DIRTY = true;
+
+		if(groups_affected_by_move!=null && groups_affected_by_move.size()>0):
+			for group in groups_affected_by_move:
+				mark_meshes_in_group_as_dirty(group)
+				VERTS_BY_LIGHT_GROUPS = swap_n_remove(group,VERTS_BY_LIGHT_GROUPS)
 	auto_bake()
 
 func on_color_picker_changed(color:Color,light:VertexLight,color_button:ColorPickerButton):
@@ -332,46 +345,50 @@ func get_convex_mix(data,vertex_index,normal,mesh):
 	var neighborhood_average =  get_neighborhood_average(data,vertex_index,normal,mesh)
 	return neighborhood_average - normal
 
+func build_flat_list_for_mesh(imported_scene,mesh):
+	var new_flat_mesh = FlatMesh.new()
+	new_flat_mesh.MESH_NAME = mesh.name;
+	new_flat_mesh.SCENE_ID = imported_scene.ID
+	new_flat_mesh.MESH = mesh;
+	new_flat_mesh.SCENE = imported_scene
+	var mesh_array:ArrayMesh =  mesh.mesh
+	var surface_count =mesh_array.get_surface_count()
+	var tools = []
+	var surface_names = []
+	for surf_index in surface_count:
+		var masked = is_masked_by_anything(mesh,surf_index,imported_scene.ID)
+		if(masked == false):
+			var surf_name = mesh_array.surface_get_name(surf_index)
+			surface_names.push_back(surf_name)
+			tools.push_back(MeshDataTool.new())
+			var data:MeshDataTool = tools[surf_index]
+			data.create_from_surface(mesh_array, surf_index)
+			for vertex_index in range(data.get_vertex_count()):
+				vert_count+=1
+				var edges_touching = data.get_vertex_edges(vertex_index)
+				var verts_touching :Array[int]= []
+				for edge in edges_touching:
+					verts_touching.push_back(edge)
+				var normal = data.get_vertex_normal(vertex_index)
+				var vertex:Vector3 = mesh.to_global(data.get_vertex(vertex_index))
+				var flat_vert: FlatVertex = FlatVertex.new()
+				flat_vert.POSITION = vertex
+				flat_vert.TOUCHING = verts_touching
+				flat_vert.SURFACE_INDEX = surf_index
+				flat_vert.VERTEX_INDEX = vertex_index
+				flat_vert.SCENE_ID = imported_scene.ID
+				flat_vert.MESH_NAME = mesh.name
+				flat_vert.NORMAL = normal
+				FLAT_LIST.push_back(flat_vert)
+				new_flat_mesh.FLAT_VERTS.push_back(flat_vert)
+	FLAT_MESHES.push_back(new_flat_mesh)
+
 func recursivley_update_flat_list_array_for_scene_node(imported_scene,node, number_of_recursions:int = 0):
 	number_of_recursions+=1
 	if(number_of_recursions>100):	return
 	if(node is MeshInstance3D):
-		var new_flat_mesh = FlatMesh.new()
-		new_flat_mesh.MESH_NAME = node.name;
-		new_flat_mesh.SCENE_ID = imported_scene.ID
-		new_flat_mesh.MESH = node;
-		new_flat_mesh.SCENE = imported_scene
-		var mesh_array:ArrayMesh =  node.mesh
-		var surface_count =mesh_array.get_surface_count()
-		var tools = []
-		var surface_names = []
-		for surf_index in surface_count:
-			var masked = is_masked_by_anything(node,surf_index,imported_scene.ID)
-			if(masked == false):
-				var surf_name = mesh_array.surface_get_name(surf_index)
-				surface_names.push_back(surf_name)
-				tools.push_back(MeshDataTool.new())
-				var data:MeshDataTool = tools[surf_index]
-				data.create_from_surface(mesh_array, surf_index)
-				for vertex_index in range(data.get_vertex_count()):
-					vert_count+=1
-					var edges_touching = data.get_vertex_edges(vertex_index)
-					var verts_touching :Array[int]= []
-					for edge in edges_touching:
-						verts_touching.push_back(edge)
-					var normal = data.get_vertex_normal(vertex_index)
-					var vertex:Vector3 = node.to_global(data.get_vertex(vertex_index))
-					var flat_vert: FlatVertex = FlatVertex.new()
-					flat_vert.POSITION = vertex
-					flat_vert.TOUCHING = verts_touching
-					flat_vert.SURFACE_INDEX = surf_index
-					flat_vert.VERTEX_INDEX = vertex_index
-					flat_vert.SCENE_ID = imported_scene.ID
-					flat_vert.MESH_NAME = node.name
-					flat_vert.NORMAL = normal
-					FLAT_LIST.push_back(flat_vert)
-					new_flat_mesh.FLAT_VERTS.push_back(flat_vert)
-		FLAT_MESHES_.push_back(new_flat_mesh)
+		build_flat_list_for_mesh(imported_scene,node)
+
 	else:
 		recursivley_update_flat_list_array_for_scene_node(imported_scene, node,number_of_recursions)
 
@@ -383,6 +400,7 @@ func is_vertex_in_close_list_already(vertex,vertex_index,surf_index,imported_sce
 			vertex_index == close_vert.OTHER_VERTEX_INDEX &&
 			surf_index == close_vert.OTHER_SURFACE_INDEX &&
 			close_vert.OTHER_SCENE_ID == imported_scene_id))
+
 
 func update_close_verts_array():
 	CLOSE_VERTS = []
@@ -628,11 +646,14 @@ func is_masked_by_anything(mesh,surf,imported_scene_id):
 						layer_mask.SURFACE_ID == surf &&
 						layer_mask.SCENE_ID == imported_scene_id))
 
-
-
 func build_FLAT_MESHES():
 	var LIGHT_WITH_MESHES = []
-	for flat_mesh in FLAT_MESHES_:
+	var meshes_to_bake
+	var groups
+
+
+
+	for flat_mesh in FLAT_MESHES:
 		var tools = []
 		var surface_names = []
 		var mesh_array = flat_mesh.MESH.mesh;
@@ -643,13 +664,10 @@ func build_FLAT_MESHES():
 			var data = MeshDataTool.new()
 			tools.insert(surf,data)
 			data.create_from_surface(mesh_array,surf)
-
-		for verts_by_light_group:VertByLightGroup in VERTS_BY_LIGHT_GROUPS:
-			if(verts_by_light_group.SCENE_ID == flat_mesh.SCENE_ID && verts_by_light_group.MESH_NAME == flat_mesh.MESH_NAME):
-				LIGHT_WITH_MESHES.push_back([flat_mesh.SCENE,flat_mesh.MESH,tools,surface_count,surface_names,verts_by_light_group])
+			for verts_by_light_group:VertByLightGroup in VERTS_BY_LIGHT_GROUPS:
+				if(verts_by_light_group.SCENE_ID == flat_mesh.SCENE_ID && verts_by_light_group.MESH_NAME == flat_mesh.MESH_NAME):
+					LIGHT_WITH_MESHES.push_back([flat_mesh.SCENE,flat_mesh.MESH,tools,surface_count,surface_names,verts_by_light_group])
 	return LIGHT_WITH_MESHES
-
-
 
 func bake_FLAT_MESHES(FLAT_MESHES):
 	var total = VERTS_BY_LIGHT.size()
@@ -666,9 +684,7 @@ func bake_FLAT_MESHES(FLAT_MESHES):
 		var flat_verts = verts_by_light_group.FLAT_VERTS
 		var light = verts_by_light_group.LIGHT
 		for flat_vert:FlatVertex in flat_verts: #subset of flat-verts for a light
-
 			COMPLEXITY+=1;
-
 			var layer = light.LAYER;
 			var is_masked_ = is_masked(layer,mesh,flat_vert.SURFACE_INDEX,imported_scene)
 			var data = tools.get(flat_vert.SURFACE_INDEX)
@@ -885,7 +901,7 @@ func _on_open_file_selected(path: String) -> void:
 						)
 
 	for scene:VBSceneData in result.SCENES:
-		p2log(scene.PATH)
+		#p2log(scene.PATH)
 		#await WAIT.for_seconds(0)
 		load_from_path(scene.PATH, scene.POSITION,scene.ROTATION,scene.SCALE,scene.ID)
 	for vb_replacement:VBMaterialReplacement in result.MATERIAL_REPLACEMENTS:
@@ -1382,11 +1398,17 @@ func load_from_path(
 var vert_count = 0
 func update_flat_list():
 	FLAT_LIST = []
+	FLAT_MESHES = []
 	vert_count =  0
-	for imported_scene:ImportedScene in DATA.SCENES:
-		if(imported_scene.EXCLUDE_FROM_BAKE == false):
-			for child in imported_scene.SCENE.get_children():
-				recursivley_update_flat_list_array_for_scene_node(imported_scene, child)
+	var has_dirty_meshes = (DIRTY_MESHES.size()>0);
+	if(has_dirty_meshes && BAKED == false ):
+		for flat_mesh:FlatMesh in DIRTY_MESHES:
+			build_flat_list_for_mesh(flat_mesh.SCENE,flat_mesh.MESH)
+	else:
+		for imported_scene:ImportedScene in DATA.SCENES:
+			if(imported_scene.EXCLUDE_FROM_BAKE == false):
+				for child in imported_scene.SCENE.get_children():
+					recursivley_update_flat_list_array_for_scene_node(imported_scene, child)
 
 var CHUNK_SIZE=1000
 
@@ -1415,93 +1437,122 @@ func get_chunk_for_vertex(vertex):
 	else:
 		return CHUNKS[chunk_index]
 
-func update_close_verts():
-	var has_AO_Layer = DATA.LAYERS.any(func (layer:LightLayer):layer.BLENDING_DIRECTION == LightLayer.BLENDING_DIRECTIONS.FLAT_AO)
-	var start_time = Time.get_unix_time_from_system()
-	var end_time
+func update_vert_by_light_group(layer,light):
+		for flat_vert in FLAT_LIST:
+			COMPLEXITY+=1;
+			var distance = light.LIGHT_MESH.global_position.distance_to(flat_vert.POSITION )
+			if(distance < light.RADIUS):
+				var existing_group_index = VERTS_BY_LIGHT_GROUPS.find_custom(
+					func (group:VertByLightGroup): return (
+						 group.SCENE_ID == flat_vert.SCENE_ID &&
+						 group.MESH_NAME == flat_vert.MESH_NAME &&
+						 group.LIGHT.ID == light.ID))
+				var existing_group:VertByLightGroup;
+				if(existing_group_index == -1):
+					existing_group = VertByLightGroup.new()
 
-	print("updating flat list")
-	update_flat_list()
-	end_time = Time.get_unix_time_from_system() - start_time
-	print("vert count| %s"%vert_count)
-	print("updated flat list | end %s" % end_time)
-	print("flat list size | %s"%FLAT_LIST.size())
+					existing_group.SCENE_ID = flat_vert.SCENE_ID
+					existing_group.MESH_NAME = flat_vert.MESH_NAME
+					existing_group.LIGHT = light
+					VERTS_BY_LIGHT_GROUPS.push_back(existing_group)
+				else:
+					existing_group = VERTS_BY_LIGHT_GROUPS[existing_group_index]
+				existing_group.FLAT_VERTS.push_back(flat_vert);
 
-	await WAIT.for_seconds(0.1);
+func update_verts_by_light_array(has_dirty_lights):
 
-	start_time = Time.get_unix_time_from_system()
-	print("updating verts by light")
-	update_verts_by_light_array()
-	end_time = Time.get_unix_time_from_system()- start_time
-	print("updated verts by light| end %s" % end_time)
-	print("verts by light size | %s"%VERTS_BY_LIGHT_GROUPS.size())
-	#for vert:VertByLightGroup in VERTS_BY_LIGHT_GROUPS:
-		#print("verts size | %s"%vert.FLAT_VERTS.size())
+	if(has_dirty_lights && MESH_HAS_MOVED_SINCE_LAST_BAKE == false):
+		OLD_VERTS_BY_LIGHT_GROUPS = VERTS_BY_LIGHT_GROUPS
+		#VERTS_BY_LIGHT = []
+		for group:VertByLightGroup in VERTS_BY_LIGHT_GROUPS:
+			for dirty_mesh:FlatMesh in DIRTY_MESHES:
+				if(group.MESH_NAME == dirty_mesh.MESH_NAME && group.SCENE_ID == dirty_mesh.SCENE_ID):
+					group.LIGHT.DIRTY = true;
+		var filtered_lights = []
+		for layer in DATA.LAYERS:
+			var lights = layer.LIGHTS.filter(func (light:VertexLight):return light.DIRTY == true)
+			for light in lights:
+				filtered_lights.push_back(light)
+		VERTS_BY_LIGHT_GROUPS = []
+		for dirty_vertex_light:VertexLight in filtered_lights:
+			print("CREATE GROUP FOR DIRTY LIGHT")
+			update_vert_by_light_group(dirty_vertex_light.LAYER,dirty_vertex_light)
+		for group:VertByLightGroup in VERTS_BY_LIGHT_GROUPS:
+			if(	OLD_VERTS_BY_LIGHT_GROUPS.has(group)==false):
+				OLD_VERTS_BY_LIGHT_GROUPS.push_back(group)
 
-	await WAIT.for_seconds(0.1);
+	else:
+		VERTS_BY_LIGHT = []
+		VERTS_BY_LIGHT_GROUPS = []
+		for layer:LightLayer in DATA.LAYERS:
+			for light :VertexLight in layer.LIGHTS:
+				print("CREATE GROUP FOR LIGHT")
+				update_vert_by_light_group(layer,light)
 
-	if(has_AO_Layer ==true && FLAT_LIST.size() == 0):
+var FULL_BAKE=false
 
-		start_time = Time.get_unix_time_from_system()
-		print("updating close verts")
-		update_close_verts_array()
-		end_time = Time.get_unix_time_from_system()- start_time
-		print("updated close verts| end %s" % end_time)
-		print("close verts size | %s"%CLOSE_VERTS.size())
-		await WAIT.for_seconds(0.1);
+func add_lights_new_meshes_to_dirty_list():
+		for group:VertByLightGroup in VERTS_BY_LIGHT_GROUPS:
+			mark_meshes_in_group_as_dirty(group)
+var OLD_VERTS_BY_LIGHT_GROUPS = []
 
-func update_verts_by_light_array():
-	VERTS_BY_LIGHT_GROUPS = []
-	VERTS_BY_LIGHT = []
-	for layer:LightLayer in DATA.LAYERS:
-		for light :VertexLight in layer.LIGHTS:
-			p2log("Calculating verts for light...")
-			#await WAIT.for_seconds(0)
-			for flat_vert in FLAT_LIST:
-				var distance = light.LIGHT_MESH.global_position.distance_to(flat_vert.POSITION )
-				if(distance < light.RADIUS):
-					var existing_group_index = VERTS_BY_LIGHT_GROUPS.find_custom(
-						func (group:VertByLightGroup): return (
-							 group.SCENE_ID == flat_vert.SCENE_ID &&
-							 group.MESH_NAME == flat_vert.MESH_NAME &&
-							 group.LIGHT.ID == light.ID))
-					var existing_group:VertByLightGroup;
-					if(existing_group_index == -1):
-						existing_group = VertByLightGroup.new()
-						existing_group.SCENE_ID = flat_vert.SCENE_ID
-						existing_group.MESH_NAME = flat_vert.MESH_NAME
-						existing_group.LIGHT = light
-						VERTS_BY_LIGHT_GROUPS.push_back(existing_group)
-					else:
-						existing_group = VERTS_BY_LIGHT_GROUPS[existing_group_index]
-					existing_group.FLAT_VERTS.push_back(flat_vert);
-var FULL_BAKE=true
 func actually_bake():
+	print("============= BAKE START =============")
+
 	COMPLEXITY = 0
 	var start_time = Time.get_unix_time_from_system()
 	var end_time
-	p2log("BAKING")
-	$BAKE.text = ("BAKING")
+	#p2log("BAKING")
+	#$BAKE.text = ("BAKING")
 	$HBoxContainer.visible = false
 	$MENU_BUTTON.visible = true;
-	_on_reset_pressed()
-	if(FULL_BAKE):
-		update_close_verts()
-	print("BAKING")
-	await WAIT.for_seconds(0.1);
-	start_time = Time.get_unix_time_from_system()
+	var dirty_lights = DATA.LAYERS.filter(
+			func (layer:LightLayer):return (layer.LIGHTS.any(
+				func (light:VertexLight): return  light.DIRTY == true)))
+	var has_dirty_meshes = (DIRTY_MESHES.size()>0);
+	var has_dirty_lights = dirty_lights.size() >0
+	if( FULL_BAKE == true):
+		VERTS_BY_LIGHT_GROUPS = []
+	if(BAKED == false || FULL_BAKE == true || has_dirty_lights == true || has_dirty_meshes == true ):
+		update_flat_list()
+		await WAIT.for_seconds(0.1);
+		if(has_dirty_lights==true):
+				add_lights_new_meshes_to_dirty_list()
+		update_verts_by_light_array(has_dirty_lights && BAKED == true )
+		await WAIT.for_seconds(0.1);
+		print("CREATE GROUP COMPLEXITY | %s"%COMPLEXITY)
+
+	reset_meshes(has_dirty_lights == true || has_dirty_meshes == true)
+	print("groups | %s"%VERTS_BY_LIGHT_GROUPS.size())
+	print("old groups | %s"%OLD_VERTS_BY_LIGHT_GROUPS.size())
+	print("DIRTY_MESHES %s" % DIRTY_MESHES.size())
+	print("DIRTY LIGHTS %s" % dirty_lights.size())
+	COMPLEXITY = 0
 	update_mesh()
+	if(has_dirty_lights == true || has_dirty_meshes == true ):
+		VERTS_BY_LIGHT_GROUPS  = OLD_VERTS_BY_LIGHT_GROUPS
+	OLD_VERTS_BY_LIGHT_GROUPS = []
+
+
+	BAKED = true
 	end_time = Time.get_unix_time_from_system() - start_time
-	print("BAKED | end %s" % end_time)
-	print("COMPLEXITY | %s"%COMPLEXITY)
+	print("BAKE COMPLEXITY | %s"%COMPLEXITY)
+	print("BAKE TIME |  %s" % end_time)
 	$BAKE.text = ("BAKE")
-	p2log("BAKE COMPLETE | end %s" % end_time)
+	$BAKE.release_focus()
+	MESH_HAS_MOVED_SINCE_LAST_BAKE = false;
+	#p2log("BAKE COMPLETE | end %s" % end_time)
+
+	DIRTY_MESHES = []
+	for layer in DATA.LAYERS:
+		for light in layer.LIGHTS:
+			light.DIRTY = false
 
 func update_mesh() -> void:
-	# SCENE, MESH, tools, surface_count, surface_names, verts_by_light_group
-	var FLAT_MESHES = build_FLAT_MESHES()
-	bake_FLAT_MESHES(FLAT_MESHES)
-	replace_surface_with_new_vertex_colors(FLAT_MESHES)
+	# LIGHT_WITH_MESHES : [SCENE, MESH, tools, surface_count, surface_names, verts_by_light_group]
+	var LIGHT_WITH_MESHES = build_FLAT_MESHES()
+	bake_FLAT_MESHES(LIGHT_WITH_MESHES)
+	replace_surface_with_new_vertex_colors(LIGHT_WITH_MESHES)
 
 func auto_bake():
 	if(AUTO_BAKE == true):
@@ -1540,51 +1591,106 @@ func enable_collision_shapes():
 		for light in layer.LIGHTS:
 			light.LIGHT_MESH.get_node("StaticBody3D/CollisionShape3D").disabled = false
 
+var MESH_HAS_MOVED_SINCE_LAST_BAKE = false
+
 func _on_gizmo_3d_transform_end(mode: Gizmo3D.TransformMode) -> void:
-	if(CURRENT_LIGHT != null && mode == Gizmo3D.TransformMode.SCALE):
-		var mesh:MeshInstance3D = CURRENT_LIGHT.LIGHT_MESH.get_node("MeshInstance3D")
-		mesh.scale = Vector3.ONE *CURRENT_LIGHT.RADIUS;
-		CURRENT_LIGHT.LIGHT_MESH.scale =Vector3.ONE
-		CURRENT_LIGHT.LIST_ITEM.get_node("VBoxContainer/RADIUS_CONTAINER/SpinBox").value = 	CURRENT_LIGHT.RADIUS
+	print("_on_gizmo_3d_transform_end | BAKED %s" % BAKED)
+	if(CURRENT_LIGHT != null && BAKED == true):
+		var groups_affected_by_move = VERTS_BY_LIGHT_GROUPS.filter(func(group:VertByLightGroup):return(
+			CURRENT_LIGHT.ID == group.LIGHT.ID
+		));
+
+		CURRENT_LIGHT.DIRTY = true;
+
+		if(groups_affected_by_move!=null && groups_affected_by_move.size()>0):
+			for group in groups_affected_by_move:
+				mark_meshes_in_group_as_dirty(group)
+				VERTS_BY_LIGHT_GROUPS = swap_n_remove(group,VERTS_BY_LIGHT_GROUPS)
+	if(CURRENT_LIGHT != null ):
+		if(mode == Gizmo3D.TransformMode.SCALE):
+			var mesh:MeshInstance3D = CURRENT_LIGHT.LIGHT_MESH.get_node("MeshInstance3D")
+			mesh.scale = Vector3.ONE *CURRENT_LIGHT.RADIUS;
+			CURRENT_LIGHT.LIGHT_MESH.scale =Vector3.ONE
+			CURRENT_LIGHT.LIST_ITEM.get_node("VBoxContainer/RADIUS_CONTAINER/SpinBox").value = 	CURRENT_LIGHT.RADIUS
+
+	if(CURRENT_MESH != null&& BAKED == true):
+		MESH_HAS_MOVED_SINCE_LAST_BAKE = true;
+		mark_mesh_as_dirty(CURRENT_MESH.SCENE.ID,CURRENT_MESH.MESH.name)
+
 	$HBoxContainer.visible = false
 	$MENU_BUTTON.visible = true;
 	auto_bake()
+
+func swap_n_remove(obj,a:Array)->Array:
+	print("swap n remove %s" % a.size())
+	var group_index = a.find(obj)
+	var size_ = a.size()
+	a = swapi(group_index,size_-1,a)
+	a.resize(size_-1)
+	print("swap n remove %s" % a.size())
+	return a
+
+func swap(obja , objb, a : Array) -> Array:
+	var i = a.find(obja)
+	var j = a.find(objb)
+	var t = a[i]
+	a[i] = a[j]
+	a[j] = t
+	return a
+
+func swapi(i , j, a : Array) -> Array:
+	var t = a[i]
+	a[i] = a[j]
+	a[j] = t
+	return a
 
 func _on_menu_button_pressed() -> void:
 	$HBoxContainer.visible = true
 	$MENU_BUTTON.visible = false;
 
 func _on_reset_pressed() -> void:
-	for scene in DATA.SCENES:
-		if(scene.EXCLUDE_FROM_BAKE):continue
-		for mesh:MeshInstance3D in scene.SCENE.get_children():
-			if(mesh is MeshInstance3D):
-				var mesh_array:ArrayMesh=mesh.mesh;
-				for og_mesh:MeshInstance3D in scene.OG_SCENE.get_children():
-					if(og_mesh.name == mesh.name):
-						var count =mesh_array.get_surface_count()
-						var tools = []
-						for index in count:
-							tools.push_back(MeshDataTool.new())
-						for index in count:
-							var data:MeshDataTool = tools[index]
-							data.create_from_surface(og_mesh.mesh, index)
-						mesh_array.clear_surfaces()
-						for index in count:
-							var data = tools[index]
-							data.commit_to_surface(mesh_array)
-							var override_material = get_mat_override_for_surface(index,mesh,scene)
-							if(override_material!=null):
-								mesh.set_surface_override_material(index,override_material)
-							else:
-								var og_mat:StandardMaterial3D = mesh_array.surface_get_material(index)
-								var shader_material:=ShaderMaterial.new()
-								shader_material.shader = DEFAULT_SHADER
-								shader_material.resource_name = og_mat.resource_name
-								shader_material.set_shader_parameter("MAIN",og_mat.albedo_texture)
-								mesh_array.surface_set_material(index,shader_material)
-			else:
-				print("TODO FIX | Skipped reset")
+	BAKED = false
+	reset_meshes(false)
+func reset_mesh(mesh,scene):
+		var mesh_array:ArrayMesh=mesh.mesh;
+		for og_mesh:MeshInstance3D in scene.OG_SCENE.get_children():
+			if(og_mesh.name == mesh.name):
+				var count =mesh_array.get_surface_count()
+				var tools = []
+				for index in count:
+					tools.push_back(MeshDataTool.new())
+				for index in count:
+					var data:MeshDataTool = tools[index]
+					data.create_from_surface(og_mesh.mesh, index)
+				mesh_array.clear_surfaces()
+				for index in count:
+					var data = tools[index]
+					data.commit_to_surface(mesh_array)
+					var override_material = get_mat_override_for_surface(index,mesh,scene)
+					if(override_material!=null):
+						mesh.set_surface_override_material(index,override_material)
+					else:
+						var og_mat:StandardMaterial3D = mesh_array.surface_get_material(index)
+						var shader_material:=ShaderMaterial.new()
+						shader_material.shader = DEFAULT_SHADER
+						shader_material.resource_name = og_mat.resource_name
+						shader_material.set_shader_parameter("MAIN",og_mat.albedo_texture)
+						mesh_array.surface_set_material(index,shader_material)
+
+func reset_meshes(has_dirty):
+	if(has_dirty == true):
+		print("resetting DIRTY_MESHES | %s" % DIRTY_MESHES.size())
+		for dirty_mesh:FlatMesh in DIRTY_MESHES:
+			reset_mesh(dirty_mesh.MESH,dirty_mesh.SCENE)
+	else:
+		for scene in DATA.SCENES:
+			if(scene.EXCLUDE_FROM_BAKE):continue
+			for mesh:MeshInstance3D in scene.SCENE.get_children():
+				#TODO not recursive! Make this recurse to be sure it clears everything
+				if(mesh is MeshInstance3D):
+					reset_mesh(mesh,scene)
+				else:
+					print("TODO FIX | Skipped reset")
 
 func _on_light_sphere_checkbox_toggled(toggled_on: bool) -> void:
 	LIGHT_SPHERES_ON = toggled_on
@@ -1602,6 +1708,7 @@ func _on_autobake_checkbox_toggled(toggled_on: bool) -> void:
 	AUTO_BAKE = toggled_on
 
 func p2log(str:String):
+	print(str)
 	$INFO_TEXT.text = str
 
 func _on_icon_checkbox_toggled(toggled_on: bool) -> void:
@@ -2039,11 +2146,12 @@ func _on_windows_button_toggled(toggled_on: bool) -> void:
 		$RECENT_SAVES.show()
 		$RECENT_TEXTURES.show()
 
-
 func _on_full_bake_checkbox_toggled(toggled_on: bool) -> void:
 	FULL_BAKE = toggled_on
 
-func select_light(node):
+func select_light(node:SelectableLight):
+	CURRENT_LIGHT = node.LIGHT
+	CURRENT_MESH = null
 	node.LIST_ITEM.grab_focus()
 	var texture:TextureRect =node.LIST_ITEM.get_node("VBoxContainer/LIGHT_NAME/TextureRect")
 	texture.self_modulate = Color(1,1,1,1)
@@ -2051,8 +2159,9 @@ func select_light(node):
 		last_light_texture.self_modulate = Color(1,1,1,0.2)
 	last_light_texture = texture;
 
-func select_mesh(node):
-
+func select_mesh(node:SelectableMesh):
+	CURRENT_MESH = node
+	CURRENT_LIGHT = null
 	node.LIST_ITEM.get_node("ICON/EXPAND").open()
 	node.LIST_ITEM.grab_focus()
 	var texture:TextureRect =node.LIST_ITEM.get_node("ICON/TextureRect")
@@ -2060,3 +2169,18 @@ func select_mesh(node):
 	if(last_mesh_texture !=null):
 		last_mesh_texture.self_modulate = Color(1,1,1,0.2)
 	last_mesh_texture = texture;
+
+func mark_meshes_in_group_as_dirty(verts_by_light_group:VertByLightGroup):
+	if(DIRTY_MESHES.any(func(flat_mesh:FlatMesh):return (
+		flat_mesh.SCENE_ID == verts_by_light_group.SCENE_ID &&
+	 	flat_mesh.MESH_NAME == verts_by_light_group.MESH_NAME))==false):
+			mark_mesh_as_dirty(verts_by_light_group.SCENE_ID,verts_by_light_group.MESH_NAME)
+
+func mark_mesh_as_dirty(SCENE_ID,MESH_NAME):
+	var flat_mesh_index = FLAT_MESHES.find_custom(func (flat_mesh:FlatMesh):return(
+				flat_mesh.SCENE_ID ==SCENE_ID &&
+				flat_mesh.MESH_NAME == MESH_NAME ))
+	if(flat_mesh_index!=-1):
+		var flat_mesh = FLAT_MESHES[flat_mesh_index]
+		DIRTY_MESHES.push_back(flat_mesh)
+	#print("DIRTY_MESHES %s" % DIRTY_MESHES.size())

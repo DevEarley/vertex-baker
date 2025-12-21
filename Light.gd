@@ -10,3 +10,4 @@ var IMPORTED_POSITION:Vector3
 var LAYER:LightLayer
 var LIST_ITEM:VBoxContainer
 var ID:int
+var DIRTY:bool

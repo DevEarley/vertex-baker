@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="VBData" load_steps=15 format=3]
+[gd_resource type="Resource" script_class="VBData" load_steps=17 format=3]
 
 [ext_resource type="Script" path="res://VBLayerData.gd" id="1_5wxeo"]
 [ext_resource type="Script" path="res://VBLayerMaskData.gd" id="2_lwyxl"]
@@ -17,18 +17,21 @@ BLENDING_FADE = 1
 
 [sub_resource type="Resource" id="Resource_lwyxl"]
 script = ExtResource("3_tup6o")
-COLOR = Vector3(0.06121826, 0.35995576, 0.4609375)
+POSITION = Vector3(-12.251774, 0, 4.8774285)
+COLOR = Vector3(0.3637255, 0.93333334, 0.28235298)
 MIX = 1.0
-RADIUS = 100.0
+RADIUS = 6.0
 PARENT_LAYER_ID = 176539327061
+ID = 176633886836
 
 [sub_resource type="Resource" id="Resource_tup6o"]
 script = ExtResource("3_tup6o")
-POSITION = Vector3(-12.251774, 0, 4.8774285)
+POSITION = Vector3(-12.251774, -18.567759, -7.842376)
 COLOR = Vector3(0.93359375, 0.2808075, 0.2808075)
 MIX = 1.0
 RADIUS = 6.0
 PARENT_LAYER_ID = 176539327061
+ID = 176633888636
 
 [sub_resource type="Resource" id="Resource_p53s1"]
 script = ExtResource("4_p53s1")
@@ -43,7 +46,7 @@ TARGET_MATERIAL_NAME = "blank_sep13_auv"
 [sub_resource type="Resource" id="Resource_nm1o3"]
 script = ExtResource("5_klk7d")
 NEW_MATERIAL_NAME = "ww"
-TEXTURE_PATH = "C:/Repos/vertex-baker/textures/white.png"
+TEXTURE_PATH = "C:/Repos/vertex-baker/textures/default.png"
 
 [sub_resource type="Resource" id="Resource_t872j"]
 script = ExtResource("6_nm1o3")
@@ -52,10 +55,26 @@ ID = 176539326912
 NAME = "SCENE_PREFAB"
 SCALE = Vector3(1, 1, 1)
 
+[sub_resource type="Resource" id="Resource_c16kq"]
+script = ExtResource("6_nm1o3")
+PATH = "C:/Repos/vertex-baker/test-scenes/test_small.glb"
+ID = 176625850787
+NAME = "@Sprite3D@1122"
+POSITION = Vector3(0, 0, -24.288555)
+SCALE = Vector3(1, 1, 1)
+
+[sub_resource type="Resource" id="Resource_yv0ax"]
+script = ExtResource("6_nm1o3")
+PATH = "C:/Repos/vertex-baker/test-scenes/test_small.glb"
+ID = 176633887446
+NAME = "@Sprite3D@1293"
+POSITION = Vector3(0, -23.79282, -24.288555)
+SCALE = Vector3(1, 1, 1)
+
 [resource]
 script = ExtResource("7_t872j")
 LAYERS = Array[ExtResource("1_5wxeo")]([SubResource("Resource_5wxeo")])
 LIGHTS = Array[ExtResource("3_tup6o")]([SubResource("Resource_lwyxl"), SubResource("Resource_tup6o")])
-SCENES = Array[ExtResource("6_nm1o3")]([SubResource("Resource_t872j")])
+SCENES = Array[ExtResource("6_nm1o3")]([SubResource("Resource_t872j"), SubResource("Resource_c16kq"), SubResource("Resource_yv0ax")])
 MATERIAL_OVERRIDES = Array[ExtResource("4_p53s1")]([SubResource("Resource_p53s1"), SubResource("Resource_klk7d")])
 MATERIAL_REPLACEMENTS = Array[ExtResource("5_klk7d")]([SubResource("Resource_nm1o3")])
