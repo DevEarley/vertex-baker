@@ -1,8 +1,10 @@
-class_name FlatVertex extends Resource
-@export var POSITION:Vector3
-@export var VERTEX_INDEX:int
-@export var SURFACE_INDEX:int
-@export var SCENE_ID:int
-@export var MESH_NAME:String
-@export var NORMAL:Vector3
-@export var TOUCHING:Array[int]
+class_name FlatVertex
+var POSITION:Vector3
+var VERTEX_INDEX:int
+var SURFACE_INDEX:int
+var SCENE_ID:int
+var MESH_NAME:String
+var SCENE
+var MESH
+var NORMAL:Vector3
+var TOUCHING:Array[int]

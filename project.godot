@@ -31,6 +31,10 @@ window/size/viewport_height=1350
 window/energy_saving/keep_screen_on=false
 window/per_pixel_transparency/allowed=true
 
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/script-tabs/plugin.cfg")
+
 [input]
 
 Shift={

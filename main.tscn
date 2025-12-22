@@ -202,7 +202,7 @@ icon = ExtResource("15_seu75")
 [node name="PALETTE_INSPECTOR" type="Window" parent="." node_paths=PackedStringArray("MAIN")]
 oversampling_override = 1.0
 title = "PALETTE INSPECTOR"
-position = Vector2i(1868, 10)
+position = Vector2i(4, 1015)
 size = Vector2i(500, 40)
 borderless = true
 unfocusable = true
@@ -283,8 +283,8 @@ FOLD_BUTTON = NodePath(".")
 [node name="REPLACEMENT_MATERIALS" type="Window" parent="." node_paths=PackedStringArray("MAIN")]
 oversampling_override = 1.0
 title = "REPLACEMENT MATERIALS"
-position = Vector2i(1873, 85)
-size = Vector2i(500, 500)
+position = Vector2i(1873, 4)
+size = Vector2i(500, 40)
 borderless = true
 unfocusable = true
 sharp_corners = true
@@ -342,7 +342,6 @@ offset_bottom = 30.0
 text = "REPLACEMENT MATERIALS"
 
 [node name="EXPAND" type="Button" parent="REPLACEMENT_MATERIALS" node_paths=PackedStringArray("WINDOW", "EXPAND_BUTTON", "FOLD_BUTTON")]
-visible = false
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
@@ -360,6 +359,7 @@ EXPAND_BUTTON = NodePath(".")
 FOLD_BUTTON = NodePath("../FOLD")
 
 [node name="FOLD" type="Button" parent="REPLACEMENT_MATERIALS" node_paths=PackedStringArray("WINDOW", "EXPAND_BUTTON", "FOLD_BUTTON")]
+visible = false
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
@@ -456,8 +456,8 @@ icon = ExtResource("9_a6jrf")
 [node name="MATERIAL_INSPECTOR" type="Window" parent="." node_paths=PackedStringArray("MAIN")]
 oversampling_override = 1.0
 title = "MESH INSPECTOR"
-position = Vector2i(1868, 620)
-size = Vector2i(500, 500)
+position = Vector2i(1873, 48)
+size = Vector2i(500, 40)
 transient = true
 borderless = true
 unfocusable = true
@@ -515,7 +515,6 @@ offset_bottom = 30.0
 text = "MATERIALS"
 
 [node name="EXPAND" type="Button" parent="MATERIAL_INSPECTOR" node_paths=PackedStringArray("WINDOW", "EXPAND_BUTTON", "FOLD_BUTTON")]
-visible = false
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
@@ -533,6 +532,7 @@ EXPAND_BUTTON = NodePath(".")
 FOLD_BUTTON = NodePath("../FOLD")
 
 [node name="FOLD" type="Button" parent="MATERIAL_INSPECTOR" node_paths=PackedStringArray("WINDOW", "EXPAND_BUTTON", "FOLD_BUTTON")]
+visible = false
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
@@ -552,7 +552,7 @@ FOLD_BUTTON = NodePath(".")
 [node name="LAYER_INSPECTOR" type="Window" parent="." node_paths=PackedStringArray("MAIN")]
 oversampling_override = 1.0
 title = "LAYER INSPECTOR"
-position = Vector2i(41, 579)
+position = Vector2i(4, 514)
 size = Vector2i(500, 500)
 borderless = true
 unfocusable = true
@@ -653,8 +653,8 @@ FOLD_BUTTON = NodePath(".")
 [node name="MESH_INSPECTOR" type="Window" parent="." node_paths=PackedStringArray("MAIN")]
 oversampling_override = 1.0
 title = "SCENE INSPECTOR"
-position = Vector2i(31, 64)
-size = Vector2i(530, 500)
+position = Vector2i(4, 4)
+size = Vector2i(500, 500)
 transient = true
 borderless = true
 sharp_corners = true
@@ -866,7 +866,7 @@ text = "EXPAND ALL"
 [node name="DATA_INSPECTOR" type="Window" parent="." node_paths=PackedStringArray("MAIN")]
 oversampling_override = 1.0
 title = "DATA"
-position = Vector2i(31, 1104)
+position = Vector2i(4, 1064)
 size = Vector2i(500, 40)
 transient = true
 borderless = true
@@ -966,7 +966,7 @@ FOLD_BUTTON = NodePath(".")
 [node name="RECENT_FILES" type="Window" parent="." node_paths=PackedStringArray("MAIN")]
 oversampling_override = 1.0
 title = "RECENTS"
-position = Vector2i(586, 179)
+position = Vector2i(511, 682)
 size = Vector2i(500, 500)
 transient = true
 borderless = true
@@ -995,36 +995,53 @@ layout_mode = 2
 
 [node name="TextureRect" type="TextureRect" parent="RECENT_FILES"]
 custom_minimum_size = Vector2(500, 25)
-offset_right = 450.0
-offset_bottom = 25.0
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 500.0
+offset_right = 1000.0
+offset_bottom = 40.0
+grow_vertical = 0
+rotation = 3.1415927
 texture = SubResource("GradientTexture2D_7mycd")
 
 [node name="TextureRect2" type="TextureRect" parent="RECENT_FILES"]
 texture_filter = 1
 custom_minimum_size = Vector2(32, 32)
-offset_left = 7.0
-offset_top = 4.0
-offset_right = 32.0
-offset_bottom = 32.0
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 4.0
+offset_top = -36.0
+offset_right = 36.0
+offset_bottom = -4.0
+grow_vertical = 0
 texture = ExtResource("26_kq58d")
 
 [node name="TITLE" type="Label" parent="RECENT_FILES"]
-offset_left = 42.0
-offset_top = 7.0
-offset_right = 206.0
-offset_bottom = 30.0
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 43.0
+offset_top = -33.0
+offset_right = 207.0
+offset_bottom = -10.0
+grow_vertical = 0
 text = "RECENT PROJECTS"
 
 [node name="EXPAND" type="Button" parent="RECENT_FILES" node_paths=PackedStringArray("WINDOW", "EXPAND_BUTTON", "FOLD_BUTTON")]
 visible = false
-anchors_preset = 1
+anchors_preset = 3
 anchor_left = 1.0
+anchor_top = 1.0
 anchor_right = 1.0
-offset_left = -35.0
-offset_top = 4.0
-offset_right = -3.0
-offset_bottom = 36.0
+anchor_bottom = 1.0
+offset_left = -37.0
+offset_top = -35.0
+offset_right = -5.0
+offset_bottom = -3.0
 grow_horizontal = 0
+grow_vertical = 0
 theme = ExtResource("6_7mycd")
 icon = ExtResource("9_dg77c")
 flat = true
@@ -1032,16 +1049,20 @@ script = ExtResource("5_lquwl")
 WINDOW = NodePath("..")
 EXPAND_BUTTON = NodePath(".")
 FOLD_BUTTON = NodePath("../FOLD")
+OPEN_FROM_BOTTOM = true
 
 [node name="FOLD" type="Button" parent="RECENT_FILES" node_paths=PackedStringArray("WINDOW", "EXPAND_BUTTON", "FOLD_BUTTON")]
-anchors_preset = 1
+anchors_preset = 3
 anchor_left = 1.0
+anchor_top = 1.0
 anchor_right = 1.0
-offset_left = -35.0
-offset_top = 4.0
-offset_right = -3.0
-offset_bottom = 36.0
+anchor_bottom = 1.0
+offset_left = -37.0
+offset_top = -35.0
+offset_right = -5.0
+offset_bottom = -3.0
 grow_horizontal = 0
+grow_vertical = 0
 theme = ExtResource("6_7mycd")
 icon = ExtResource("9_ycdy4")
 flat = true
@@ -1049,11 +1070,12 @@ script = ExtResource("5_lquwl")
 WINDOW = NodePath("..")
 EXPAND_BUTTON = NodePath("../EXPAND")
 FOLD_BUTTON = NodePath(".")
+OPEN_FROM_BOTTOM = true
 
 [node name="RECENT_SAVES" type="Window" parent="." node_paths=PackedStringArray("MAIN")]
 oversampling_override = 1.0
 title = "RECENTS"
-position = Vector2i(586, 109)
+position = Vector2i(1873, 92)
 size = Vector2i(500, 40)
 transient = true
 borderless = true
@@ -1140,8 +1162,8 @@ FOLD_BUTTON = NodePath(".")
 [node name="RECENT_MESHES" type="Window" parent="." node_paths=PackedStringArray("MAIN")]
 oversampling_override = 1.0
 title = "RECENTS"
-position = Vector2i(586, 689)
-size = Vector2i(500, 500)
+position = Vector2i(4, 1104)
+size = Vector2i(500, 40)
 transient = true
 borderless = true
 sharp_corners = true
@@ -1190,7 +1212,6 @@ offset_bottom = 30.0
 text = "RECENT MESHES"
 
 [node name="EXPAND" type="Button" parent="RECENT_MESHES" node_paths=PackedStringArray("WINDOW", "EXPAND_BUTTON", "FOLD_BUTTON")]
-visible = false
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
@@ -1208,6 +1229,7 @@ EXPAND_BUTTON = NodePath(".")
 FOLD_BUTTON = NodePath("../FOLD")
 
 [node name="FOLD" type="Button" parent="RECENT_MESHES" node_paths=PackedStringArray("WINDOW", "EXPAND_BUTTON", "FOLD_BUTTON")]
+visible = false
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
@@ -1227,7 +1249,7 @@ FOLD_BUTTON = NodePath(".")
 [node name="RECENT_TEXTURES" type="Window" parent="." node_paths=PackedStringArray("MAIN")]
 oversampling_override = 1.0
 title = "RECENTS"
-position = Vector2i(1871, 1124)
+position = Vector2i(4, 1144)
 size = Vector2i(500, 40)
 transient = true
 borderless = true
@@ -1388,10 +1410,10 @@ anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -181.0
-offset_top = -179.0
-offset_right = -9.0
-offset_bottom = -139.0
+offset_left = -186.0
+offset_top = -224.0
+offset_right = -14.0
+offset_bottom = -184.0
 grow_horizontal = 0
 grow_vertical = 0
 text = "BAKE"
@@ -1437,13 +1459,15 @@ anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -412.0
-offset_top = -49.0
-offset_right = -210.0
-offset_bottom = -9.0
+offset_left = -203.0
+offset_top = -169.0
+offset_right = -1.0
+offset_bottom = -129.0
 grow_horizontal = 0
 grow_vertical = 0
+button_pressed = true
 text = "FULL BAKE"
+icon = ExtResource("9_efxa6")
 
 [node name="ICON_CHECKBOX" type="CheckButton" parent="."]
 layout_mode = 1

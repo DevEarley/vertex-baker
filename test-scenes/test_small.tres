@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="VBData" load_steps=17 format=3]
+[gd_resource type="Resource" script_class="VBData" load_steps=20 format=3]
 
 [ext_resource type="Script" path="res://VBLayerData.gd" id="1_5wxeo"]
 [ext_resource type="Script" path="res://VBLayerMaskData.gd" id="2_lwyxl"]
@@ -16,46 +16,64 @@ BLENDING_METHOD = 1
 BLENDING_FADE = 1
 
 [sub_resource type="Resource" id="Resource_lwyxl"]
+script = ExtResource("2_lwyxl")
+LAYER_ID = 176539327061
+SCENE_ID = 176539326912
+MESH_NAME = "blank_sep9"
+
+[sub_resource type="Resource" id="Resource_tup6o"]
+script = ExtResource("2_lwyxl")
+LAYER_ID = 176539327061
+SCENE_ID = 176625850787
+MESH_NAME = "blank_sep9"
+
+[sub_resource type="Resource" id="Resource_p53s1"]
+script = ExtResource("2_lwyxl")
+LAYER_ID = 176539327061
+SCENE_ID = 176633887446
+MESH_NAME = "blank_sep9"
+
+[sub_resource type="Resource" id="Resource_klk7d"]
 script = ExtResource("3_tup6o")
 POSITION = Vector3(-12.251774, 0, 4.8774285)
 COLOR = Vector3(0.3637255, 0.93333334, 0.28235298)
 MIX = 1.0
 RADIUS = 6.0
 PARENT_LAYER_ID = 176539327061
-ID = 176633886836
+ID = 176635667673
 
-[sub_resource type="Resource" id="Resource_tup6o"]
+[sub_resource type="Resource" id="Resource_nm1o3"]
 script = ExtResource("3_tup6o")
 POSITION = Vector3(-12.251774, -18.567759, -7.842376)
 COLOR = Vector3(0.93359375, 0.2808075, 0.2808075)
 MIX = 1.0
 RADIUS = 6.0
 PARENT_LAYER_ID = 176539327061
-ID = 176633888636
+ID = 176635667675
 
-[sub_resource type="Resource" id="Resource_p53s1"]
+[sub_resource type="Resource" id="Resource_t872j"]
 script = ExtResource("4_p53s1")
 NEW_MATERIAL_NAME = "ww"
 TARGET_MATERIAL_NAME = "sphere3_auv"
 
-[sub_resource type="Resource" id="Resource_klk7d"]
+[sub_resource type="Resource" id="Resource_c16kq"]
 script = ExtResource("4_p53s1")
 NEW_MATERIAL_NAME = "ww"
 TARGET_MATERIAL_NAME = "blank_sep13_auv"
 
-[sub_resource type="Resource" id="Resource_nm1o3"]
+[sub_resource type="Resource" id="Resource_yv0ax"]
 script = ExtResource("5_klk7d")
 NEW_MATERIAL_NAME = "ww"
 TEXTURE_PATH = "C:/Repos/vertex-baker/textures/default.png"
 
-[sub_resource type="Resource" id="Resource_t872j"]
+[sub_resource type="Resource" id="Resource_m1v28"]
 script = ExtResource("6_nm1o3")
 PATH = "C:/Repos/vertex-baker/test-scenes/test_small.glb"
 ID = 176539326912
 NAME = "SCENE_PREFAB"
 SCALE = Vector3(1, 1, 1)
 
-[sub_resource type="Resource" id="Resource_c16kq"]
+[sub_resource type="Resource" id="Resource_0cpj6"]
 script = ExtResource("6_nm1o3")
 PATH = "C:/Repos/vertex-baker/test-scenes/test_small.glb"
 ID = 176625850787
@@ -63,18 +81,19 @@ NAME = "@Sprite3D@1122"
 POSITION = Vector3(0, 0, -24.288555)
 SCALE = Vector3(1, 1, 1)
 
-[sub_resource type="Resource" id="Resource_yv0ax"]
+[sub_resource type="Resource" id="Resource_dw7tc"]
 script = ExtResource("6_nm1o3")
 PATH = "C:/Repos/vertex-baker/test-scenes/test_small.glb"
 ID = 176633887446
-NAME = "@Sprite3D@1293"
+NAME = "@Sprite3D@1223"
 POSITION = Vector3(0, -23.79282, -24.288555)
 SCALE = Vector3(1, 1, 1)
 
 [resource]
 script = ExtResource("7_t872j")
 LAYERS = Array[ExtResource("1_5wxeo")]([SubResource("Resource_5wxeo")])
-LIGHTS = Array[ExtResource("3_tup6o")]([SubResource("Resource_lwyxl"), SubResource("Resource_tup6o")])
-SCENES = Array[ExtResource("6_nm1o3")]([SubResource("Resource_t872j"), SubResource("Resource_c16kq"), SubResource("Resource_yv0ax")])
-MATERIAL_OVERRIDES = Array[ExtResource("4_p53s1")]([SubResource("Resource_p53s1"), SubResource("Resource_klk7d")])
-MATERIAL_REPLACEMENTS = Array[ExtResource("5_klk7d")]([SubResource("Resource_nm1o3")])
+LIGHTS = Array[ExtResource("3_tup6o")]([SubResource("Resource_klk7d"), SubResource("Resource_nm1o3")])
+SCENES = Array[ExtResource("6_nm1o3")]([SubResource("Resource_m1v28"), SubResource("Resource_0cpj6"), SubResource("Resource_dw7tc")])
+MATERIAL_OVERRIDES = Array[ExtResource("4_p53s1")]([SubResource("Resource_t872j"), SubResource("Resource_c16kq")])
+MATERIAL_REPLACEMENTS = Array[ExtResource("5_klk7d")]([SubResource("Resource_yv0ax")])
+LAYER_MASKS = Array[ExtResource("2_lwyxl")]([SubResource("Resource_lwyxl"), SubResource("Resource_tup6o"), SubResource("Resource_p53s1")])

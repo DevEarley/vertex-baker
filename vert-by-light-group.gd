@@ -4,5 +4,7 @@ var LIGHT:VertexLight
 var FLAT_VERTS:Array[FlatVertex]
 var MESH_NAME:String
 var SCENE_ID:int
+var SCENE
+var MESH
 var DIRTY:bool
 var FOR_DIRTY_MESH:bool
