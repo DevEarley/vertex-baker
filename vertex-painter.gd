@@ -63,7 +63,7 @@ var CURRENT_REPLACEMENT:MaterialReplacement
 var CURRENT_REPLACEMENT_LIST_ITEM:Node
 var MIN_DISTANCE = 1.0;
 var CLOSE_VERTS:Array = []
-var VERTS_BY_LIGHT:Array[VertByLight]
+
 var VERTS_BY_LIGHT_GROUPS:Array[VertByLightGroup]
 var FLAT_LIST:Array[FlatVertex]
 var CHUNKS=[]
@@ -119,11 +119,16 @@ func _on_add_layer_pressed(
 	else:
 		layer.NAME = layer_name
 	DATA.LAYERS.push_back(layer)
+	add_layer_to_window(layer)
+
+func add_layer_to_window(layer):
 	var new_layer = layer_prefab.instantiate()
 	layer.LIST_ITEM = new_layer;
 	$LAYER_INSPECTOR/ScrollContainer/CONTAINER/LAYERS.add_child(new_layer)
 	var button  = new_layer.get_node("NAME/ADD_LIGHT_TO_LAYER")
 	var delete_button  = new_layer.get_node("MORE_MENU/DELETE")
+	var move_up_button  = new_layer.get_node("MORE_MENU/MOVE_UP")
+	var move_down_button  = new_layer.get_node("MORE_MENU/MOVE_DOWN")
 	var blending_dropdown:OptionButton  = new_layer.get_node("NAME/BLENDING_METHOD")
 	var blending_direction_dropdown:OptionButton  = new_layer.get_node("NAME/BLENDING_DIRECTION")
 	var blending_fade_dropdown:OptionButton  = new_layer.get_node("NAME/BLENDING_FADE")
@@ -131,6 +136,8 @@ func _on_add_layer_pressed(
 	name_label.text = layer.NAME
 	button.connect("pressed",on_add_light_to_layer.bind(new_layer,layer))
 	delete_button.connect("pressed",on_delete_layer_pressed.bind(new_layer,layer))
+	move_up_button.connect("pressed",on_layer_move_up_pressed.bind(new_layer,layer))
+	move_down_button.connect("pressed",on_layer_move_down_pressed.bind(new_layer,layer))
 	blending_dropdown.select(layer.BLENDING_METHOD)
 	blending_dropdown.connect("pressed",on_blending_method_dropdown_pressed.bind(layer))
 	blending_dropdown.connect("item_selected",on_blending_method_dropdown_selected)
@@ -175,6 +182,33 @@ func on_delete_layer_pressed(layer:Control,light_layer:LightLayer):
 	DATA.LAYERS.remove_at(index_to_remove)
 	auto_bake()
 
+func on_layer_move_down_pressed(layer:Control,light_layer:LightLayer):
+	var index_to_reorder = DATA.LAYERS.find(light_layer)
+	if(index_to_reorder == DATA.LAYERS.size()-1):return;
+	var target_occupant = DATA.LAYERS[index_to_reorder+1]
+	DATA.LAYERS[index_to_reorder+1]=light_layer
+	DATA.LAYERS[index_to_reorder]=target_occupant
+	update_layers_window()
+	auto_bake()
+
+func on_layer_move_up_pressed(layer:Control,light_layer:LightLayer):
+	var index_to_reorder = DATA.LAYERS.find(light_layer)
+	if(index_to_reorder == 0):return;
+	var target_occupant = DATA.LAYERS[index_to_reorder-1]
+	DATA.LAYERS[index_to_reorder-1]=light_layer
+	DATA.LAYERS[index_to_reorder]=target_occupant
+	update_layers_window()
+	auto_bake()
+
+func update_layers_window():
+	for child in $LAYER_INSPECTOR/ScrollContainer/CONTAINER/LAYERS.get_children():
+		child.queue_free();
+
+	for layer:LightLayer in DATA.LAYERS:
+		add_layer_to_window(layer)
+		for light in layer.LIGHTS:
+			add_light_to_layer_list_item(light,light.RADIUS,light.MIX,layer.LIST_ITEM)
+
 func on_add_light_to_layer(
 	layer:Control,light_layer:LightLayer,
 	imported_position:Vector3=Vector3.ZERO,
@@ -182,7 +216,6 @@ func on_add_light_to_layer(
 	imported_radius:float=1.0,
 	imported_mix:float=1.0,id:int=-1):
 	light_layer.LIST_ITEM.get_node("VBoxContainer/EXPAND").show()
-	var new_light = light_prefab.instantiate()
 	var light = VertexLight.new()
 	#if(id == -1||id == null|| id == 0):
 	light.ID = generate_id()
@@ -193,7 +226,6 @@ func on_add_light_to_layer(
 	light.COLOR = imported_color
 	light.LIGHT_MESH = light_mesh.instantiate()
 	light.LIGHT_MESH.position = imported_position
-	light.LIGHT_MESH.LIST_ITEM = new_light
 	light.LIGHT_MESH.LIGHT = light
 	var mesh:MeshInstance3D = light.LIGHT_MESH.get_node("MeshInstance3D")
 	mesh.visible = LIGHT_SPHERES_ON;
@@ -205,6 +237,12 @@ func on_add_light_to_layer(
 	light.MIX = imported_mix
 	light_layer.LIGHTS.push_back(light)
 	$SubViewportContainer/SubViewport.add_child(light.LIGHT_MESH)
+	add_light_to_layer_list_item(light,imported_radius,imported_mix,layer)
+	auto_bake()
+
+func add_light_to_layer_list_item(light,imported_radius,imported_mix,layer_control:Control):
+	var new_light = light_prefab.instantiate()
+	light.LIGHT_MESH.LIST_ITEM = new_light
 	light.LIST_ITEM = new_light;
 	var name_label:Label = new_light.get_node("VBoxContainer/LIGHT_NAME")
 	name_label.text ="%s"% light.ID
@@ -225,8 +263,7 @@ func on_add_light_to_layer(
 	move_button.connect("pressed",on_move_light.bind(light))
 	var scale_button = new_light.get_node("VBoxContainer/RADIUS_CONTAINER/SCALE")
 	scale_button.connect("pressed",on_scale_light_pressed.bind(light))
-	layer.get_node("VBoxContainer/LIGHTS").add_child(new_light)
-	auto_bake()
+	layer_control.get_node("VBoxContainer/LIGHTS").add_child(new_light)
 
 func on_scale_light_pressed(light:VertexLight):
 	gizmo.clear_selection()
@@ -413,11 +450,11 @@ func is_vertex_in_close_list_already(vertex,vertex_index,surf_index,imported_sce
 
 func update_close_verts_array():
 	CLOSE_VERTS = []
-	for verts_by_light:VertByLight in VERTS_BY_LIGHT:
+	for verts_by_light:VertByLightGroup in VERTS_BY_LIGHT_GROUPS:
 		if(verts_by_light.LIGHT.LAYER.BLENDING_DIRECTION == LightLayer.BLENDING_DIRECTIONS.FLAT_AO
 		|| verts_by_light.LIGHT.LAYER.BLENDING_DIRECTION == LightLayer.BLENDING_DIRECTIONS.AO):
 			CLEANED_FLAT_LIST = verts_by_light.FLAT_VERTS.duplicate(true)
-			for flat_vert_a in FLAT_LIST:
+			for flat_vert_a in verts_by_light.FLAT_VERTS:
 				var closest_distance = INF
 				var closest_flat_vert = null
 				var closest_dot = 0.0
@@ -426,14 +463,14 @@ func update_close_verts_array():
 						flat_vert_a.VERTEX_INDEX != flat_vert_b.VERTEX_INDEX
 					)
 					if(continue_with_op):
-								var dist_to_vert = flat_vert_b.POSITION.distance_to(flat_vert_a.POSITION)
-								var distance_vector =  flat_vert_b.POSITION - (flat_vert_a.POSITION)
-								var facing_each_other =  flat_vert_a.NORMAL.dot(distance_vector.normalized())
-								var distance = flat_vert_b.POSITION.distance_to(flat_vert_a.POSITION)
-								if( facing_each_other > 0.5 && distance < closest_distance):
-									closest_flat_vert = flat_vert_b
-									closest_distance = distance
-									closest_dot = facing_each_other
+						var dist_to_vert = flat_vert_b.POSITION.distance_to(flat_vert_a.POSITION)
+						var distance_vector =  flat_vert_b.POSITION - (flat_vert_a.POSITION)
+						var facing_each_other =  flat_vert_a.NORMAL.dot(distance_vector.normalized())
+						var distance = flat_vert_b.POSITION.distance_to(flat_vert_a.POSITION)
+						if( facing_each_other > 0.5 && distance < closest_distance):
+							closest_flat_vert = flat_vert_b
+							closest_distance = distance
+							closest_dot = facing_each_other
 				if(closest_flat_vert !=null):
 					var close_vert = CloseVertex.new()
 					close_vert.DOT = closest_dot
@@ -683,7 +720,6 @@ func build_FLAT_MESHES():
 	return LIGHT_WITH_MESHES
 
 func bake_FLAT_MESHES(LIGHT_WITH_MESHES):
-	var total = VERTS_BY_LIGHT.size()
 	var index_= 0
 	var _flat_mesh
 
@@ -831,6 +867,8 @@ func update_data_window_scenes():
 
 func update_data_window_layers():
 	add_title_to_data_window("LAYERS (%s)" % DATA.LAYERS.size())
+	for child in $DATA_INSPECTOR/ScrollContainer/CONTAINER/DATA.get_children():
+		child.queue_free()
 	for layer in DATA.LAYERS:
 		var new_label = Label.new()
 		new_label.text = "%s \n %s \n (%s) lights\n\n" % [layer.NAME,layer.ID, layer.LIGHTS.size()]
@@ -1523,7 +1561,7 @@ func update_verts_by_light_array(has_dirty_lights):
 		#print("3) OLD_VERTS_BY_LIGHT_GROUPS | %s" % OLD_VERTS_BY_LIGHT_GROUPS.size())
 
 	else:
-		VERTS_BY_LIGHT = []
+		#VERTS_BY_LIGHT = []
 		VERTS_BY_LIGHT_GROUPS = []
 		#OLD_VERTS_BY_LIGHT_GROUPS = []
 		for layer:LightLayer in DATA.LAYERS:
@@ -1558,30 +1596,27 @@ func actually_bake():
 				func (light:VertexLight): return  light.DIRTY_MESHES_NEED_REBAKE == true)))
 	var has_dirty_meshes = (DIRTY_MESHES.size()>0);
 	var has_dirty_lights = dirty_lights.size() >0
-
 	FULL_BAKE = (FULL_BAKE || MESH_HAS_MOVED_SINCE_LAST_BAKE) # todo remove this
 	if( FULL_BAKE == true):
 		VERTS_BY_LIGHT_GROUPS = []
 	if( FULL_BAKE == true || has_dirty_lights == true || has_dirty_meshes == true ):
 		print("1) DIRTY_MESHES (FROM MOVE)| %s" % DIRTY_MESHES.size())
-
 		if((DIRTY_MESHES.size()==0)):
 			update_flat_list()
-		#await WAIT.for_seconds(0.1);
-		print("FLAT LIST SIZE| %s" % FLAT_LIST.size())
 		update_verts_by_light_array(has_dirty_lights )
+		update_close_verts_array()
+		print("VERTS_BY_LIGHT_GROUPS| %s" % VERTS_BY_LIGHT_GROUPS.size())
+		print("FLAT LIST SIZE| %s" % FLAT_LIST.size())
 		if(has_dirty_lights==true || has_dirty_meshes == true):
 			print("2) BEFORE DIRTY_MESHES (FROM LIGHTS)| %s" % DIRTY_MESHES.size())
 			for group:VertByLightGroup in VERTS_BY_LIGHT_GROUPS:
 				if(group.LIGHT.DIRTY_MESHES_NEED_REBAKE):
 					mark_meshes_in_group_as_dirty(group)
 			print("3) AFTER DIRTY_MESHES (FROM LIGHTS)| %s" % DIRTY_MESHES.size())
-		#await WAIT.for_seconds(0.1);
 		print("UPDATE GROUP FUNC COMPLEXITY| %s"%COMPLEXITY)
 		reset_meshes(has_dirty_lights == true || has_dirty_meshes == true)
 		COMPLEXITY = 0
 		update_mesh()
-	#VERTS_BY_LIGHT_GROUPS = OLD_VERTS_BY_LIGHT_GROUPS
 	print("TOTAL DIRTY_MESHES | %s" % DIRTY_MESHES.size())
 	print("TOTAL DIRTY LIGHTS | %s" % dirty_lights.size())
 	print("TOTAL GROUPS | %s " % VERTS_BY_LIGHT_GROUPS.size())

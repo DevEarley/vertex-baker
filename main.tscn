@@ -202,7 +202,7 @@ icon = ExtResource("15_seu75")
 [node name="PALETTE_INSPECTOR" type="Window" parent="." node_paths=PackedStringArray("MAIN")]
 oversampling_override = 1.0
 title = "PALETTE INSPECTOR"
-position = Vector2i(4, 1015)
+position = Vector2i(4, 880)
 size = Vector2i(500, 40)
 borderless = true
 unfocusable = true
@@ -283,7 +283,7 @@ FOLD_BUTTON = NodePath(".")
 [node name="REPLACEMENT_MATERIALS" type="Window" parent="." node_paths=PackedStringArray("MAIN")]
 oversampling_override = 1.0
 title = "REPLACEMENT MATERIALS"
-position = Vector2i(1873, 4)
+position = Vector2i(480, 4)
 size = Vector2i(500, 40)
 borderless = true
 unfocusable = true
@@ -456,7 +456,7 @@ icon = ExtResource("9_a6jrf")
 [node name="MATERIAL_INSPECTOR" type="Window" parent="." node_paths=PackedStringArray("MAIN")]
 oversampling_override = 1.0
 title = "MESH INSPECTOR"
-position = Vector2i(1873, 48)
+position = Vector2i(480, 48)
 size = Vector2i(500, 40)
 transient = true
 borderless = true
@@ -552,7 +552,7 @@ FOLD_BUTTON = NodePath(".")
 [node name="LAYER_INSPECTOR" type="Window" parent="." node_paths=PackedStringArray("MAIN")]
 oversampling_override = 1.0
 title = "LAYER INSPECTOR"
-position = Vector2i(4, 514)
+position = Vector2i(4, 420)
 size = Vector2i(500, 500)
 borderless = true
 unfocusable = true
@@ -866,7 +866,7 @@ text = "EXPAND ALL"
 [node name="DATA_INSPECTOR" type="Window" parent="." node_paths=PackedStringArray("MAIN")]
 oversampling_override = 1.0
 title = "DATA"
-position = Vector2i(4, 1064)
+position = Vector2i(4, 880)
 size = Vector2i(500, 40)
 transient = true
 borderless = true
@@ -966,7 +966,7 @@ FOLD_BUTTON = NodePath(".")
 [node name="RECENT_FILES" type="Window" parent="." node_paths=PackedStringArray("MAIN")]
 oversampling_override = 1.0
 title = "RECENTS"
-position = Vector2i(511, 682)
+position = Vector2i(480, 420)
 size = Vector2i(500, 500)
 transient = true
 borderless = true
@@ -1075,7 +1075,7 @@ OPEN_FROM_BOTTOM = true
 [node name="RECENT_SAVES" type="Window" parent="." node_paths=PackedStringArray("MAIN")]
 oversampling_override = 1.0
 title = "RECENTS"
-position = Vector2i(1873, 92)
+position = Vector2i(480, 92)
 size = Vector2i(500, 40)
 transient = true
 borderless = true
@@ -1162,7 +1162,7 @@ FOLD_BUTTON = NodePath(".")
 [node name="RECENT_MESHES" type="Window" parent="." node_paths=PackedStringArray("MAIN")]
 oversampling_override = 1.0
 title = "RECENTS"
-position = Vector2i(4, 1104)
+position = Vector2i(4, 880)
 size = Vector2i(500, 40)
 transient = true
 borderless = true
@@ -1249,7 +1249,7 @@ FOLD_BUTTON = NodePath(".")
 [node name="RECENT_TEXTURES" type="Window" parent="." node_paths=PackedStringArray("MAIN")]
 oversampling_override = 1.0
 title = "RECENTS"
-position = Vector2i(4, 1144)
+position = Vector2i(4, 880)
 size = Vector2i(500, 40)
 transient = true
 borderless = true
