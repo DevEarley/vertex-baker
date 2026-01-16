@@ -403,6 +403,9 @@ func build_flat_list_for_mesh(imported_scene,mesh,dirty:bool=false):
 			var surf_name = mesh_array.surface_get_name(surf_index)
 			surface_names.push_back(surf_name)
 			tools.push_back(MeshDataTool.new())
+			if(tools.size()-1<surf_index):
+				print("ERROR missing tool?")
+				return
 			var data:MeshDataTool = tools[surf_index]
 			data.create_from_surface(mesh_array, surf_index)
 			for vertex_index in range(data.get_vertex_count()):
@@ -1011,18 +1014,44 @@ func _on_save_file_selected(path: String) -> void:
 		DATA.save_recents()
 		$RECENT_SAVES.size = Vector2(500,40)
 
+
 func _on_export_file_selected(path: String) -> void:
 	merge_materials()
 	bake_scale_and_rotation()
+	var flat_list_of_mesh
 	var gltf_scene_root_node = Node3D.new()
+	var tools_for_mesh_with_col = []
+	#var tools_for_mesh_without_col = []
+	var node_with_col= MeshInstance3D.new()
+	#var node_without_col= MeshInstance3D.new()
+	node_with_col.mesh = ArrayMesh.new()
+	node_with_col.mesh.resource_name = "with-col"
+	node_with_col.name = "with-col"
+	var scene_index = 0
 	for imported_scene:ImportedScene in DATA.SCENES:
 		if(imported_scene.EXCLUDE_FROM_EXPORT == false):
 			for child_mesh in imported_scene.SCENE.get_children():
-				child_mesh.reparent(gltf_scene_root_node)
+
+				var count = child_mesh.mesh.get_surface_count()
+
+				for index_ in count:
+					tools_for_mesh_with_col.push_back(MeshDataTool.new())
+				for index in count:
+					var data:MeshDataTool = tools_for_mesh_with_col[index+scene_index]
+					data.create_from_surface( child_mesh.mesh, index)
+					for i in range(data.get_vertex_count()):
+						var vertex = data.get_vertex(i)
+						var normal = data.get_vertex_normal(i)
+						data.set_vertex(i, vertex)
+						data.set_vertex_normal(i, normal)
+					data.commit_to_surface(node_with_col.mesh )
+				scene_index+=count
+	gltf_scene_root_node.add_child(node_with_col)
+	#gltf_scene_root_node.add_child(node_without_col)
+
+
 	var gltf_document_save := GLTFDocument.new()
 	var gltf_state_save := GLTFState.new()
-
-
 	var mats:Array[Material]=[]
 	for mat_replacement in DATA.MATERIAL_REPLACEMENTS:
 		mats.push_back(mat_replacement.MATERIAL as Material)
@@ -1032,7 +1061,6 @@ func _on_export_file_selected(path: String) -> void:
 	DATA.update_recent_files(path,VBRecentFile.VB_FILE_TYPES.EXPORTED)
 	update_recents_window()
 	DATA.save_recents()
-
 	p2log("EXPORT DONE")
 
 func _on_import_file_selected(path: String) -> void:
