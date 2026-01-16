@@ -1017,7 +1017,6 @@ func _on_save_file_selected(path: String) -> void:
 
 func _on_export_file_selected(path: String) -> void:
 	merge_materials()
-	bake_scale_and_rotation()
 	var flat_list_of_mesh
 	var gltf_scene_root_node = Node3D.new()
 	var tools_for_mesh_with_col = []
@@ -1030,26 +1029,33 @@ func _on_export_file_selected(path: String) -> void:
 	var scene_index = 0
 	for imported_scene:ImportedScene in DATA.SCENES:
 		if(imported_scene.EXCLUDE_FROM_EXPORT == false):
-			for child_mesh in imported_scene.SCENE.get_children():
-
+			var scene_scale =imported_scene.NODE.scale
+			var scene_rotation = imported_scene.SCENE.rotation
+			var node_rotation = imported_scene.NODE.rotation
+			for child_mesh:MeshInstance3D in imported_scene.SCENE.get_children():
 				var count = child_mesh.mesh.get_surface_count()
-
+				var target_scale =scene_scale *child_mesh.scale*imported_scene.SCENE.scale
 				for index_ in count:
 					tools_for_mesh_with_col.push_back(MeshDataTool.new())
 				for index in count:
 					var data:MeshDataTool = tools_for_mesh_with_col[index+scene_index]
 					data.create_from_surface( child_mesh.mesh, index)
 					for i in range(data.get_vertex_count()):
-						var vertex = data.get_vertex(i)
-						var normal = data.get_vertex_normal(i)
-						data.set_vertex(i, vertex)
+						var vertex = (data.get_vertex(i)*target_scale)
+						var normal = data.get_vertex_normal(i)*target_scale
+						var z = vertex.rotated(Vector3(0,0,1),scene_rotation.z)
+						var x = vertex.rotated(Vector3(1,0,0),scene_rotation.x)
+						var y =vertex.rotated(Vector3(0,1,0),scene_rotation.y)
+						z = vertex.rotated(Vector3(0,0,1),node_rotation.z)
+						x = vertex.rotated(Vector3(1,0,0),node_rotation.x)
+						y =vertex.rotated(Vector3(0,1,0),node_rotation.y)
 						data.set_vertex_normal(i, normal)
-					data.commit_to_surface(node_with_col.mesh )
+						data.set_vertex(i, z+imported_scene.SCENE.global_position)
+						data.set_vertex(i, x+imported_scene.SCENE.global_position)
+						data.set_vertex(i, y++imported_scene.SCENE.global_position)
+					data.commit_to_surface(node_with_col.mesh 	)
 				scene_index+=count
 	gltf_scene_root_node.add_child(node_with_col)
-	#gltf_scene_root_node.add_child(node_without_col)
-
-
 	var gltf_document_save := GLTFDocument.new()
 	var gltf_state_save := GLTFState.new()
 	var mats:Array[Material]=[]
@@ -1805,6 +1811,7 @@ func _on_menu_button_pressed() -> void:
 func _on_reset_pressed() -> void:
 	BAKED = false
 	reset_meshes(false)
+
 func reset_mesh(mesh,scene):
 		var mesh_array:ArrayMesh=mesh.mesh;
 		for og_mesh:MeshInstance3D in scene.OG_SCENE.get_children():
@@ -1888,7 +1895,7 @@ func _on_icon_checkbox_toggled(toggled_on: bool) -> void:
 			for light in layer.LIGHTS:
 				light.LIGHT_MESH.modulate.a =0.0
 
-func bake_scale_and_rotation() -> void:
+func bake_scale_and_rotation(group) -> void:
 	if(BAKE_SCALE_ON_EXPORT || BAKE_ROTATION_ON_EXPORT):
 		for imported_scene:ImportedScene in DATA.SCENES:
 				var scene_scale =imported_scene.NODE.scale
@@ -1897,7 +1904,7 @@ func bake_scale_and_rotation() -> void:
 				for child_mesh in imported_scene.SCENE.get_children():
 					var target_scale =scene_scale *child_mesh.scale*imported_scene.SCENE.scale
 					if(BAKE_SCALE_ON_EXPORT):
-						scale_mesh(child_mesh,target_scale )
+						scale_mesh(child_mesh,target_scale)
 					if(BAKE_ROTATION_ON_EXPORT):
 						rotate_mesh(child_mesh,scene_rotation)
 						rotate_mesh(child_mesh,node_rotation)
