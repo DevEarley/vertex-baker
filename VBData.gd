@@ -6,3 +6,4 @@ class_name VBData
 @export var MATERIAL_OVERRIDES:Array[VBMaterialOverride]=[]
 @export var MATERIAL_REPLACEMENTS:Array[VBMaterialReplacement]=[]
 @export var LAYER_MASKS:Array[VBLayerMaskData]=[]
+@export var COLLISION_MASKS:Array[VBCollisionMaskData]=[]

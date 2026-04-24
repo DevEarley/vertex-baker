@@ -5,6 +5,7 @@ var NAME:String
 var PATH:String
 var NODE: Sprite3D;
 var SCENE: Node3D;
+var BUFFER: PackedByteArray
 var OG_SCENE: Node3D;
 var LIST_ITEM: VBoxContainer;
 var IMPORTED_SCALE:Vector3

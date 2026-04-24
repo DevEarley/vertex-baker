@@ -23,7 +23,7 @@ enum SHADERS {
 @export var WATER_FLOW_SHADER:VisualShader
 @export var WINDY_SHADER:VisualShader
 @export var GLASS_SHADER:VisualShader
-
+@export var LINUX_MODE:bool = false
 var default_texture = ("res://textures/default.png")
 var missing_texture = ("res://textures/missing_texture.png")
 var missing_texture_ = preload("res://textures/missing_texture.png")
@@ -174,12 +174,15 @@ func on_blending_fade_dropdown_pressed(light_layer:LightLayer):
 
 func on_delete_layer_pressed(layer:Control,light_layer:LightLayer):
 	var index_to_remove = DATA.LAYERS.find(light_layer)
+	var ID_to_remove = light_layer.ID
 	#remove all of the lights
 	for light in light_layer.LIGHTS:
 		on_delete_light(light)
 	#remove from UI
 	light_layer.LIST_ITEM.queue_free()
 	DATA.LAYERS.remove_at(index_to_remove)
+	DATA.LAYER_MASKS =  DATA.LAYER_MASKS.filter(func( mask:LightLayerMask):	return(mask.LAYER_ID == ID_to_remove))
+
 	auto_bake()
 
 func on_layer_move_down_pressed(layer:Control,light_layer:LightLayer):
@@ -395,18 +398,19 @@ func build_flat_list_for_mesh(imported_scene,mesh,dirty:bool=false):
 	new_flat_mesh.SCENE = imported_scene
 	var mesh_array:ArrayMesh =  mesh.mesh
 	var surface_count =mesh_array.get_surface_count()
-	var tools = []
+	#var tools = []
 	var surface_names = []
 	for surf_index in surface_count:
 		var masked = is_masked_by_anything(mesh,surf_index,imported_scene.ID)
 		if(masked == false):
 			var surf_name = mesh_array.surface_get_name(surf_index)
 			surface_names.push_back(surf_name)
-			tools.push_back(MeshDataTool.new())
-			if(tools.size()-1<surf_index):
-				print("ERROR missing tool?")
-				return
-			var data:MeshDataTool = tools[surf_index]
+			#tools.push_back(MeshDataTool.new())
+			#if(tools.size()-1<surf_index):
+				#print("ERROR missing tool?")
+				#return
+			#var data:MeshDataTool = tools[surf_index]
+			var data:MeshDataTool = MeshDataTool.new()
 			data.create_from_surface(mesh_array, surf_index)
 			for vertex_index in range(data.get_vertex_count()):
 				vert_count+=1
@@ -688,6 +692,12 @@ func is_masked(layer,mesh,surf,imported_scene):
 						layer_mask.SURFACE_ID == surf &&
 						layer_mask.SCENE_ID == imported_scene.ID))
 
+func has_collision_mask(mesh,imported_scene):
+	return DATA.COLLISION_MASKS.any(func(mask:CollisionMask):
+						return (mask.MESH_NAME == mesh.name &&
+						#mask.SURFACE_ID == surf &&
+						mask.SCENE_ID == imported_scene.ID))
+
 func is_masked_by_anything(mesh,surf,imported_scene_id):
 	return DATA.LAYER_MASKS.any(func(layer_mask:LightLayerMask):
 						return (
@@ -853,9 +863,12 @@ func update_recents_window():
 				$RECENT_FILES/ScrollContainer/CONTAINER/RECENTS.add_child(recent_prefab)
 
 func update_data_window():
+	for child in $DATA_INSPECTOR/ScrollContainer/CONTAINER/DATA.get_children():
+		child.queue_free()
 	#update_data_window_scenes()
 	#update_data_window_layers()
 	update_data_window_layer_masks()
+	update_data_window_collision_masks()
 	#update_data_window_replacements()
 	#update_data_window_overrides()
 
@@ -884,6 +897,17 @@ func update_data_window_layer_masks():
 		var new_label = Label.new()
 		new_label.text = "LAYER ID: %s \nSCENE ID: %s \nMESH NAME: %s \nSURFACE ID: %s\n\n" % [
 			layer_mask.LAYER_ID,
+			layer_mask.MESH_NAME,
+			layer_mask.SCENE_ID,
+			layer_mask.SURFACE_ID	]
+		new_label.custom_minimum_size = (Vector2(400,150))
+		$DATA_INSPECTOR/ScrollContainer/CONTAINER/DATA.add_child(new_label)
+
+func update_data_window_collision_masks():
+	add_title_to_data_window("COLLISION_MASKS (%s)" % DATA.COLLISION_MASKS.size())
+	for layer_mask in DATA.COLLISION_MASKS:
+		var new_label = Label.new()
+		new_label.text = "SCENE ID: %s \nMESH NAME: %s \nSURFACE ID: %s\n\n" % [
 			layer_mask.MESH_NAME,
 			layer_mask.SCENE_ID,
 			layer_mask.SURFACE_ID	]
@@ -920,12 +944,23 @@ func update_data_window_overrides():
 func _on_open_file_selected(path: String) -> void:
 	p2log("LOADING")
 	var result:VBData;
+	
+	if(LINUX_MODE):
+		path = path.replace("C:\\","\\media\\dev\\Windows\\")
+		path = path.replace("C:/","/media/dev/Windows/")
 	if ResourceLoader.exists(path):
 		result =  load(path)
 	else:
 		return
 	DATA.update_recent_files(path,VBRecentFile.VB_FILE_TYPES.PROJECT_FILE_OPENED)
 	update_recents_window()
+	for collision_mask_data:VBCollisionMaskData in result.COLLISION_MASKS:
+		var collision_mask:CollisionMask = CollisionMask.new()
+		collision_mask.MESH_NAME = collision_mask_data.MESH_NAME
+		collision_mask.SCENE_ID = collision_mask_data.SCENE_ID
+		collision_mask.SURFACE_ID = collision_mask_data.SURFACE_ID
+		DATA.COLLISION_MASKS.push_back(collision_mask)
+
 	for layer_mask_data:VBLayerMaskData in result.LAYER_MASKS:
 		var layer_mask:LightLayerMask = LightLayerMask.new()
 		layer_mask.LAYER_ID = layer_mask_data.LAYER_ID
@@ -1014,18 +1049,90 @@ func _on_save_file_selected(path: String) -> void:
 		DATA.save_recents()
 		$RECENT_SAVES.size = Vector2(500,40)
 
+#
+#func _on_export_file_selected(path: String) -> void:
+	#merge_materials()
+	#var flat_list_of_mesh
+	#var gltf_scene_root_node = Node3D.new()
+	#var tools_for_mesh_with_col = []
+	#var tools_for_mesh_without_col = []
+	#var scene_index = 0
+	#var gltf_document_save := GLTFDocument.new()
+	#
+	#gltf_document_save.root_node_mode = GLTFDocument.RootNodeMode.ROOT_NODE_MODE_KEEP_ROOT
+	#var gltf_state_save := GLTFState.new()
+	#for imported_scene:ImportedScene in DATA.SCENES:
+		#if(imported_scene.EXCLUDE_FROM_EXPORT == false):
+			#var scene_scale =imported_scene.NODE.scale
+			#var scene_rotation = imported_scene.SCENE.rotation
+			#var node_rotation = imported_scene.NODE.rotation
+	##
+			##surface_get_arrays
+			#for child_mesh:MeshInstance3D in imported_scene.SCENE.get_children():
+				#var mesh_:ArrayMesh =ArrayMesh.new()
+				#
+				#for surf in child_mesh.mesh.get_surface_count():
+					#var arrays = child_mesh.mesh.surface_get_arrays(surf)
+					#mesh_.add_surface_from_arrays(Mesh.PrimitiveType.PRIMITIVE_TRIANGLES,arrays)
+				#var node_with_col= MeshInstance3D.new()
+				#node_with_col.mesh = mesh_
+				#gltf_scene_root_node.add_child(node_with_col)
+				##node_with_col.mesh.resource_name = "vb-%s-col" % child_mesh.name
+				##node_with_col.name = "vb-%s-col" % child_mesh.name
+				##var node_without_col= MeshInstance3D.new()
+				##node_without_col.mesh = ArrayMesh.new()
+				##node_without_col.mesh.resource_name = "vb-%s" % child_mesh.name
+				##node_without_col.name = "vb-%s" % child_mesh.name
+				##var count = child_mesh.mesh.get_surface_count()
+				##if(count==0):
+					##print("skipping %s" % child_mesh.name)
+					##
+				##else:
+					##print("exporting %s" % child_mesh.name)
+					##var target_scale =scene_scale *child_mesh.scale*imported_scene.SCENE.scale
+				##
+					###for index_ in count:
+						###tools_for_mesh_with_col.push_back(MeshDataTool.new())
+##
+					##var mesh__:ArrayMesh = ArrayMesh.new()
+					##for index in count:
+						###var data:MeshDataTool = MeshDataTool.new()
+						###data.create_from_surface( child_mesh.mesh, index)
+						###if(has_collision_mask(child_mesh,imported_scene)):
+							###data.commit_to_surface(node_without_col.mesh 	)
+						###else:
+							###data.commit_to_surface(node_with_col.mesh 	)
+						###array_.push_back(child_mesh.mesh.surface_get_arrays(index))
+						##var st = SurfaceTool.new()
+						##st.append_from(child_mesh.mesh, index,gltf_scene_root_node.transform)
+						##mesh__ = st.commit(mesh__)
+					##for surf in mesh__.get_surface_count():	
+						##var data:MeshDataTool = MeshDataTool.new()
+						##data.create_from_surface( mesh__, surf)
+						##data.commit_to_surface(node_with_col.mesh 	)
+				###gltf_scene_root_node.add_child(node_without_col)
+				##gltf_scene_root_node.add_child(node_with_col)
+#
+	##var gltf_document_save := FBXDocument.new()
+	##var gltf_state_save := FBXState.new()
+		#gltf_document_save.append_from_buffer(imported_scene.BUFFER,"",gltf_state_save)
+	#var mats:Array[Material]=[]
+	#for mat_replacement in DATA.MATERIAL_REPLACEMENTS:
+		#mats.push_back(mat_replacement.MATERIAL as Material)
+	#gltf_state_save.set_materials(mats)
+	##gltf_document_save.append_from_scene(gltf_scene_root_node, gltf_state_save)
+	#gltf_document_save.write_to_filesystem(gltf_state_save, path)
+	#DATA.update_recent_files(path,VBRecentFile.VB_FILE_TYPES.EXPORTED)
+	#update_recents_window()
+	#DATA.save_recents()
+	#p2log("EXPORT DONE")
 
 func _on_export_file_selected(path: String) -> void:
 	merge_materials()
 	var flat_list_of_mesh
 	var gltf_scene_root_node = Node3D.new()
 	var tools_for_mesh_with_col = []
-	#var tools_for_mesh_without_col = []
-	var node_with_col= MeshInstance3D.new()
-	#var node_without_col= MeshInstance3D.new()
-	node_with_col.mesh = ArrayMesh.new()
-	node_with_col.mesh.resource_name = "with-col"
-	node_with_col.name = "with-col"
+	var tools_for_mesh_without_col = []
 	var scene_index = 0
 	for imported_scene:ImportedScene in DATA.SCENES:
 		if(imported_scene.EXCLUDE_FROM_EXPORT == false):
@@ -1033,6 +1140,15 @@ func _on_export_file_selected(path: String) -> void:
 			var scene_rotation = imported_scene.SCENE.rotation
 			var node_rotation = imported_scene.NODE.rotation
 			for child_mesh:MeshInstance3D in imported_scene.SCENE.get_children():
+				var node_with_col= MeshInstance3D.new()
+				var node_without_col= MeshInstance3D.new()
+				node_with_col.mesh = ArrayMesh.new()
+				node_with_col.mesh.resource_name = "vb-%s-col" % child_mesh.name
+				node_with_col.name = "vb-%s-col" % child_mesh.name
+				node_without_col.mesh = ArrayMesh.new()
+				node_without_col.mesh.resource_name = "vb-%s" % child_mesh.name
+				node_without_col.name = "vb-%s" % child_mesh.name
+				print("exporting %s" % child_mesh.name)
 				var count = child_mesh.mesh.get_surface_count()
 				var target_scale =scene_scale *child_mesh.scale*imported_scene.SCENE.scale
 				for index_ in count:
@@ -1053,9 +1169,14 @@ func _on_export_file_selected(path: String) -> void:
 						data.set_vertex(i, z+imported_scene.SCENE.global_position)
 						data.set_vertex(i, x+imported_scene.SCENE.global_position)
 						data.set_vertex(i, y++imported_scene.SCENE.global_position)
-					data.commit_to_surface(node_with_col.mesh 	)
+					#if(has_collision_mask(child_mesh,index,imported_scene)):
+					if(has_collision_mask(child_mesh,imported_scene)):
+						data.commit_to_surface(node_without_col.mesh 	)
+					else:
+						data.commit_to_surface(node_with_col.mesh 	)
 				scene_index+=count
-	gltf_scene_root_node.add_child(node_with_col)
+				gltf_scene_root_node.add_child(node_without_col)
+				gltf_scene_root_node.add_child(node_with_col)
 	var gltf_document_save := GLTFDocument.new()
 	var gltf_state_save := GLTFState.new()
 	var mats:Array[Material]=[]
@@ -1200,8 +1321,11 @@ func on_assign_layers_to_mesh_done(
 				new_layer_mask.SCENE_ID = imported_scene.ID
 				DATA.LAYER_MASKS.push_back(new_layer_mask)
 		elif(item_is_checked == true && already_has_a_mask == true):
-			#TODO fix - replace find with filter
-			var index_to_remove = DATA.LAYER_MASKS.find(light_layer)
+			var index_to_remove = DATA.LAYER_MASKS.find_custom(func (layer_mask:LightLayerMask):
+				return (layer_mask.LAYER_ID  == light_layer.ID &&
+						layer_mask.SURFACE_ID == surface &&
+						layer_mask.SCENE_ID == imported_scene.ID &&
+						layer_mask.MESH_NAME == child_mesh.name) )
 			DATA.LAYER_MASKS.remove_at(index_to_remove)
 	auto_bake()
 
@@ -1217,6 +1341,30 @@ func on_assign_layer_mask_state_changed(index:int,
 	var item_is_checked = popup_menu.is_item_checked(index)
 	popup_menu.set_item_checked(index,!item_is_checked)
 
+func on_toggle_collision(toggled_on:bool,surface_list_item,	imported_scene,	child_mesh,	surface):
+		if(toggled_on):
+			print("remove mask")
+			var index_to_remove = DATA.COLLISION_MASKS.find_custom(func (layer_mask:CollisionMask):
+				return (layer_mask.SURFACE_ID == surface &&
+						layer_mask.SCENE_ID == imported_scene.ID &&
+						layer_mask.MESH_NAME == child_mesh.name) )
+			DATA.COLLISION_MASKS.remove_at(index_to_remove)
+		else:
+			var already_has_a_mask = DATA.COLLISION_MASKS.any(func(layer_mask:CollisionMask):
+				return(
+					layer_mask.SURFACE_ID == surface &&
+					layer_mask.MESH_NAME == child_mesh.name &&
+					layer_mask.SCENE_ID == imported_scene.ID))
+			if(already_has_a_mask == false):
+					print("add mask")
+
+					var new_layer_mask = CollisionMask.new()
+					new_layer_mask.SURFACE_ID = surface
+					new_layer_mask.MESH_NAME = child_mesh.name
+					new_layer_mask.SCENE_ID = imported_scene.ID
+					DATA.COLLISION_MASKS.push_back(new_layer_mask)
+
+
 func load_mesh(child_mesh,scene_list_item, recursion,imported_scene, imported_scale:Vector3=Vector3.ONE):
 	p2log("load_mesh")
 	if(child_mesh is MeshInstance3D):
@@ -1227,9 +1375,17 @@ func load_mesh(child_mesh,scene_list_item, recursion,imported_scene, imported_sc
 		for surface in array_mesh.get_surface_count():
 			var surface_list_item = surface_list_item_prefab.instantiate()
 			var assign_layers = surface_list_item.get_node("ICON/ASSIGN_LAYERS")
+			var collision_checkbox:CheckBox =  surface_list_item.get_node("ICON/COLLISION_CHECKBOX")
+			collision_checkbox.button_pressed = has_collision_mask(child_mesh,imported_scene) == false
+			#collision_checkbox.button_pressed = has_collision_mask(child_mesh,surface,imported_scene) == false
 			var popup_menu:PopupMenu = assign_layers.get_popup()
 			popup_menu.hide_on_checkable_item_selection = false;
 			popup_menu.hide_on_item_selection = false;
+			collision_checkbox.connect("toggled",on_toggle_collision.bind(
+				surface_list_item,
+				imported_scene,
+				child_mesh,
+				surface))
 			assign_layers.connect("about_to_popup",on_assign_layers_to_mesh_pressed.bind(
 				surface_list_item,
 				imported_scene,
@@ -1384,103 +1540,131 @@ func on_delete_scene_pressed(imported_scene:ImportedScene):
 	update_material_inspector()
 
 func load_from_path(
-	path,
+	path:String,
 	imported_position:Vector3=Vector3.ZERO,
 	imported_rotation:Vector3=Vector3.ZERO,
 	imported_scale:Vector3=Vector3.ONE,
 	imported_ID:int=-1):
 	if(path == ""):return
 	p2log("load_from_current_path")
-	var gltf_state_load = GLTFState.new()
-	var gltf_state_load_2 = GLTFState.new()
-	var gltf_document_load_2 = GLTFDocument.new()
-	var gltf_document_load = GLTFDocument.new()
-	var error = gltf_document_load.append_from_file(path, gltf_state_load)
-	var error_2 = gltf_document_load_2.append_from_file(path, gltf_state_load_2)
-	var file:FileAccess = FileAccess.open(path, FileAccess.READ_WRITE)
-	if error == OK:
-		DATA.update_recent_files(path,VBRecentFile.VB_FILE_TYPES.IMPORTED)
-		update_recents_window()
-
-		var scene_list_item = scene_list_item_prefab.instantiate()
-		var scene = gltf_document_load.generate_scene(gltf_state_load)
-		var scene_2 = gltf_document_load_2.generate_scene(gltf_state_load_2)
-		scene.name = "MESH"
-		var imported_scene = ImportedScene.new()
-		var node= $SubViewportContainer/SubViewport
-		var mesh:SelectableMesh = scene_prefab.instantiate()
-		imported_scene.NODE = mesh;
-		imported_scene.SCENE = scene;
-		imported_scene.IMPORTED_SCALE = imported_scale
-		imported_scene.IMPORTED_POSITION = imported_position
-		imported_scene.IMPORTED_ROTATION = imported_rotation
-		imported_scene.PATH = path
-		imported_scene.OG_SCENE = scene_2;
-		if(imported_ID==-1):
-			imported_scene.ID = generate_id()
-		else:
-			imported_scene.ID = imported_ID
-		mesh.MESH =scene
-		mesh.SCENE =imported_scene
-		mesh.LIST_ITEM = scene_list_item
-		mesh.add_child(scene)
-		node.add_child(mesh)
-		mesh.scale = imported_scale
-		mesh.position = imported_position
-		mesh.rotation = imported_rotation
-		imported_scene.LIST_ITEM = scene_list_item
-		scene_list_item.get_node("HBoxContainer/ROTATE").connect("pressed",on_rotate_pressed.bind(mesh))
-		scene_list_item.get_node("HBoxContainer/SCALE").connect("pressed",on_scale_pressed.bind(mesh))
-		scene_list_item.get_node("HBoxContainer/MOVE").connect("pressed",on_move_scene_pressed.bind(mesh))
-		scene_list_item.get_node("HBoxContainer/DUPLICATE").connect("pressed",on_duplicated_pressed.bind(imported_scene))
-		scene_list_item.get_node("ICON/MORE_MENU/DELETE").connect("pressed",on_delete_scene_pressed.bind(imported_scene))
-		scene_list_item.get_node("HBoxContainer/BAKE").connect("pressed",on_bake_toggle_pressed.bind(imported_scene))
-		scene_list_item.get_node("HBoxContainer/EXPORT").connect("pressed",on_export_toggle_pressed.bind(imported_scene))
-
-		scene_list_item.get_node("ICON/MORE_MENU/SCALE_VALUE").text = "%s" % imported_scale.x
-		scene_list_item.get_node("ICON/MORE_MENU/SCALE_VALUE").connect("mouse_entered",on_focus)
-		scene_list_item.get_node("ICON/MORE_MENU/SCALE_VALUE").connect("text_submitted",on_scale_value_changed.bind(mesh))
-		scene_list_item.get_node("ICON/MORE_MENU/SCALE_VALUE").connect("focus_exited",on_scale_changed.bind(mesh,scene_list_item))
-
-		scene_list_item.get_node("ICON/MORE_MENU/ROTATE_X").text = "%s" % imported_rotation.x
-		scene_list_item.get_node("ICON/MORE_MENU/ROTATE_X").connect("mouse_entered",on_focus)
-		scene_list_item.get_node("ICON/MORE_MENU/ROTATE_X").connect("text_submitted",on_rotate_x_value_changed.bind(mesh))
-		scene_list_item.get_node("ICON/MORE_MENU/ROTATE_X").connect("focus_exited",on_rotate_x_changed.bind(mesh,scene_list_item))
-
-		scene_list_item.get_node("ICON/MORE_MENU/ROTATE_Y").text = "%s" % imported_rotation.y
-		scene_list_item.get_node("ICON/MORE_MENU/ROTATE_Y").connect("mouse_entered",on_focus)
-		scene_list_item.get_node("ICON/MORE_MENU/ROTATE_Y").connect("text_submitted",on_rotate_y_value_changed.bind(mesh))
-		scene_list_item.get_node("ICON/MORE_MENU/ROTATE_Y").connect("focus_exited",on_rotate_y_changed.bind(mesh,scene_list_item))
-
-		scene_list_item.get_node("ICON/MORE_MENU/ROTATE_Z").text = "%s" % imported_rotation.z
-		scene_list_item.get_node("ICON/MORE_MENU/ROTATE_Z").connect("mouse_entered",on_focus)
-		scene_list_item.get_node("ICON/MORE_MENU/ROTATE_Z").connect("text_submitted",on_rotate_z_value_changed.bind(mesh))
-		scene_list_item.get_node("ICON/MORE_MENU/ROTATE_Z").connect("focus_exited",on_rotate_z_changed.bind(mesh,scene_list_item))
-
-		scene_list_item.get_node("ICON/MORE_MENU/MOVE_X").text = "%s" % imported_position.x
-		scene_list_item.get_node("ICON/MORE_MENU/MOVE_X").connect("mouse_entered",on_focus)
-		scene_list_item.get_node("ICON/MORE_MENU/MOVE_X").connect("text_submitted",on_move_x_value_changed.bind(mesh))
-		scene_list_item.get_node("ICON/MORE_MENU/MOVE_X").connect("focus_exited",on_move_x_changed.bind(mesh,scene_list_item))
-
-		scene_list_item.get_node("ICON/MORE_MENU/MOVE_Y").text = "%s" % imported_position.y
-		scene_list_item.get_node("ICON/MORE_MENU/MOVE_Y").connect("mouse_entered",on_focus)
-		scene_list_item.get_node("ICON/MORE_MENU/MOVE_Y").connect("text_submitted",on_move_y_value_changed.bind(mesh))
-		scene_list_item.get_node("ICON/MORE_MENU/MOVE_Y").connect("focus_exited",on_move_y_changed.bind(mesh,scene_list_item))
-
-		scene_list_item.get_node("ICON/MORE_MENU/MOVE_Z").text = "%s" % imported_position.z
-		scene_list_item.get_node("ICON/MORE_MENU/MOVE_Z").connect("mouse_entered",on_focus)
-		scene_list_item.get_node("ICON/MORE_MENU/MOVE_Z").connect("text_submitted",on_move_z_value_changed.bind(mesh))
-		scene_list_item.get_node("ICON/MORE_MENU/MOVE_Z").connect("focus_exited",on_move_z_changed.bind(mesh,scene_list_item))
-
-		imported_scene.NAME = mesh.name
-		DATA.SCENES.push_back(imported_scene)
-		scene_list_item.get_node("ICON/NAME").text = path
-		$MESH_INSPECTOR/ScrollContainer/CONTAINER/MESHES.add_child(scene_list_item)
-		for child_mesh in scene.get_children():
-			load_mesh(child_mesh,scene_list_item,0,imported_scene)
-		update_material_inspector()
+	if(LINUX_MODE):
+		path = path.replace("C:\\","\\media\\dev\\Windows\\")
+		path = path.replace("C:/","/media/dev/Windows/")
+	var scene
+	var scene_2
+	var mesh:SelectableMesh
+	var buffer:PackedByteArray
+	var imported_scene = ImportedScene.new()
+	if(path.contains(".fbx")):
+		var fbx_doc = FBXDocument.new()
+		var fbx_doc2 = FBXDocument.new()
+		var fbx_state = FBXState.new()
+		var fbx_state2 = FBXState.new()
+		var error_fbx = fbx_doc.append_from_file(path, fbx_state)
+		if error_fbx == OK:
+			imported_scene.BUFFER = fbx_doc.generate_buffer(fbx_state)
+			scene = fbx_doc.generate_scene(fbx_state)
+			var error_fbx2 = fbx_doc2.append_from_file(path, fbx_state2)
+			if error_fbx2 == OK:
+				scene_2 = fbx_doc2.generate_scene(fbx_state2)
 	else:
-		p2log("Couldn't load glTF scene (error code: %s)." % error_string(error))
+		var gltf_state_load = GLTFState.new()
+		var gltf_state_load_2 = GLTFState.new()
+		var gltf_document_load_2 = GLTFDocument.new()
+		var gltf_document_load = GLTFDocument.new()
+		gltf_document_load.root_node_mode = GLTFDocument.RootNodeMode.ROOT_NODE_MODE_KEEP_ROOT
+		gltf_document_load_2.root_node_mode = GLTFDocument.RootNodeMode.ROOT_NODE_MODE_KEEP_ROOT
+		var error = gltf_document_load.append_from_file(path, gltf_state_load)
+		var error_2 = gltf_document_load_2.append_from_file(path, gltf_state_load_2)
+		#var file:FileAccess = FileAccess.open(path, FileAccess.READ_WRITE)
+		if error != OK:
+			p2log("Couldn't load glTF scene (error code: %s)." % error_string(error))
+		imported_scene.BUFFER = gltf_document_load.generate_buffer(gltf_state_load)
+		scene = gltf_document_load.generate_scene(gltf_state_load)
+		if(error_2==OK):
+			scene_2 = gltf_document_load_2.generate_scene(gltf_state_load_2)
+
+	var scene_list_item = scene_list_item_prefab.instantiate()
+	mesh = scene_prefab.instantiate()
+	DATA.update_recent_files(path,VBRecentFile.VB_FILE_TYPES.IMPORTED)
+	update_recents_window()
+
+	#scene.name = "MESH"
+	var node= $SubViewportContainer/SubViewport
+	imported_scene.NODE = mesh;
+	imported_scene.SCENE = scene;
+	imported_scene.IMPORTED_SCALE = imported_scale
+	imported_scene.IMPORTED_POSITION = imported_position
+	imported_scene.IMPORTED_ROTATION = imported_rotation
+	imported_scene.PATH = path
+	imported_scene.OG_SCENE = scene_2;
+	if(imported_ID==-1):
+		imported_scene.ID = generate_id()
+	else:
+		imported_scene.ID = imported_ID
+	mesh.MESH =scene
+	mesh.SCENE =imported_scene
+	mesh.LIST_ITEM = scene_list_item
+	mesh.add_child(scene)
+	node.add_child(mesh)
+	mesh.scale = imported_scale
+	mesh.position = imported_position
+	mesh.rotation = imported_rotation
+	imported_scene.LIST_ITEM = scene_list_item
+	scene_list_item.get_node("HBoxContainer/ROTATE").connect("pressed",on_rotate_pressed.bind(mesh))
+	scene_list_item.get_node("HBoxContainer/SCALE").connect("pressed",on_scale_pressed.bind(mesh))
+	scene_list_item.get_node("HBoxContainer/MOVE").connect("pressed",on_move_scene_pressed.bind(mesh))
+	scene_list_item.get_node("HBoxContainer/DUPLICATE").connect("pressed",on_duplicated_pressed.bind(imported_scene))
+	scene_list_item.get_node("ICON/MORE_MENU/DELETE").connect("pressed",on_delete_scene_pressed.bind(imported_scene))
+	scene_list_item.get_node("HBoxContainer/BAKE").connect("pressed",on_bake_toggle_pressed.bind(imported_scene))
+	scene_list_item.get_node("HBoxContainer/EXPORT").connect("pressed",on_export_toggle_pressed.bind(imported_scene))
+
+	scene_list_item.get_node("ICON/MORE_MENU/SCALE_VALUE").text = "%s" % imported_scale.x
+	scene_list_item.get_node("ICON/MORE_MENU/SCALE_VALUE").connect("mouse_entered",on_focus)
+	scene_list_item.get_node("ICON/MORE_MENU/SCALE_VALUE").connect("text_submitted",on_scale_value_changed.bind(mesh))
+	scene_list_item.get_node("ICON/MORE_MENU/SCALE_VALUE").connect("focus_exited",on_scale_changed.bind(mesh,scene_list_item))
+
+	scene_list_item.get_node("ICON/MORE_MENU/ROTATE_X").text = "%s" % imported_rotation.x
+	scene_list_item.get_node("ICON/MORE_MENU/ROTATE_X").connect("mouse_entered",on_focus)
+	scene_list_item.get_node("ICON/MORE_MENU/ROTATE_X").connect("text_submitted",on_rotate_x_value_changed.bind(mesh))
+	scene_list_item.get_node("ICON/MORE_MENU/ROTATE_X").connect("focus_exited",on_rotate_x_changed.bind(mesh,scene_list_item))
+
+	scene_list_item.get_node("ICON/MORE_MENU/ROTATE_Y").text = "%s" % imported_rotation.y
+	scene_list_item.get_node("ICON/MORE_MENU/ROTATE_Y").connect("mouse_entered",on_focus)
+	scene_list_item.get_node("ICON/MORE_MENU/ROTATE_Y").connect("text_submitted",on_rotate_y_value_changed.bind(mesh))
+	scene_list_item.get_node("ICON/MORE_MENU/ROTATE_Y").connect("focus_exited",on_rotate_y_changed.bind(mesh,scene_list_item))
+
+	scene_list_item.get_node("ICON/MORE_MENU/ROTATE_Z").text = "%s" % imported_rotation.z
+	scene_list_item.get_node("ICON/MORE_MENU/ROTATE_Z").connect("mouse_entered",on_focus)
+	scene_list_item.get_node("ICON/MORE_MENU/ROTATE_Z").connect("text_submitted",on_rotate_z_value_changed.bind(mesh))
+	scene_list_item.get_node("ICON/MORE_MENU/ROTATE_Z").connect("focus_exited",on_rotate_z_changed.bind(mesh,scene_list_item))
+
+	scene_list_item.get_node("ICON/MORE_MENU/MOVE_X").text = "%s" % imported_position.x
+	scene_list_item.get_node("ICON/MORE_MENU/MOVE_X").connect("mouse_entered",on_focus)
+	scene_list_item.get_node("ICON/MORE_MENU/MOVE_X").connect("text_submitted",on_move_x_value_changed.bind(mesh))
+	scene_list_item.get_node("ICON/MORE_MENU/MOVE_X").connect("focus_exited",on_move_x_changed.bind(mesh,scene_list_item))
+
+	scene_list_item.get_node("ICON/MORE_MENU/MOVE_Y").text = "%s" % imported_position.y
+	scene_list_item.get_node("ICON/MORE_MENU/MOVE_Y").connect("mouse_entered",on_focus)
+	scene_list_item.get_node("ICON/MORE_MENU/MOVE_Y").connect("text_submitted",on_move_y_value_changed.bind(mesh))
+	scene_list_item.get_node("ICON/MORE_MENU/MOVE_Y").connect("focus_exited",on_move_y_changed.bind(mesh,scene_list_item))
+
+	scene_list_item.get_node("ICON/MORE_MENU/MOVE_Z").text = "%s" % imported_position.z
+	scene_list_item.get_node("ICON/MORE_MENU/MOVE_Z").connect("mouse_entered",on_focus)
+	scene_list_item.get_node("ICON/MORE_MENU/MOVE_Z").connect("text_submitted",on_move_z_value_changed.bind(mesh))
+	scene_list_item.get_node("ICON/MORE_MENU/MOVE_Z").connect("focus_exited",on_move_z_changed.bind(mesh,scene_list_item))
+
+	imported_scene.NAME = mesh.name
+	DATA.SCENES.push_back(imported_scene)
+	scene_list_item.get_node("ICON/NAME").text = path
+	$MESH_INSPECTOR/ScrollContainer/CONTAINER/MESHES.add_child(scene_list_item)
+	for child_mesh in scene.get_children():
+		print("loading mesh %s" % child_mesh.name)
+		var mesh_:ArrayMesh = child_mesh.mesh
+		print("surf count: %s "% mesh_.get_surface_count())
+		load_mesh(child_mesh,scene_list_item,0,imported_scene)
+	update_material_inspector()
+
 var vert_count = 0
 func update_flat_list():
 	FLAT_LIST = []
@@ -2132,6 +2316,8 @@ func merge_materials():
 					var material_override:Material = get_mat_override_for_surface(surf,mesh,scene)
 					if(material_override!=null):
 						mesh_array.surface_set_material(surf,material_override)
+						#mesh.set_surface_override_material(surf,material_override)
+						
 
 func on_edit_replacement(replacement:MaterialReplacement,material_replacement_list_item:Node):
 	CURRENT_REPLACEMENT = replacement
@@ -2144,8 +2330,12 @@ func update_material_replacements_window():
 	for replacement:MaterialReplacement in DATA.MATERIAL_REPLACEMENTS:
 		var material_replacement_list_item = material_replacement_list_item_prefab.instantiate()
 		material_replacement_list_item.get_node("ICON/SHADER_ID").text = "%s" % replacement.SHADER_ID
-		material_replacement_list_item.get_node("ICON/PATH").text = replacement.TEXTURE_PATH
-		if(FileAccess.file_exists(replacement.TEXTURE_PATH)==false):
+		var path = replacement.TEXTURE_PATH
+		if(LINUX_MODE):
+			path = path.replace("C:\\","\\media\\dev\\Windows\\")
+			path = path.replace("C:/","/media/dev/Windows/")
+		material_replacement_list_item.get_node("ICON/PATH").text = path
+		if(FileAccess.file_exists(path)==false):
 			material_replacement_list_item.get_node("ICON/PATH/MISSING").show()
 		else:
 			material_replacement_list_item.get_node("ICON/PATH/MISSING").hide()
@@ -2165,6 +2355,9 @@ func _on_create_material_pressed() -> void:
 	DATA.save_recents()
 
 func create_replacement (PATH,mat_name,shader_id):
+	if(LINUX_MODE):
+		PATH = PATH.replace("C:\\","\\media\\dev\\Windows\\")
+		PATH = PATH.replace("C:/","/media/dev/Windows/")
 	var new_mat_override := MaterialReplacement.new()
 	if(mat_name == ""):mat_name="UNTITLED %s" % generate_id()
 	new_mat_override.NEW_MATERIAL_NAME = mat_name;
@@ -2197,6 +2390,9 @@ func load_image(PATH:String):
 		else:
 			print("load_image | result was null")
 			return null
+	elif(LINUX_MODE):
+		PATH = PATH.replace("C:\\","\\media\\dev\\Windows\\")
+		PATH = PATH.replace("C:/","/media/dev/Windows/")
 	if(FileAccess.file_exists(PATH)==true):
 		var result = Image.load_from_file(PATH)
 		if(result != null):
@@ -2243,6 +2439,9 @@ func _on_update_texture_file_selected(path: String) -> void:
 	update_recents_window()
 	CURRENT_REPLACEMENT.TEXTURE_PATH = path;
 	CURRENT_REPLACEMENT_LIST_ITEM.get_node("ICON/PATH").text = path;
+	if(LINUX_MODE):
+		path = path.replace("C:\\","\\media\\dev\\Windows\\")
+		path = path.replace("C:/","/media/dev/Windows/")
 	var texture_image = load_image(path)
 	CURRENT_REPLACEMENT.MATERIAL.set_shader_parameter("MAIN",texture_image)
 	update_material_replacements_window()

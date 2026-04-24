@@ -2,6 +2,7 @@ extends Node
 var LAYERS:Array[LightLayer]=[]
 var SCENES:Array[ImportedScene]=[]
 var MATERIALS:Array[ImportedMaterial]=[]
+var COLLISION_MASKS:Array[CollisionMask]=[]
 var LAYER_MASKS:Array[LightLayerMask]=[]
 var MATERIAL_OVERRIDES:Array[MaterialOverride]=[]
 var MATERIAL_REPLACEMENTS:Array[MaterialReplacement]=[]
@@ -48,8 +49,10 @@ func to_project_data():
 	project_data.LAYERS = []
 	project_data.LIGHTS = []
 	project_data.LAYER_MASKS = []
+	project_data.COLLISION_MASKS = []
 	project_data.MATERIAL_OVERRIDES = []
 	project_data.MATERIAL_REPLACEMENTS = []
+
 	for mat_override in MATERIAL_OVERRIDES:
 		var vb_mat_override:VBMaterialOverride =VBMaterialOverride.new()
 		vb_mat_override.NEW_MATERIAL_NAME = mat_override.NEW_MATERIAL_NAME
@@ -75,6 +78,13 @@ func to_project_data():
 		vb_layer_mask.SCENE_ID = layer_mask.SCENE_ID
 		vb_layer_mask.MESH_NAME = layer_mask.MESH_NAME
 		project_data.LAYER_MASKS.push_back(vb_layer_mask);
+
+	for collision_mask:CollisionMask in COLLISION_MASKS:
+		var vb_collision_mask:VBCollisionMaskData =VBCollisionMaskData.new()
+		vb_collision_mask.SURFACE_ID = collision_mask.SURFACE_ID
+		vb_collision_mask.SCENE_ID = collision_mask.SCENE_ID
+		vb_collision_mask.MESH_NAME = collision_mask.MESH_NAME
+		project_data.COLLISION_MASKS.push_back(vb_collision_mask);
 
 	for scene in SCENES:
 		var scene_data:VBSceneData = VBSceneData.new()

@@ -8,6 +8,10 @@
 
 config_version=5
 
+[animation]
+
+compatibility/default_parent_skeleton_in_mesh_instance_3d=true
+
 [application]
 
 config/name="VertexPainter"
@@ -15,9 +19,9 @@ run/main_scene="uid://egxf4avoauls"
 config/features=PackedStringArray("4.5", "GL Compatibility")
 run/low_processor_mode=true
 boot_splash/show_image=false
-boot_splash/fullsize=false
 boot_splash/use_filter=false
 config/icon="uid://uh5cxm4hwe45"
+boot_splash/stretch_mode=0
 
 [autoload]
 
@@ -34,6 +38,17 @@ window/per_pixel_transparency/allowed=true
 [editor_plugins]
 
 enabled=PackedStringArray("res://addons/script-tabs/plugin.cfg")
+
+[importer_defaults]
+
+scene={
+&"gltf/embedded_image_handling": 0,
+&"meshes/create_shadow_meshes": false,
+&"meshes/ensure_tangents": false,
+&"meshes/force_disable_compression": true,
+&"meshes/generate_lods": false,
+&"meshes/light_baking": 0
+}
 
 [input]
 
